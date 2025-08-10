@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1055304403478",
+    "project_id": "hrlynx-8521e",
+    "storage_bucket": "hrlynx-8521e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1055304403478:android:a67e2f7fe10d0a65108337",
+        "android_client_info": {
+          "package_name": "com.bdCalling.hr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3NkDfXayUoGWd4F0sghDCOFucHuEp1-0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
