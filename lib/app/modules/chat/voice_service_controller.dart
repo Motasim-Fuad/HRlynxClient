@@ -32,6 +32,9 @@ class VoiceService extends GetxController {
   StreamSubscription? _playerDurationSubscription;
   StreamSubscription? _playerCompleteSubscription;
 
+  // Cache for downloaded audio files
+  final Map<String, String> _audioCache = {};
+
   @override
   void onInit() {
     super.onInit();
@@ -50,28 +53,23 @@ class VoiceService extends GetxController {
   }
 
   void _setupAudioPlayerListeners() {
-    // Player completion listener
     _playerCompleteSubscription = _player.onPlayerComplete.listen((_) {
-      print('🎵 Audio playback completed - resetting state');
+      print('🎵 Audio playback completed');
       _resetPlaybackState();
     });
 
     _playerStateSubscription = _player.onPlayerStateChanged.listen((state) {
       print('🎵 Player state changed: $state');
 
-      // Update state immediately based on player state
       switch (state) {
         case PlayerState.completed:
         case PlayerState.stopped:
-          print('🎵 Player completed/stopped - resetting state');
           _resetPlaybackState();
           break;
         case PlayerState.playing:
-          print('🎵 Player is playing - updating state');
           isPlaying.value = true;
           break;
         case PlayerState.paused:
-          print('🎵 Player is paused - updating state');
           isPlaying.value = false;
           break;
         default:
@@ -82,17 +80,17 @@ class VoiceService extends GetxController {
     _playerPositionSubscription = _player.onPositionChanged.listen((position) {
       playbackPosition.value = position;
 
-      // Update progress percentage
       if (totalDuration.value.inMilliseconds > 0) {
         playbackProgress.value = position.inMilliseconds / totalDuration.value.inMilliseconds;
       }
 
-      // Check if audio has finished playing manually (fallback)
+      // Auto-stop when reaching end
       if (totalDuration.value.inMilliseconds > 0 &&
-          position.inMilliseconds >= totalDuration.value.inMilliseconds - 100) {
-        print('🎵 Audio reached end - manual completion');
+          position.inMilliseconds >= totalDuration.value.inMilliseconds - 200) {
         Future.delayed(Duration(milliseconds: 100), () {
-          _resetPlaybackState();
+          if (isPlaying.value) {
+            _resetPlaybackState();
+          }
         });
       }
     });
@@ -103,27 +101,6 @@ class VoiceService extends GetxController {
     });
   }
 
-  // Simplified toggle method with better state management
-  Future<void> togglePlayPause(String voiceUrl) async {
-    try {
-      print('🎵 togglePlayPause called for URL: $voiceUrl');
-      print('🎵 Current state - isPlaying: ${isPlaying.value}, currentUrl: ${currentPlayingUrl.value}');
-
-      if (isPlayingUrl(voiceUrl)) {
-        // Currently playing this URL - pause it
-        print('🎵 Pausing current audio');
-        await pauseVoiceMessage();
-      } else {
-        // Not playing this URL - play it
-        print('🎵 Starting to play audio');
-        await playVoiceMessage(voiceUrl);
-      }
-    } catch (e) {
-      print('❌ Error toggling play/pause: $e');
-      _handlePlaybackError();
-    }
-  }
-
   void _resetPlaybackState() {
     print('🎵 Resetting playback state');
     isPlaying.value = false;
@@ -131,14 +108,159 @@ class VoiceService extends GetxController {
     playbackPosition.value = Duration.zero;
     playbackProgress.value = 0.0;
 
-    // Reset total duration after a delay to show final time briefly
-    Future.delayed(Duration(milliseconds: 1000), () {
+    // Keep total duration for a moment to show completion
+    Future.delayed(Duration(milliseconds: 500), () {
       if (!isPlaying.value) {
         totalDuration.value = Duration.zero;
       }
     });
   }
 
+  // Main method for playing voice messages (Messenger-style)
+  Future<void> playVoiceMessage(String voiceUrl) async {
+    try {
+      print('🎵 Playing voice message: $voiceUrl');
+
+      // Stop any currently playing audio first
+      if (isPlaying.value) {
+        await stopPlayback();
+        await Future.delayed(Duration(milliseconds: 100));
+      }
+
+      // Set current playing URL
+      currentPlayingUrl.value = voiceUrl;
+
+      // Use cached file if available, otherwise download
+      String? localPath = _audioCache[voiceUrl];
+
+      if (localPath == null || !File(localPath).existsSync()) {
+        localPath = await _downloadAudioFile(voiceUrl);
+        if (localPath != null) {
+          _audioCache[voiceUrl] = localPath;
+        }
+      }
+
+      if (localPath != null) {
+        await _playFromLocalFile(localPath);
+      } else {
+        throw Exception('Failed to download audio file');
+      }
+
+    } catch (e) {
+      print('❌ Error playing voice message: $e');
+      _handlePlaybackError();
+    }
+  }
+
+  Future<void> pauseVoiceMessage() async {
+    try {
+      print('🎵 Pausing playback');
+      await _player.pause();
+    } catch (e) {
+      print('❌ Error pausing playback: $e');
+      _handlePlaybackError();
+    }
+  }
+
+  Future<void> resumeVoiceMessage() async {
+    try {
+      print('🎵 Resuming playback');
+      await _player.resume();
+    } catch (e) {
+      print('❌ Error resuming playback: $e');
+      _handlePlaybackError();
+    }
+  }
+
+  Future<void> stopPlayback() async {
+    try {
+      print('🎵 Stopping playback');
+      await _player.stop();
+      _resetPlaybackState();
+    } catch (e) {
+      print('❌ Error stopping playback: $e');
+      _resetPlaybackState();
+    }
+  }
+
+  Future<String?> _downloadAudioFile(String voiceUrl) async {
+    try {
+      String downloadUrl = voiceUrl;
+      if (!voiceUrl.startsWith('http')) {
+        downloadUrl = '${ApiConstants.baseUrl}$voiceUrl';
+      }
+
+      print('🎵 Downloading: $downloadUrl');
+
+      final token = await TokenStorage.getLoginAccessToken();
+      final headers = <String, String>{};
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+
+      final response = await http.get(
+        Uri.parse(downloadUrl),
+        headers: headers,
+      ).timeout(Duration(seconds: 15));
+
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        final directory = await getTemporaryDirectory();
+        final fileName = 'voice_${voiceUrl.hashCode.abs()}.wav';
+        final localPath = '${directory.path}/$fileName';
+
+        final file = File(localPath);
+        await file.writeAsBytes(response.bodyBytes);
+
+        print('🎵 Downloaded to: $localPath (${response.bodyBytes.length} bytes)');
+        return localPath;
+      } else {
+        throw Exception('Download failed: ${response.statusCode}');
+      }
+
+    } catch (e) {
+      print('❌ Download error: $e');
+      return null;
+    }
+  }
+
+  Future<void> _playFromLocalFile(String localPath) async {
+    try {
+      final file = File(localPath);
+      if (!await file.exists() || await file.length() == 0) {
+        throw Exception('Local file does not exist or is empty');
+      }
+
+      print('🎵 Playing from: $localPath');
+      await _player.play(DeviceFileSource(localPath));
+
+    } catch (e) {
+      print('❌ Play from local file error: $e');
+      throw e;
+    }
+  }
+
+  void _handlePlaybackError() {
+    print('🎵 Handling playback error');
+    _resetPlaybackState();
+
+    Get.snackbar(
+      "Playback Error",
+      "Unable to play voice message",
+      backgroundColor: Colors.red.shade600,
+      colorText: Colors.white,
+      duration: Duration(seconds: 2),
+      margin: EdgeInsets.all(16),
+      borderRadius: 8,
+      icon: Icon(Icons.error_outline, color: Colors.white),
+      snackPosition: SnackPosition.BOTTOM,
+    );
+  }
+
+  bool isPlayingUrl(String url) {
+    return isPlaying.value && currentPlayingUrl.value == url;
+  }
+
+  // Recording methods (unchanged)
   Future<bool> _checkPermission() async {
     final status = await Permission.microphone.request();
     return status == PermissionStatus.granted;
@@ -173,10 +295,8 @@ class VoiceService extends GetxController {
         });
 
         return true;
-      } else {
-        print('❌ Recording path is null');
-        return false;
       }
+      return false;
     } catch (e) {
       print('❌ Error starting recording: $e');
       return false;
@@ -231,170 +351,24 @@ class VoiceService extends GetxController {
       );
       request.files.add(audioFile);
 
-      print('🎤 Sending voice file to backend with session_id: $sessionId');
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
-      print('📥 Voice API Response: ${response.body}');
 
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
         if (jsonResponse['success'] == true) {
           return jsonResponse;
-        } else {
-          Get.snackbar("Error", "Failed to send voice message");
-          return null;
         }
-      } else {
-        Get.snackbar("Error", "Server error: ${response.statusCode}");
-        return null;
       }
+
+      Get.snackbar("Error", "Failed to send voice message");
+      return null;
 
     } catch (e) {
       print('❌ Error sending voice to backend: $e');
-      Get.snackbar("Error", "Failed to process voice: $e");
+      Get.snackbar("Error", "Failed to process voice");
       return null;
     }
-  }
-
-  Future<void> playVoiceMessage(String voiceUrl) async {
-    try {
-      print('🎵 playVoiceMessage called for: $voiceUrl');
-
-      // If playing different URL, stop it first
-      if (isPlaying.value && currentPlayingUrl.value != voiceUrl) {
-        print('🎵 Stopping different audio first');
-        await stopPlayback();
-        await Future.delayed(Duration(milliseconds: 200));
-      }
-
-      // Set the currently playing URL immediately
-      currentPlayingUrl.value = voiceUrl;
-
-      // Download and play
-      await _downloadAndPlay(voiceUrl);
-
-    } catch (e) {
-      print('❌ Error playing voice message: $e');
-      _handlePlaybackError();
-    }
-  }
-
-  Future<void> pauseVoiceMessage() async {
-    try {
-      print('🎵 Pausing playback');
-      await _player.pause();
-      // State will be updated by the listener
-    } catch (e) {
-      print('❌ Error pausing playback: $e');
-      _handlePlaybackError();
-    }
-  }
-
-  Future<void> resumeVoiceMessage() async {
-    try {
-      print('🎵 Resuming playback');
-      await _player.resume();
-      // State will be updated by the listener
-    } catch (e) {
-      print('❌ Error resuming playback: $e');
-      _handlePlaybackError();
-    }
-  }
-
-  Future<void> _downloadAndPlay(String voiceUrl) async {
-    try {
-      print('🎵 Downloading and playing: $voiceUrl');
-
-      String downloadUrl = voiceUrl;
-      if (!voiceUrl.startsWith('http')) {
-        downloadUrl = '${ApiConstants.baseUrl}$voiceUrl';
-      }
-
-      print('🎵 Download URL: $downloadUrl');
-
-      final token = await TokenStorage.getLoginAccessToken();
-      final headers = <String, String>{};
-      if (token != null) {
-        headers['Authorization'] = 'Bearer $token';
-      }
-
-      // Download with timeout
-      final response = await http.get(
-          Uri.parse(downloadUrl),
-          headers: headers
-      ).timeout(Duration(seconds: 30));
-
-      if (response.statusCode == 200) {
-        final directory = await getTemporaryDirectory();
-        final fileName = 'temp_audio_${DateTime.now().millisecondsSinceEpoch}.wav';
-        final localPath = '${directory.path}/$fileName';
-
-        final file = File(localPath);
-        await file.writeAsBytes(response.bodyBytes);
-
-        print('🎵 File downloaded to: $localPath, size: ${response.bodyBytes.length} bytes');
-
-        // Verify file exists and has content
-        if (await file.exists() && await file.length() > 0) {
-          // Stop any current playback
-          await _player.stop();
-          await Future.delayed(Duration(milliseconds: 100));
-
-          // Play from local file
-          await _player.play(DeviceFileSource(localPath));
-          print('🎵 Started playing from local file');
-
-          // Clean up file after playing
-          Future.delayed(Duration(minutes: 2), () {
-            if (file.existsSync()) {
-              file.delete().catchError((e) => print('⚠️ Could not delete temp file: $e'));
-            }
-          });
-        } else {
-          throw Exception('Downloaded file is empty or does not exist');
-        }
-
-      } else {
-        throw Exception('Failed to download audio file: ${response.statusCode} - ${response.body}');
-      }
-
-    } catch (e) {
-      print('❌ Download and play method failed: $e');
-      _handlePlaybackError();
-    }
-  }
-
-  void _handlePlaybackError() {
-    print('🎵 Handling playback error');
-    _resetPlaybackState();
-
-    Get.snackbar(
-      "Audio Error",
-      "Could not play voice message. Please check your internet connection.",
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      duration: Duration(seconds: 3),
-      margin: EdgeInsets.all(16),
-      borderRadius: 8,
-      icon: Icon(Icons.error_outline, color: Colors.white),
-    );
-  }
-
-  Future<void> stopPlayback() async {
-    try {
-      print('🎵 Stopping playback');
-      await _player.stop();
-      _resetPlaybackState();
-    } catch (e) {
-      print('❌ Error stopping playback: $e');
-    }
-  }
-
-  bool isPlayingUrl(String url) {
-    final result = isPlaying.value && currentPlayingUrl.value == url;
-    print('🎵 isPlayingUrl($url): $result (current: ${currentPlayingUrl.value}, isPlaying: ${isPlaying.value})');
-    return result;
   }
 
   Future<void> cancelRecording() async {
@@ -415,6 +389,7 @@ class VoiceService extends GetxController {
     }
   }
 
+  // Utility methods
   String formatDuration(int seconds) {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
@@ -427,8 +402,21 @@ class VoiceService extends GetxController {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
+  // Clean up cache periodically
+  void clearAudioCache() {
+    _audioCache.forEach((url, path) {
+      final file = File(path);
+      if (file.existsSync()) {
+        file.delete().catchError((e) => print('⚠️ Cache cleanup error: $e'));
+      }
+    });
+    _audioCache.clear();
+  }
+
   @override
   void onClose() {
+    clearAudioCache();
+
     _playerStateSubscription?.cancel();
     _playerPositionSubscription?.cancel();
     _playerDurationSubscription?.cancel();

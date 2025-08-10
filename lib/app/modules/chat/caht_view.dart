@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/modules/chat/voice_service_controller.dart';
 import 'package:hr/app/modules/chat/widget/sessionTitle.dart' show SessionHistoryTile;
-import 'package:hr/app/modules/chat/widget/voice_message_widget.py.dart';
+import 'package:hr/app/modules/chat/widget/voice_message_widget.dart';
 import 'package:hr/app/modules/chat/widget/voice_recording_widget.dart' show VoiceRecordingWidget;
 import 'package:intl/intl.dart';
 
