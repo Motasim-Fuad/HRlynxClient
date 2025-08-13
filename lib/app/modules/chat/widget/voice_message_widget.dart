@@ -8,7 +8,6 @@ class VoiceMessageBubble extends StatefulWidget {
   final String? transcript;
   final bool isUser;
   final String timestamp;
-  final VoiceService voiceService;
   final Duration? audioDuration; // Optional duration from backend
 
   const VoiceMessageBubble({
@@ -17,7 +16,6 @@ class VoiceMessageBubble extends StatefulWidget {
     this.transcript,
     required this.isUser,
     required this.timestamp,
-    required this.voiceService,
     this.audioDuration,
   }) : super(key: key);
 
@@ -33,6 +31,16 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   late Animation<double> _pulseAnimation;
   bool _isDisposed = false;
 
+  // FIXED: Get VoiceService globally instead of passing it
+  VoiceService get voiceService {
+    if (Get.isRegistered<VoiceService>()) {
+      return Get.find<VoiceService>();
+    } else {
+      // Fallback: create one if not exists (shouldn't happen but safety)
+      return Get.put(VoiceService(), permanent: true);
+    }
+  }
+
   // Static wave heights for consistent look (like Messenger)
   List<double> _staticWaveHeights = [];
   List<double> _animatedWaveHeights = [];
@@ -47,13 +55,13 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   }
 
   void _setupVoiceServiceListener() {
-    ever(widget.voiceService.isPlaying, (isPlaying) {
+    ever(voiceService.isPlaying, (isPlaying) {
       if (!_isDisposed) {
         _updateAnimations();
       }
     });
 
-    ever(widget.voiceService.currentPlayingUrl, (currentUrl) {
+    ever(voiceService.currentPlayingUrl, (currentUrl) {
       if (!_isDisposed) {
         _updateAnimations();
       }
@@ -165,8 +173,8 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   bool _isCurrentlyPlaying() {
     return widget.voiceUrl != null &&
         widget.voiceUrl!.isNotEmpty &&
-        widget.voiceService.isPlaying.value &&
-        widget.voiceService.currentPlayingUrl.value == widget.voiceUrl;
+        voiceService.isPlaying.value &&
+        voiceService.currentPlayingUrl.value == widget.voiceUrl;
   }
 
   @override
@@ -198,7 +206,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
           // Play/Pause button with Messenger-style design
           Obx(() {
             final isThisPlaying = _isCurrentlyPlaying();
-            final isLoading = widget.voiceService.isProcessing.value;
+            final isLoading = voiceService.isProcessing.value;
 
             return AnimatedBuilder(
               animation: _pulseAnimation,
@@ -275,8 +283,8 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
           // Duration display
           Obx(() {
             final isThisPlaying = _isCurrentlyPlaying();
-            final duration = widget.voiceService.totalDuration.value;
-            final position = widget.voiceService.playbackPosition.value;
+            final duration = voiceService.totalDuration.value;
+            final position = voiceService.playbackPosition.value;
 
             String timeText = "0:15"; // Default
 
@@ -326,10 +334,10 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
 
       if (isThisPlaying) {
         // Pause current audio
-        await widget.voiceService.pauseVoiceMessage();
+        await voiceService.pauseVoiceMessage();
       } else {
         // Play this audio (will stop others automatically)
-        await widget.voiceService.playVoiceMessage(widget.voiceUrl!);
+        await voiceService.playVoiceMessage(widget.voiceUrl!);
       }
     } catch (e) {
       print('❌ Error in play/pause: $e');

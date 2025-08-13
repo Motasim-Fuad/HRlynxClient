@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/api_servies/repository/auth_repo.dart';
@@ -16,8 +15,6 @@ import 'package:hr/app/modules/chat/widget/typing_indicator.dart';
 
 import '../main_screen/main_screen_view.dart';
 import 'chat_controller.dart';
-
-
 
 class ChatView extends StatelessWidget {
   final String sessionId;
@@ -53,7 +50,16 @@ class ChatView extends StatelessWidget {
 
     final chatController = Get.find<ChatController>(tag: controllerTag);
     final tooltipCtrl = Get.put(ChatTooltipController());
-    final voiceService = Get.put(VoiceService());
+
+    // FIXED: Use global VoiceService instance instead of creating new one
+    VoiceService voiceService;
+    if (Get.isRegistered<VoiceService>()) {
+      voiceService = Get.find<VoiceService>();
+      print('🎵 Using existing global VoiceService');
+    } else {
+      voiceService = Get.put(VoiceService(), permanent: true);
+      print('🎵 Created new global VoiceService');
+    }
 
     return Obx(() {
       final session = chatController.session.value;
@@ -201,7 +207,7 @@ class ChatView extends StatelessWidget {
           controllerTag: newControllerTag,
         ));
 
-        // Delay cleanup of old controller
+        // FIXED: Don't delete VoiceService, just cleanup old ChatController
         Future.delayed(const Duration(seconds: 1), () {
           if (Get.isRegistered<ChatController>(tag: controllerTag)) {
             final oldController = Get.find<ChatController>(tag: controllerTag);
@@ -267,7 +273,7 @@ class ChatView extends StatelessWidget {
         controllerTag: newControllerTag,
       ));
 
-      // Delay cleanup of old controller
+      // FIXED: Don't delete VoiceService, just cleanup old ChatController
       Future.delayed(const Duration(seconds: 1), () {
         if (Get.isRegistered<ChatController>(tag: controllerTag)) {
           final oldController = Get.find<ChatController>(tag: controllerTag);

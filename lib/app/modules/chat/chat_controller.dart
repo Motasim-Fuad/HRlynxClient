@@ -291,13 +291,6 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
             },
             child: Text('Continue'),
           ),
-          // ElevatedButton(
-          //   onPressed: () {
-          //     Get.back();
-          //     showLimitWarning.value = false;
-          //   },
-          //   child: Text('Create New Session'),
-          // ),
         ],
       ),
     );
@@ -430,84 +423,6 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
         message.hasVoice == true ||
         (message.voice_file_url != null && message.voice_file_url!.isNotEmpty);
   }
-
-// Replace the problematic code in your fetchSessionDetails() method with this:
-//   Future<void> fetchSessionDetails() async {
-//     try {
-//       final sessionIdInt = sessionIdAsInt;
-//       if (sessionIdInt == null) {
-//         print("❌ Invalid session ID: cannot convert '$sessionId' to integer");
-//         return;
-//       }
-//
-//       print("📋 Fetching session details for ID: $sessionIdInt");
-//       final response = await AuthRepository().fetchSessionsDetails(sessionIdInt);
-//       final model = SessonChatHistoryModel.fromJson(response);
-//       session.value = model.session;
-//
-//       print("************$response");
-//
-//       // Clear existing messages
-//       messages.clear();
-//
-//       if (model.messages != null && model.messages!.isNotEmpty) {
-//         // Debug: Print all messages and their voice properties
-//         for (int i = 0; i < model.messages!.length; i++) {
-//           final message = model.messages![i];
-//           print("📋 Message $i:");
-//           print("  - ID: ${message.id}");
-//           print("  - Content: ${message.content?.substring(0, math.min(50, message.content?.length ?? 0))}...");
-//           print("  - hasVoice: ${message.hasVoice}");
-//           print("  - messageType: ${message.messageType}");
-//           print("  - voice_file_url: ${message.voice_file_url}");
-//           print("  - transcript: ${message.transcript}");
-//           print("  - isVoice getter: ${message.isVoice}"); // This calls the getter
-//         }
-//
-//         // Process messages without filtering - show all messages as they are
-//         List<Messages> processedMessages = [];
-//
-//         for (var message in model.messages!) {
-//           // Create a copy of the message to ensure proper state
-//           final processedMessage = Messages(
-//             id: message.id,
-//             content: message.content,
-//             isUser: message.isUser,
-//             createdAt: message.createdAt,
-//             messageType: message.messageType, // Preserve original messageType
-//             hasVoice: message.hasVoice, // Preserve hasVoice flag
-//             voice_file_url: message.voice_file_url,
-//             transcript: message.transcript,
-//           );
-//
-//           processedMessages.add(processedMessage);
-//
-//           // Debug: Check if message should show as voice
-//           print("✅ Processed message ID: ${processedMessage.id}");
-//           print("   - isVoice: ${processedMessage.isVoice}");
-//           print("   - messageType: ${processedMessage.messageType}");
-//           print("   - hasVoice: ${processedMessage.hasVoice}");
-//           print("   - voice_file_url: ${processedMessage.voice_file_url}");
-//         }
-//
-//         // Sort by ID to maintain chronological order
-//         processedMessages.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
-//
-//         messages.assignAll(processedMessages);
-//         print('📥 Loaded ${processedMessages.length} messages');
-//
-//         // Count voice messages for debugging
-//         final voiceCount = processedMessages.where((msg) => msg.isVoice).length;
-//         print('🎤 Voice messages count: $voiceCount');
-//       }
-//
-//       WidgetsBinding.instance.addPostFrameCallback((_) {
-//         scrollToBottom();
-//       });
-//     } catch (e) {
-//       print("❌ Failed to fetch session details: $e");
-//     }
-//   }
   Future<void> fetchSuggestions(int personaId) async {
     try {
       // Only fetch suggestions for new sessions

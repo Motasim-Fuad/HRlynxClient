@@ -59,10 +59,11 @@ class MessageListWidget extends StatelessWidget {
                         print("🎤 Rendering as VoiceMessageBubble for message ${message.id}");
                         return VoiceMessageBubble(
                           voiceUrl: message.voice_file_url,
-                          transcript: message.transcript ?? message.content, // Fallback to content if no transcript
-                          isUser: isMe,
-                          timestamp: formatTime(parseIsoDate(message.createdAt)),
-                          voiceService: voiceService,
+                          transcript: message.transcript ?? message.content,
+                          isUser: message.isUser ?? false,
+                          timestamp: message.createdAt ?? '',
+                          // REMOVED: voiceService parameter - it will get it globally now
+                          audioDuration: null, // or calculate from your data
                         );
                       } else {
                         print("📝 Rendering as text bubble for message ${message.id}");
