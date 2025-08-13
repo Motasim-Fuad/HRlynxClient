@@ -208,11 +208,13 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                           padding: const EdgeInsets.only(left: 58,  bottom: 0,  right: 0, top: 0),
                           child: Column(
                             children: [
-                              _buildFeatureRow('Unlimited AI Persona Access', Icons.psychology),
+                              _buildFeatureRow('HR QuickScan™ News Highlights', Icons.newspaper),
                               const SizedBox(height: 8),
-                              _buildFeatureRow('Unlimited Chat Support', Icons.chat_bubble_outline),
+                              _buildFeatureRow('Expert AI HR Persona Suite', Icons.psychology),
                               const SizedBox(height: 8),
-                              _buildFeatureRow('Save Conversations', Icons.save_outlined),
+                              _buildFeatureRow('Priority Chat Access', Icons.chat_bubble_outline),
+                              const SizedBox(height: 8),
+                              _buildFeatureRow('Save & Revisit Conversations', Icons.save_outlined),
                             ],
                           ),
                         ),
@@ -228,7 +230,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                             '${yearlyPlan.name}',
                             '\$${yearlyPlan.price}/',
                             '${yearlyPlan.interval}',
-                            'Save 25% - Get 3 months free',
+                            'Your HR superpower — less than 42¢ a day (Save 17%)',
                             true,
                           ),
 
@@ -241,7 +243,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                             '${monthlyPlan.name}',
                             '\$${monthlyPlan.price}/',
                             '${monthlyPlan.interval}',
-                            'Less than a daily latte. Much more satisfying.',
+                            'Smarter HR decisions, every month – let’s go!',
                             false,
                           ),
                         ],
@@ -563,7 +565,7 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
-                  'No commitment. Cancel anytime during trial.',
+                  'Free for 7 days — cancel anytime, no charge.',
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
                     fontSize: 11,

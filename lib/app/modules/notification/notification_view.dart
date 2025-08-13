@@ -396,21 +396,21 @@ class NotificationTile extends StatelessWidget {
                             ),
                           ),
                           const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _getNotificationColor(notification.notificationType).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              notification.notificationType.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: _getNotificationColor(notification.notificationType),
-                              ),
-                            ),
-                          ),
+                          // Container(
+                          //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          //   decoration: BoxDecoration(
+                          //     color: _getNotificationColor(notification.notificationType).withOpacity(0.1),
+                          //     borderRadius: BorderRadius.circular(12),
+                          //   ),
+                          //   child: Text(
+                          //     notification.notificationType.toUpperCase(),
+                          //     style: TextStyle(
+                          //       fontSize: 10,
+                          //       fontWeight: FontWeight.w600,
+                          //       color: _getNotificationColor(notification.notificationType),
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ],

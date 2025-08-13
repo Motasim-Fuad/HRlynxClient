@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/common_widgets/button.dart';
 import 'package:hr/app/common_widgets/premium_basic_text.dart' show PremiumBasicText;
+import 'package:hr/app/modules/main_screen/main_screen_view.dart';
 import 'package:hr/app/utils/app_colors.dart' show AppColors;
 import 'package:hr/app/utils/app_images.dart';
 
@@ -56,14 +57,13 @@ class CongratulationView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  PremiumBasicText(tittle: 'AI-Summarized News Highlights'),
+                  PremiumBasicText(tittle: 'HR QuickScan™ News Highlights'),
                   SizedBox(height: screenHeight * 0.015),
-                  PremiumBasicText(tittle: 'Access to Expert AI HR Persona Suite'),
+                  PremiumBasicText(tittle: 'Expert AI HR Persona Suite'),
                   SizedBox(height: screenHeight * 0.015),
-                  PremiumBasicText(tittle: 'High-Volume Chat Access'),
+                  PremiumBasicText(tittle: 'Priority Chat Access'),
                   SizedBox(height: screenHeight * 0.015),
-                  PremiumBasicText(tittle: 'Save Conversations'),
-                  PremiumBasicText(tittle: 'Save Conversations'),
+                  PremiumBasicText(tittle: 'Priority Chat Access'),
                 ],
               ),
             ),
@@ -89,8 +89,8 @@ class CongratulationView extends StatelessWidget {
             ),
 
             Spacer(),
-            Button(title: "home",onTap: (){
-              Get.to(MiniStream());
+            Button(title: "Home",onTap: (){
+              Get.offAll(MainScreen());
             },),
             // Additional spacing for different screen sizes
             SizedBox(height: screenHeight * 0.01),

@@ -389,7 +389,7 @@ class ProfileView extends StatelessWidget {
               // ),
 
               _buildMenuItem(
-                icon: Icons.insert_drive_file_outlined,
+                icon: Icons.local_police_outlined,
                 title: 'Privacy Policy',
                 onTap: () => Get.to(PrivacyPolicy()),
               ),

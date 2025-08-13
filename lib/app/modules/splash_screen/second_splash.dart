@@ -1,9 +1,9 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/common_widgets/button.dart';
 import 'package:hr/app/common_widgets/splash_text.dart';
-import 'package:hr/app/modules/splash_screen/third_splash.dart' show ThirdSplash;
+import 'package:hr/app/modules/splash_screen/third_splash.dart'
+    show ThirdSplash;
 import 'package:hr/app/utils/app_colors.dart';
 import 'package:hr/app/utils/app_images.dart';
 import 'package:hr/app/utils/app_text.dart';
@@ -19,33 +19,37 @@ class SecondSplash extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(AppImages.splash, height: 170,),
+
+            Image.asset(AppImages.splash, height: 170),
             Text(
-              'Personalized ',
+              'Breaking News with ',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: 32,
-                color: AppColors.primarycolor,
-              ),
-            ),   Text(
-              'News Feed',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 32,
+                fontSize: 25,
                 color: AppColors.primarycolor,
               ),
             ),
-            SizedBox(height: 20),
             Text(
-              AppText.secondsplash,
+              'AI-powered HR QuickScan™',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 25,
+                color: AppColors.primarycolor,
+              ),
+            ),
+            SizedBox(height: 30),
+            Text(
+              'Overwhelmed by HR news? HR QuickScan™ gives you the essentials in seconds so you can move from reading to doing.',textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.w400,
                 fontSize: 16,
                 color: Color(0xFF050505),
+
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -62,11 +66,14 @@ class SecondSplash extends StatelessWidget {
 
             SizedBox(height: 10),
             SplashText(text: 'HR Strategy & Leadership'),
+            SizedBox(height: 5),
             SplashText(text: 'Workforce Compliance & Regulation'),
+            SizedBox(height: 5),
             SplashText(text: 'Talent Acquisition & Labor Trends'),
+            SizedBox(height: 5),
             SplashText(text: 'Compensation, Benefits & Rewards'),
+            SizedBox(height: 5),
             SplashText(text: 'People Development & Culture'),
-
 
             Spacer(),
             Row(
@@ -118,7 +125,12 @@ class SecondSplash extends StatelessWidget {
                 ),
               ],
             ),
-            Button(title: 'Next',onTap: (){ Get.offAll(ThirdSplash());},),
+            Button(
+              title: 'Next',
+              onTap: () {
+                Get.offAll(ThirdSplash());
+              },
+            ),
           ],
         ),
       ),

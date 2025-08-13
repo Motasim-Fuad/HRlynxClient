@@ -89,15 +89,17 @@ class Persona {
 }
 
 
+// Add or update this in your Messages model class:
+
 class Messages {
-  final int? id;
-  final String? content;
-  final bool? isUser;
-  final String? createdAt;
-  final String? messageType;
-  final bool? hasVoice;
-  final String? voice_file_url;
-  final String? transcript;
+  int? id;
+  String? content;
+  bool? isUser;
+  String? createdAt;
+  String? messageType;
+  bool? hasVoice;
+  String? voice_file_url;
+  String? transcript;
 
   Messages({
     this.id,
@@ -110,28 +112,34 @@ class Messages {
     this.transcript,
   });
 
-  // Fixed isVoice getter - check multiple conditions
+  // Enhanced isVoice getter with comprehensive checks
   bool get isVoice {
-    // Check if messageType is 'voice'
-    if (messageType == 'voice') {
-      print("🎤 Message ${id} is voice due to messageType");
-      return true;
+    // Check multiple indicators for voice messages
+    bool hasVoiceUrl = voice_file_url != null && voice_file_url!.isNotEmpty;
+    bool hasVoiceType = messageType?.toLowerCase() == 'voice';
+    bool hasVoiceFlag = hasVoice == true;
+    bool hasTranscriptData = transcript != null && transcript!.isNotEmpty;
+
+    // Also check content for voice indicators (in case backend sends different format)
+    bool contentIndicatesVoice = false;
+    if (content != null) {
+      contentIndicatesVoice = content!.contains('voice_file_url') ||
+          content!.contains('transcript');
     }
 
-    // Check if hasVoice flag is true
-    if (hasVoice == true) {
-      print("🎤 Message ${id} is voice due to hasVoice flag");
-      return true;
+    bool result = hasVoiceUrl || hasVoiceType || hasVoiceFlag || hasTranscriptData || contentIndicatesVoice;
+
+    // Debug logging for voice detection
+    if (hasVoiceUrl || hasVoiceType || hasVoiceFlag || hasTranscriptData) {
+      print("🎤 Voice message detected for ID $id:");
+      print("  - hasVoiceUrl: $hasVoiceUrl (${voice_file_url})");
+      print("  - hasVoiceType: $hasVoiceType (${messageType})");
+      print("  - hasVoiceFlag: $hasVoiceFlag");
+      print("  - hasTranscript: $hasTranscriptData");
+      print("  - Final result: $result");
     }
 
-    // Check if voice_file_url exists and is not empty
-    if (voice_file_url != null && voice_file_url!.isNotEmpty) {
-      print("🎤 Message ${id} is voice due to voice_file_url");
-      return true;
-    }
-
-    print("📝 Message ${id} is text message");
-    return false;
+    return result;
   }
 
   factory Messages.fromJson(Map<String, dynamic> json) {

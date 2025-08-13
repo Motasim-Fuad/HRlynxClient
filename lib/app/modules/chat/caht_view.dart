@@ -178,7 +178,7 @@ class ChatView extends StatelessWidget {
       return Scaffold(
         body: Column(
           children: [
-              SizedBox(height: 20,),
+            SizedBox(height: 20,),
             Container(
               padding: EdgeInsets.all(12),
               margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),

@@ -85,6 +85,85 @@ class _NewsDetailsViewState extends State<NewsDetailsView> {
       );
     }
   }
+  Widget _buildFormattedSummary(String summary) {
+    // Split by ** to get sections
+    List<String> parts = summary.split('**');
+    List<Widget> sections = [];
+
+    String currentSection = '';
+    String currentTitle = '';
+
+    for (int i = 0; i < parts.length; i++) {
+      if (i % 2 == 0) {
+        // Regular text (not between ** markers)
+        currentSection += parts[i];
+      } else {
+        // Bold text (section titles)
+        if (parts[i].isNotEmpty) {
+          currentTitle = parts[i];
+
+          // Check if we have content after this title
+          if (i + 1 < parts.length && parts[i + 1].isNotEmpty) {
+            // Create a container for this section
+            sections.add(
+              Container(
+                margin: EdgeInsets.only(bottom: 16),
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Color(0xFFE6ECEB),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Bold title
+                    Text(
+                      currentTitle.trim(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primarycolor,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 8), // Space after title
+                    // Regular content
+                    Text(
+                      (i + 1 < parts.length ? parts[i + 1] : '').trim(),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        color:  AppColors.primarycolor,
+                        fontSize: 16,
+                        height: 1.4, // Line height for better readability
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+
+            // Skip the next part since we already used it
+            i++;
+          }
+        }
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: sections,
+    );
+  }
 
   // Native sharing using platform channels
   Future<void> _shareArticle() async {
@@ -463,14 +542,7 @@ class _NewsDetailsViewState extends State<NewsDetailsView> {
                 SizedBox(height: 16),
 
                 // Article Summary
-                Text(
-                  article['ai_summary']?.toString() ?? 'No summary available',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF7D848D),
-                    fontSize: 16,
-                  ),
-                ),
+                _buildFormattedSummary(article['ai_summary']?.toString() ?? 'No summary available'),
 
                 SizedBox(height: 30),
 
@@ -516,14 +588,11 @@ class _NewsDetailsViewState extends State<NewsDetailsView> {
                   child: GestureDetector(
                     onTap: () {
                       Get.defaultDialog(
-                        title: 'Disclaimer',
-                        content: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Text(
-                            'All news content displayed is sourced from third-party providers and publicly available RSS feeds. Article summaries and AI-generated insights are provided for informational purposes only. Full credit and copyright remain with the original publisher. HRlynx is not responsible for the accuracy, timeliness, or completeness of third-party content. For full articles, please refer directly to the source.',
-                            style: TextStyle(fontSize: 14),
-                          ),
-                        ),
+                        
+                        titlePadding: EdgeInsetsGeometry.only(top: 30),
+                        contentPadding: EdgeInsets.all(20),
+                        middleText: "All news content displayed is sourced from third-party providers and publicly available RSS feeds. Article summaries and AI-generated insights are provided for informational purposes only. Full credit and copyright remain with the original publisher. HRlynx is not responsible for the accuracy, timeliness, or completeness of third-party content. For full articles, please refer directly to the source.",
+                        title: "Disclaimer",
                       );
                     },
                     child: Text(

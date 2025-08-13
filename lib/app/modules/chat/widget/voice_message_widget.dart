@@ -317,6 +317,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   void _handlePlayPause() async {
     if (widget.voiceUrl == null || widget.voiceUrl!.isEmpty) {
       _showErrorSnackbar("Voice file not available");
+      print("Voice file not available");
       return;
     }
 

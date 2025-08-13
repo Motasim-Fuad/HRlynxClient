@@ -15,6 +15,23 @@ class NewsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final NewsController controller = Get.put(NewsController());
 
+
+    // Add this helper function to your NewsView class (or put it in the controller)
+    String _extractDontMissContent(String summary) {
+      // Find "Don't Miss This:" and get the text after it until the next ** section
+      int startIndex = summary.indexOf('Don\'t Miss This:');
+      if (startIndex == -1) return summary; // If not found, return original
+
+      // Find the end of this section (next ** or end of string)
+      int contentStart = summary.indexOf('\n', startIndex);
+      if (contentStart == -1) contentStart = startIndex + 'Don\'t Miss This:'.length;
+
+      int contentEnd = summary.indexOf('**', contentStart);
+      if (contentEnd == -1) contentEnd = summary.length;
+
+      return summary.substring(contentStart, contentEnd).trim();
+    }
+
     return Scaffold(
       appBar: AppBar(
         leading: GestureDetector(
@@ -314,7 +331,7 @@ class NewsView extends StatelessWidget {
                                         ),
                                         SizedBox(height: 8),
                                         Text(
-                                          article['ai_summary'] ?? '',
+                                          _extractDontMissContent(article['ai_summary'] ?? ''),
                                           style: TextStyle(
                                             fontWeight: FontWeight.w400,
                                             fontSize: 14,

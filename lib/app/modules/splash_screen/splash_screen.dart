@@ -27,16 +27,16 @@ class SplashScreen extends StatelessWidget {
                     Text(
                       'Welcome to your AI-powered',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style:  TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 23,
-                        color: Color(0xFF050505),
+                        color: AppColors.primarycolor,
                       ),
                     ),
-                    Text(" HR Assistant!",style: const TextStyle(
+                    Text(" HR Assistant!",style:  TextStyle(
                       fontWeight: FontWeight.w500,
                       fontSize: 23,
-                      color: Color(0xFF050505),
+                      color: AppColors.primarycolor,
                     ),),
                   ],
                 ),

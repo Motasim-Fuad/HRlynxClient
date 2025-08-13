@@ -42,7 +42,7 @@ class VoiceService extends GetxController {
     _configureAudioPlayer();
   }
 
-  void _configureAudioPlayer() async {
+  Future<void> _configureAudioPlayer() async {
     try {
       await _player.setVolume(1.0);
       await _player.setPlayerMode(PlayerMode.mediaPlayer);
@@ -227,12 +227,16 @@ class VoiceService extends GetxController {
     try {
       final file = File(localPath);
       if (!await file.exists() || await file.length() == 0) {
+        print("Local file does not exist or is empty");
         throw Exception('Local file does not exist or is empty');
+
       }
 
       print('🎵 Playing from: $localPath');
+      print('🎵 solution');
       await _player.play(DeviceFileSource(localPath));
-
+      // here is my error
+      print('@@@@@@@@@ my voice local Playing from: $localPath');
     } catch (e) {
       print('❌ Play from local file error: $e');
       throw e;
