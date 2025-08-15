@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/common_widgets/button.dart' show Button;
@@ -12,122 +11,130 @@ class ThirdSplash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final double h = size.height;
+    final double w = size.width;
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Image.asset(AppImages.splash, height: 200, ),
-            Text(
-              textAlign: TextAlign.center,
-              'Interactive \nAI HR Assistants',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 25,
-                color: AppColors.primarycolor,
-              ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: w * 0.05,
+              vertical: h * 0.02,
             ),
-            SizedBox(height: 15),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 0),
-              child: Text(
-                "Supportive, insightful HR guidance - powered by AI, designed for you.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w400,
-                  fontSize: 20,
-                  color: Color(0xFF393636),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Image
+                Image.asset(
+                  AppImages.splash,
+                  height: h * 0.25,
+                  fit: BoxFit.contain,
                 ),
-              ),
-            ),
-            SizedBox(height: 40),
-            Padding(
-              padding: const EdgeInsets.only(left: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text(
+
+                SizedBox(height: h * 0.02),
+
+                // Title
+                Text(
+                  'Interactive \nAI HR Assistants',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: h * 0.03,
+                    color: AppColors.primarycolor,
+                  ),
+                ),
+
+                SizedBox(height: h * 0.02),
+
+                // Description
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: w * 0.05),
+                  child: Text(
+                    "Supportive, insightful HR guidance - powered by AI, designed for you.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: h * 0.022,
+                      color: const Color(0xFF393636),
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: h * 0.04),
+
+                // Example Prompts Label
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
                     'Example Prompts',
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
-                      fontSize: 18,
-                      color: Color(0xFF050505),
+                      fontSize: h * 0.023,
+                      color: const Color(0xFF050505),
                     ),
                   ),
-                ],
-              ),
-            ),
-            SizedBox(height: 10),
-            SplashText(text: 'Prepare for a difficult conversation'),
-            SplashText(text: "What's new in California labor law?"),
+                ),
 
-            SizedBox(height: 30),
-            Text(
-              'Tailored by role (HRBP, TA, etc)',
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: 16,
-                color: Color(0xFF050505),
-              ),
-            ),
-            Spacer(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    height: 12,
-                    width: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xffE6ECEB),
-                    ),
+                SizedBox(height: h * 0.015),
+
+                // Prompt Examples
+                SplashText(text: 'Prepare for a difficult conversation'),
+                SizedBox(height: h * 0.008),
+                SplashText(text: "What's new in California labor law?"),
+
+                SizedBox(height: h * 0.03),
+
+                // Footer text
+                Text(
+                  'Tailored by role (HRBP, TA, etc)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: h * 0.02,
+                    color: const Color(0xFF050505),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    height: 12,
-                    width: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xffE6ECEB),
-                    ),
-                  ),
+
+                SizedBox(height: h * 0.1),
+
+                // Page indicators
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(4, (index) {
+                    final isActive = index == 2;
+                    return Padding(
+                      padding: EdgeInsets.all(w * 0.015),
+                      child: Container(
+                        height: h * 0.015,
+                        width: h * 0.015,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isActive
+                              ? AppColors.primarycolor
+                              : const Color(0xffE6ECEB),
+                        ),
+                      ),
+                    );
+                  }),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    height: 12,
-                    width: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primarycolor,
-                    ),
-                  ),
+
+                SizedBox(height: h * 0.03),
+
+                // Next button
+                Button(
+                  title: 'Next',
+                  onTap: () {
+                    Get.offAll( OnboardingView());
+                  },
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    height: 12,
-                    width: 12,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Color(0xffE6ECEB),
-                    ),
-                  ),
-                ),
+
+                SizedBox(height: h * 0.03),
               ],
             ),
-            Button(title: 'Next',onTap: (){
-              Get.offAll(OnboardingView());
-            },),
-
-          ],
+          ),
         ),
       ),
     );

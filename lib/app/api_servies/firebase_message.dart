@@ -12,7 +12,6 @@ import 'dart:io';
 class FirebaseMeg {
   final msgService = FirebaseMessaging.instance;
 
-
   initFCM() async {
     try {
       // Request permission
@@ -29,7 +28,7 @@ class FirebaseMeg {
         String? token = await msgService.getToken();
 
         if (token != null) {
-          print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@  FCM  token: $token");
+          print("FCM  token: $token");
 
           // Backend এ token পাঠান
           await sendTokenToBackend(token);
@@ -40,7 +39,6 @@ class FirebaseMeg {
           print("Token refreshed: $newToken");
           sendTokenToBackend(newToken);
         });
-
       } else {
         print('User declined or has not accepted permission');
       }
@@ -56,7 +54,6 @@ class FirebaseMeg {
 
       // Handle initial message
       handleInitialMessage();
-
     } catch (e) {
       print("Error initializing FCM: $e");
     }
@@ -88,15 +85,18 @@ class FirebaseMeg {
         headers: {
           'Content-Type': 'application/json',
           // যদি authentication লাগে তাহলে এখানে add করুন
-          'Authorization': 'Bearer $accessToken',
+          // 'Authorization': 'Bearer $accessToken',
         },
         body: jsonEncode(requestBody),
       );
 
       print("Response Status Code: ${response.statusCode}");
       print("Response Body: ${response.body}");
-      if (response.statusCode == 400 && response.body.contains("already exists")) {
-        print('✅ Token already exists in backend, skipping insert.  its not a error');
+      if (response.statusCode == 400 &&
+          response.body.contains("already exists")) {
+        print(
+          '✅ Token already exists in backend, skipping insert.  its not a error',
+        );
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -104,42 +104,40 @@ class FirebaseMeg {
         print("✅ Token successfully sent to backend");
 
         // Success snackbar show করুন (safely)
-        _showSnackbarSafely(
-          title: "Success",
-          message: "FCM Token registered successfully",
-          backgroundColor: Colors.green,
-        );
-
+        // _showSnackbarSafely(
+        //   title: "Success",
+        //   message: "FCM Token registered successfully",
+        //   backgroundColor: Colors.green,
+        // );
       } else if (response.statusCode == 400) {
         Map<String, dynamic> errorData = jsonDecode(response.body);
 
         // Check if token already exists
         if (errorData['errors'] != null &&
             errorData['errors']['token'] != null &&
-            errorData['errors']['token'].toString().contains('already exists')) {
+            errorData['errors']['token'].toString().contains(
+              'already exists',
+            )) {
           print("⚠️ Token already exists in backend");
 
           // Token already exists - you might want to update it
           // অথবা simply ignore করতে পারেন
-
         } else {
           print("❌ Validation Error: ${errorData['message']}");
-          _showSnackbarSafely(
-            title: "Validation Error",
-            message: errorData['message'] ?? "Unknown validation error",
-            backgroundColor: Colors.orange,
-          );
+          // _showSnackbarSafely(
+          //   title: "Validation Error",
+          //   message: errorData['message'] ?? "Unknown validation error",
+          //   backgroundColor: Colors.orange,
+          // );
         }
-
       } else {
         print("❌ Failed to send token. Status: ${response.statusCode}");
-        _showSnackbarSafely(
-          title: "Error",
-          message: "Failed to register FCM token",
-          backgroundColor: Colors.red,
-        );
+        // _showSnackbarSafely(
+        //   title: "Error",
+        //   message: "Failed to register FCM token",
+        //   backgroundColor: Colors.red,
+        // );
       }
-
     } catch (e) {
       print("❌ Error sending token to backend: $e");
       _showSnackbarSafely(
@@ -186,7 +184,8 @@ class FirebaseMeg {
 
   // Handle initial message
   Future<void> handleInitialMessage() async {
-    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    RemoteMessage? initialMessage = await FirebaseMessaging.instance
+        .getInitialMessage();
     if (initialMessage != null) {
       print('App opened from notification: ${initialMessage.messageId}');
       // Handle the initial message
@@ -226,9 +225,8 @@ class FirebaseMeg {
             backgroundColor: backgroundColor,
             duration: Duration(seconds: 3),
             onTap: onTap != null ? (snack) => onTap() : null,
-            snackPosition:SnackPosition.TOP ,
+            snackPosition: SnackPosition.TOP,
           ),
-
         );
       } else {
         // If context not ready, delay and try again
