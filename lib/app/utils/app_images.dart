@@ -25,5 +25,6 @@ class AppImages {
   static const String placeholder = 'assets/images/images.png';
   static const String edit_profile = 'assets/images/edit_profile.svg';
   static const String default_news_img = 'assets/images/default_news.png';
+  static const String congratulation_right_icon = 'assets/images/congratilitation_icon.svg';
 
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:hr/app/utils/app_colors.dart' show AppColors;
+import 'package:hr/app/utils/app_images.dart';
 
 class PremiumBasicText extends StatelessWidget {
   const PremiumBasicText({super.key, required this.tittle});
@@ -15,19 +17,30 @@ class PremiumBasicText extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Icon(
-            Icons.check,
-            color: AppColors.primarycolor,
-            size: screenWidth * 0.05, // responsive icon size
+          // Icon(
+          //   Icons.check,
+          //   color: AppColors.primarycolor,
+          //   size: screenWidth * 0.05, // responsive icon size
+          // ),
+
+
+          SvgPicture.asset(
+            AppImages.congratulation_right_icon,
+            colorFilter: ColorFilter.mode(
+              AppColors.primarycolor,
+              BlendMode.srcIn,
+            ),
+            width: screenWidth * 0.05,
+            height: screenWidth * 0.05,
           ),
           SizedBox(width: screenWidth * 0.02), // responsive spacing
           Expanded(
             child: Text(
               tittle,
               style: TextStyle(
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w600,
                 fontSize: screenWidth * 0.04, // responsive font size
-                color: const Color(0xFF050505),
+                color: AppColors.primarycolor,
               ),
               overflow: TextOverflow.ellipsis, // prevents overflow
             ),

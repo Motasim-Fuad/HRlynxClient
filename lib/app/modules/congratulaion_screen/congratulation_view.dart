@@ -63,7 +63,7 @@ class CongratulationView extends StatelessWidget {
                   SizedBox(height: screenHeight * 0.015),
                   PremiumBasicText(tittle: 'Priority Chat Access'),
                   SizedBox(height: screenHeight * 0.015),
-                  PremiumBasicText(tittle: 'Priority Chat Access'),
+                  PremiumBasicText(tittle: 'Save & Revisit Conversations'),
                 ],
               ),
             ),

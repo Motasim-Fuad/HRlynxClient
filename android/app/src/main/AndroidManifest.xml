@@ -15,7 +15,12 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- ✅ Google Pay permissions - UPDATED -->
+    <!-- ✅ Push Notification Permissions - ADDED -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+
+    <!-- ✅ Google Pay permissions -->
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
@@ -34,6 +39,7 @@
         android:icon="@mipmap/launcher_icon"
         android:theme="@style/NormalTheme"
         android:enableOnBackInvokedCallback="true">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -49,12 +55,10 @@
                 android:name="com.stripe.android.PaymentConfiguration.PublishableKey"
                 android:value="pk_test_51RVMTHQU9tGM4LXBf8ZHLjC18DYzzWu4HnxSCojMGP58ZO8x1K2sFbNZ5xGLmIRt6KjZpo77V0RKs4m6dwoxoFLi00u06pnafX" />
 
-            <!-- ✅ Google Pay Configuration - UPDATED -->
+            <!-- ✅ Google Pay Configuration -->
             <meta-data
                 android:name="com.google.android.gms.wallet.api.enabled"
                 android:value="true" />
-
-            <!-- ✅ Google Pay Test Environment -->
             <meta-data
                 android:name="com.google.android.gms.wallet.test.environment"
                 android:value="true" />
@@ -65,26 +69,49 @@
             </intent-filter>
         </activity>
 
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+        <!-- ✅ Firebase Messaging Service - ADDED -->
+        <service
+            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+            android:exported="false"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- ✅ Default notification channel - ADDED -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
+
+        <!-- ✅ Default notification icon - ADDED -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notification" />
+
+        <!-- ✅ Default notification color - ADDED -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/colorAccent" />
+
+        <!-- Flutter embedding -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 
-    <!-- ✅ UPDATED queries section for Google Pay -->
+    <!-- ✅ Queries section -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
 
-        <!-- ✅ Google Pay specific queries -->
+        <!-- Google Pay specific queries -->
         <package android:name="com.google.android.apps.nfc.payment" />
         <package android:name="com.google.android.gms" />
         <package android:name="com.android.vending" />
 
-        <!-- ✅ Google Pay intents -->
         <intent>
             <action android:name="com.google.android.gms.wallet.ACTION_ENABLE_WALLET_OPTIMIZATION" />
         </intent>
