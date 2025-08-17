@@ -84,10 +84,10 @@
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="high_importance_channel" />
 
-        <!-- ✅ Default notification icon - ADDED -->
+        <!-- ✅ Default notification icon - Using app launcher icon -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/ic_notification" />
+            android:resource="@mipmap/launcher_icon" />
 
         <!-- ✅ Default notification color - ADDED -->
         <meta-data

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification color -->
+    <color name="colorAccent">#FF6200EE</color>
+
+    <!-- অথবা আপনি চাইলে অন্য কোনো color use করতে পারেন -->
+    <!-- <color name="colorAccent">#FF4081</color> -->
+    <!-- <color name="colorAccent">#2196F3</color> -->
+</resources>

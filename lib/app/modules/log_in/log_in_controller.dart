@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/api_servies/firebase_message.dart';
 import 'package:hr/app/api_servies/notification_services.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart' show UserController;
 import '../../api_servies/repository/auth_repo.dart';
@@ -84,4 +85,6 @@ class LogInController extends GetxController {
       print('❌ Error initializing notification service: $e');
     }
   }
+
+
 }
