@@ -60,7 +60,11 @@ class LogInController extends GetxController {
 
       if (access != null && refresh != null) {
         await TokenStorage.saveLoginTokens(access, refresh);
+
+        // ✅ Login successful হওয়ার পর notification service এবং FCM token setup করুন
         await initializeNotificationService();
+        await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
+
         Get.snackbar("Success", response['message'] ?? "Login successful");
         Get.to(() => MainScreen());
       } else {
@@ -86,5 +90,15 @@ class LogInController extends GetxController {
     }
   }
 
-
+  // ✅ নতুন function: Login এর পর FCM token backend এ পাঠানোর জন্য
+  Future<void> sendFCMTokenToBackend() async {
+    try {
+      // Firebase message service এর instance নিন
+      final firebaseMsg = FirebaseMeg();
+      await firebaseMsg.sendFCMTokenAfterLogin();
+      print('✅ FCM token sent to backend after login');
+    } catch (e) {
+      print('❌ Error sending FCM token after login: $e');
+    }
+  }
 }

@@ -34,7 +34,7 @@
         android:required="false" />
 
     <application
-        android:label="hr"
+        android:label="HRlynx"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:theme="@style/NormalTheme"
@@ -85,9 +85,13 @@
             android:value="high_importance_channel" />
 
         <!-- ✅ Default notification icon - Using app launcher icon -->
+<!--        <meta-data-->
+<!--            android:name="com.google.firebase.messaging.default_notification_icon"-->
+<!--            android:resource="@mipmap/launcher_icon" />-->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@mipmap/launcher_icon" />
+            android:resource="@drawable/ic_notification" />
+
 
         <!-- ✅ Default notification color - ADDED -->
         <meta-data

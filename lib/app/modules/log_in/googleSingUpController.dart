@@ -2,6 +2,7 @@
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hr/app/api_servies/firebase_message.dart'; // ✅ FCM service import করুন
 import 'package:hr/app/api_servies/notification_services.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart' show UserController;
 import 'package:hr/app/modules/payment/payment_view.dart';
@@ -68,8 +69,9 @@ class GoogleSignUpController extends GetxController {
 
       // Step 4: Handle success or failure
       if (success) {
-        // Initialize notification service after successful Google login
+        // ✅ Google login successful হওয়ার পর notification service এবং FCM token setup করুন
         await initializeNotificationService();
+        await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
 
         // Clear stored persona ID after successful use
         await TokenStorage.clearSelectedPersonaId();
@@ -104,6 +106,18 @@ class GoogleSignUpController extends GetxController {
       print('✅ Notification service initialized successfully');
     } catch (e) {
       print('❌ Error initializing notification service: $e');
+    }
+  }
+
+  // ✅ নতুন function: Google login এর পর FCM token backend এ পাঠানোর জন্য
+  Future<void> sendFCMTokenToBackend() async {
+    try {
+      // Firebase message service এর instance নিন
+      final firebaseMsg = FirebaseMeg();
+      await firebaseMsg.sendFCMTokenAfterLogin();
+      print('✅ FCM token sent to backend after Google login');
+    } catch (e) {
+      print('❌ Error sending FCM token after Google login: $e');
     }
   }
 }

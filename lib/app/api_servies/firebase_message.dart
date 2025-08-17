@@ -32,18 +32,12 @@ class FirebaseMeg {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         print('User granted permission');
 
-        // Get FCM token
-        String? token = await msgService.getToken();
-
-        if (token != null) {
-          print("FCM token: $token");
-          await sendTokenToBackend(token);
-        }
-
+        // ✅ শুধু FCM setup করুন, token backend এ পাঠাবেন না এখনই
         // Token refresh listener
         msgService.onTokenRefresh.listen((newToken) {
           print("Token refreshed: $newToken");
-          sendTokenToBackend(newToken);
+          // ✅ Token refresh এর সময়ও check করুন access token আছে কিনা
+          _sendTokenIfLoggedIn(newToken);
         });
       } else {
         print('User declined or has not accepted permission');
@@ -62,6 +56,31 @@ class FirebaseMeg {
       handleInitialMessage();
     } catch (e) {
       print("Error initializing FCM: $e");
+    }
+  }
+
+  // ✅ নতুন function: Login এর পর এটা call করুন
+  Future<void> sendFCMTokenAfterLogin() async {
+    try {
+      String? token = await msgService.getToken();
+      if (token != null) {
+        print("FCM token after login: $token");
+        await sendTokenToBackend(token);
+      } else {
+        print("No FCM token available");
+      }
+    } catch (e) {
+      print("Error getting FCM token after login: $e");
+    }
+  }
+
+  // ✅ Helper function: শুধু logged in user দের জন্য token send করুন
+  Future<void> _sendTokenIfLoggedIn(String token) async {
+    final accessToken = await TokenStorage.getLoginAccessToken();
+    if (accessToken != null && accessToken.isNotEmpty) {
+      await sendTokenToBackend(token);
+    } else {
+      print("User not logged in, skipping token send");
     }
   }
 
@@ -112,6 +131,13 @@ class FirebaseMeg {
   // Backend এ FCM token পাঠানোর function
   Future<void> sendTokenToBackend(String token) async {
     final accessToken = await TokenStorage.getLoginAccessToken();
+
+    // ✅ Access token check করুন
+    if (accessToken == null || accessToken.isEmpty) {
+      print("❌ No access token available, cannot send FCM token");
+      return;
+    }
+
     try {
       String deviceType = Platform.isAndroid ? 'android' : 'ios';
       String apiUrl = "${ApiConstants.baseUrl}/api/notifications/fcm-tokens/";
@@ -197,6 +223,9 @@ class FirebaseMeg {
       showWhen: true,
       enableVibration: true,
       playSound: true,
+      icon: '@drawable/ic_notification', // ✅ Custom notification icon
+      color: Color(0xFF2196F3), // ✅ আপনার app color
+      largeIcon:DrawableResourceAndroidBitmap('@drawable/ic_notification'), // ✅ App icon as large icon
     );
 
     const DarwinNotificationDetails iosNotificationDetails =
@@ -272,7 +301,7 @@ class FirebaseMeg {
 
       if (newToken != null) {
         print("New token generated: $newToken");
-        await sendTokenToBackend(newToken);
+        await _sendTokenIfLoggedIn(newToken);
       }
     } catch (e) {
       print("Error refreshing token: $e");
