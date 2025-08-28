@@ -1,4 +1,4 @@
 class ApiConstants {
-  static const String baseUrl = "https://action-vc-elected-government.trycloudflare.com";
-  static const String wsBaseUrl = "ws://action-vc-elected-government.trycloudflare.com";
+  static const String baseUrl = "https://maintains-usb-bell-with.trycloudflare.com";
+  static const String wsBaseUrl = "ws://maintains-usb-bell-with.trycloudflare.com";
 }

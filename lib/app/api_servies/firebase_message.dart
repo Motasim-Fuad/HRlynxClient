@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/api_servies/api_Constant.dart';
 import 'package:hr/app/api_servies/token.dart';
+import 'package:hr/app/modules/notification/notification_view.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
@@ -270,17 +271,25 @@ class FirebaseMeg {
   }
 
   // ✅ Handle notification data - NEW FUNCTION
-  void handleNotificationData(Map<String, dynamic> data) {
-    if (data.isNotEmpty) {
-      String? screen = data['screen'];
-      String? id = data['id'];
+  // void handleNotificationData(Map<String, dynamic> data) {
+  //   if (data.isNotEmpty) {
+  //     String? screen = data['screen'];
+  //     String? id = data['id'];
+  //
+  //     if (screen != null) {
+  //       // Navigate to specific screen
+  //       Get.to(() => NotificationView(), arguments: {'id': id});
+  //       print('Should navigate to: $screen with id: $id');
+  //     }
+  //   }
+  // }
 
-      if (screen != null) {
-        // Navigate to specific screen
-        // Get.toNamed('/screen_name', arguments: {'id': id});
-        print('Should navigate to: $screen with id: $id');
-      }
-    }
+  void handleNotificationData(Map<String, dynamic> data) {
+    // যাই আসুক, সবসময় NotificationView এ ন্যাভিগেট করবে
+    String? id = data['id']; // যদি backend থেকে id আসে তাহলে সাথে পাঠান
+
+    Get.to(() => NotificationView(), arguments: {'id': id});
+    print('Navigated to NotificationView with id: $id');
   }
 
   // Handle initial message

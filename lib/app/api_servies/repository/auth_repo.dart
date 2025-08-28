@@ -466,4 +466,91 @@ class AuthRepository {
   }
 
 
+
+
+// In auth_repo.dart - Replace the existing getAffiliateProducts method
+
+  Future<Map<String, dynamic>> getAffiliateProducts({
+    required String categorySlug,
+    int page = 1,  // Add page parameter for pagination
+  }) async {
+    try {
+      // Use the correct endpoint format from your API
+      String url = "${ApiConstants.baseUrl}/api/affiliate/products?category_slug=$categorySlug";
+
+      // Add page parameter if not first page
+      if (page > 1) {
+        url += "&page=$page";
+      }
+
+      print('🔗 Fetching affiliate products from: $url');
+
+      final response = await NetworkApiServices.getApi(
+          url,
+          withAuth: true,
+          tokenType: 'login'
+      );
+
+      if (response != null) {
+        print('✅ Affiliate products response: $response');
+        return {
+          'success': true,
+          'data': response,
+        };
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to fetch affiliate products - no response',
+        };
+      }
+    } catch (e) {
+      print('❌ Error fetching affiliate products: $e');
+      return {
+        'success': false,
+        'error': 'Error fetching affiliate products: $e',
+      };
+    }
+  }
+
+// Track click count
+  Future<Map<String, dynamic>> trackClick(int product) async {
+    try {
+      String url = "${ApiConstants.baseUrl}/api/affiliate/track-click/";
+      final body = {
+        'product': product,
+      };
+
+      print('🔗 Tracking click for product: $product');
+      print('📤 Request body: $body');
+
+      final response = await NetworkApiServices.postApi(
+          url,
+          body,
+          withAuth: true,
+          tokenType: 'login'
+      );
+
+      if (response != null) {
+        print('✅ Track click response: $response');
+        return {
+          'success': true,
+          'data': response,
+        };
+      } else {
+        return {
+          'success': false,
+          'error': 'Failed to track click',
+        };
+      }
+    } catch (e) {
+      print('❌ Error tracking click: $e');
+      return {
+        'success': false,
+        'error': 'Error tracking click: $e',
+      };
+    }
+  }
+
+
+
 }

@@ -1,11 +1,11 @@
-//package com.bdCalling.hr
+//package com.lynxova.hrlnyx
 //
 //import io.flutter.embedding.android.FlutterActivity
 //
 //class MainActivity : FlutterActivity()
 
 
-package com.bdCalling.hr
+package com.lynxova.hrlnyx
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine

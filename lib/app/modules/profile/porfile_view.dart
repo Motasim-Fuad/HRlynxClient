@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hr/app/common_widgets/button.dart';
 import 'package:hr/app/common_widgets/privacy_policy.dart';
+import 'package:hr/app/modules/GooglePay/googlePay.dart';
 import 'package:hr/app/modules/change_password/change_password.dart' show ChangePassword;
 import 'package:hr/app/modules/home/chat_al_ai_persona_controller.dart';
 import 'package:hr/app/modules/home/user_isSubcriptionController.dart';
@@ -382,11 +383,11 @@ class ProfileView extends StatelessWidget {
           //       onTap: () => Get.to(GooglePaymentScreen()),
           //     ),
 
-              // _buildMenuItem(
-              //   icon: Icons.notifications_active_outlined,
-              //   title: 'fake',
-              //   onTap: () => Get.to(PaymentScreen()),
-              // ),
+              _buildMenuItem(
+                icon: Icons.g_mobiledata,
+                title: 'GooglePay',
+                onTap: () => Get.to(GooglePayView()),
+              ),
 
               _buildMenuItem(
                 icon: Icons.local_police_outlined,

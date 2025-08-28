@@ -23,68 +23,10 @@ class NotificationView extends StatelessWidget {
             color: Colors.black87,
           ),
         ),
+        centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black87),
-        actions: [
-          // WebSocket connection indicator
-          Obx(() => Container(
-            margin: const EdgeInsets.only(right: 16),
-            child: Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: notificationService.isConnected.value
-                        ? Colors.green
-                        : Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  notificationService.isConnected.value ? 'Live' : 'Offline',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: notificationService.isConnected.value
-                        ? Colors.green
-                        : Colors.red,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          )),
-          // Mark all as read button
-          Obx(() => notificationService.unreadCount.value > 0
-              ? IconButton(
-            icon: const Icon(Icons.done_all),
-            onPressed: () async {
-              try {
-                await notificationService.markAllAsRead();
-                Get.snackbar(
-                  'Success',
-                  'All notifications marked as read',
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.green,
-                  colorText: Colors.white,
-                  duration: const Duration(seconds: 2),
-                );
-              } catch (e) {
-                print('❌ Error marking all as read: $e');
-                Get.snackbar(
-                  'Error',
-                  'Failed to mark all as read',
-                  snackPosition: SnackPosition.BOTTOM,
-                  backgroundColor: Colors.red,
-                  colorText: Colors.white,
-                );
-              }
-            },
-          )
-              : const SizedBox.shrink()),
-        ],
       ),
       body: Column(
         children: [
