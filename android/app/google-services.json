@@ -12,7 +12,20 @@
           "package_name": "com.lynxova.hrlnyx"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "907467608466-au8d6pts9a6c730rgn2fd70easikehah.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lynxova.hrlnyx",
+            "certificate_hash": "9409a5609e8107c02c5bcbf764b31651e5e2f03c"
+          }
+        },
+        {
+          "client_id": "907467608466-5rgoia6ig5kbokfa4e81q7t80565sqhr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAgD6I2WbbtTAYA84tHyD8NCO4ZHz_Li2M"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "907467608466-5rgoia6ig5kbokfa4e81q7t80565sqhr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "907467608466-9c7kk86ghtfqrvou3hpk3m45uj3sg07v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lynxova.hrlnyx"
+              }
+            }
+          ]
         }
       }
     }

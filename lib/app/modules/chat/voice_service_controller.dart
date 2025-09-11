@@ -264,19 +264,102 @@ class VoiceService extends GetxController {
     return isPlaying.value && currentPlayingUrl.value == url;
   }
 
-  // Recording methods (unchanged)
-  Future<bool> _checkPermission() async {
-    final status = await Permission.microphone.request();
-    return status == PermissionStatus.granted;
-  }
 
-  Future<bool> startRecording() async {
+
+  Future<bool> _checkPermission() async {
     try {
-      if (!await _checkPermission()) {
-        Get.snackbar("Permission Denied", "Microphone permission is required");
+      print("🎤 Checking native iOS permission only...");
+
+      // শুধুমাত্র AudioRecorder এর নিজের permission check করবো
+      // কারণ iOS এ এটাই সবচেয়ে reliable
+      bool hasPermission = await _recorder.hasPermission();
+      print("🎤 Native recorder permission: $hasPermission");
+
+      if (hasPermission) {
+        print("✅ Native permission granted, ready to record");
+        return true;
+      } else {
+        print("❌ Native permission denied");
+
+        // যদি permission না থাকে, user কে manual settings এ যেতে বলবো
+        _showManualPermissionDialog();
         return false;
       }
 
+    } catch (e) {
+      print("🎤 Error checking permission: $e");
+      return false;
+    }
+  }
+
+  void _showManualPermissionDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: Text('Microphone Permission Needed'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Please enable microphone access manually:'),
+            SizedBox(height: 12),
+            Text('1. Go to iPhone Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text('2. Find "HRlynx" app'),
+            Text('3. Turn ON Microphone'),
+            Text('4. Come back to app'),
+            SizedBox(height: 12),
+            Text('Then try recording again.', style: TextStyle(color: Colors.blue)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              // iOS Settings এ নিয়ে যাবে
+              openAppSettings();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            child: Text('Open Settings'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+
+  Future<bool> startRecording() async {
+    try {
+      print("🎤 Starting recording (iOS native only)...");
+
+      // শুধু native permission check
+      bool hasPermission = await _recorder.hasPermission();
+
+      if (!hasPermission) {
+        print("🎤 No native permission");
+
+        Get.snackbar(
+          "Permission Required",
+          "Please enable microphone in Settings → HRlynx → Microphone",
+          backgroundColor: Colors.orange.shade600,
+          colorText: Colors.white,
+          duration: Duration(seconds: 4),
+          mainButton: TextButton(
+            onPressed: () => openAppSettings(),
+            child: Text("Settings", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        );
+
+        return false;
+      }
+
+      // Recording setup
       final directory = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       _recordingPath = '${directory.path}/voice_message_$timestamp.wav';
@@ -289,23 +372,59 @@ class VoiceService extends GetxController {
       );
 
       final recordingPath = _recordingPath;
-      if (recordingPath != null) {
-        await _recorder.start(config, path: recordingPath);
-        isRecording.value = true;
-        recordingDuration.value = 0;
-
-        _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-          recordingDuration.value++;
-        });
-
-        return true;
+      if (recordingPath == null) {
+        throw Exception("Recording path is null");
       }
-      return false;
+
+      print("🎤 Starting recording to: $recordingPath");
+
+      // Start recording
+      await _recorder.start(config, path: recordingPath);
+
+      // Update state
+      isRecording.value = true;
+      recordingDuration.value = 0;
+
+      // Duration timer
+      _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+        recordingDuration.value++;
+      });
+
+      print("✅ Recording started successfully");
+
+      Get.snackbar(
+        "Recording Started",
+        "Recording voice message...",
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+        duration: Duration(seconds: 2),
+        icon: Icon(Icons.mic, color: Colors.white),
+      );
+
+      return true;
+
     } catch (e) {
-      print('❌ Error starting recording: $e');
+      print('❌ Recording error: $e');
+
+      // Reset state
+      isRecording.value = false;
+      recordingDuration.value = 0;
+      _recordingTimer?.cancel();
+
+      // Show error
+      Get.snackbar(
+        "Recording Failed",
+        "Could not start recording. Check microphone permission.",
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+
       return false;
     }
   }
+
+
 
   Future<Map<String, dynamic>?> stopRecordingAndSendToChat(String sessionId) async {
     try {

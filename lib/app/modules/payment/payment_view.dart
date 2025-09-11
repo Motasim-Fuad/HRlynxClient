@@ -562,6 +562,62 @@ class _PaymentViewState extends State<PaymentView> with TickerProviderStateMixin
                 ],
               ),
               const SizedBox(height: 4),
+
+              // Payment method selector
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () => controller.togglePaymentMethod(),
+                    child: Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: controller.useGooglePlay.value
+                            ? Colors.teal.shade700
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white.withOpacity(0.7)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.android, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Google Play',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 20),
+                  GestureDetector(
+                    onTap: () => controller.togglePaymentMethod(),
+                    child: Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: !controller.useGooglePlay.value
+                            ? Colors.teal.shade700
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white.withOpacity(0.7)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.credit_card, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Stripe',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8),
                 child: Text(

@@ -2,61 +2,183 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<key>CFBundleDisplayName</key>
-	<string>Hrlynx</string>
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>com.lynxova.hrlnyx</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>$(FLUTTER_BUILD_NAME)</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>com.bdCalling.hr</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.1055304403478-cqkcvgp9duh67ud0ek6ic1stbsub7i5v</string>
-			</array>
-		</dict>
-	</array>
-	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>FirebaseAppDelegateProxyEnabled</key>
-	<true/>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
-	<key>UIMainStoryboardFile</key>
-	<string>Main</string>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleDisplayName</key>
+    <string>HRlynx</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>HRlynx</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(FLUTTER_BUILD_NAME)</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+
+    <!-- ✅ CORRECTED URL SCHEMES - ভুল CLIENT_ID সরিয়ে সঠিক দেওয়া হলো -->
+    <key>CFBundleURLTypes</key>
+    <array>
+       <dict>
+          <key>CFBundleURLName</key>
+          <string>REVERSED_CLIENT_ID</string>
+          <key>CFBundleURLSchemes</key>
+          <array>
+             <string>com.googleusercontent.apps.907467608466-9c7kk86ghtfqrvou3hpk3m45uj3sg07v</string>
+          </array>
+       </dict>
+    </array>
+
+    <key>CFBundleVersion</key>
+    <string>$(FLUTTER_BUILD_NUMBER)</string>
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <true/>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    <key>UIMainStoryboardFile</key>
+    <string>Main</string>
+
+    <!-- ✅ Background Modes -->
+    <key>UIBackgroundModes</key>
+    <array>
+       <string>remote-notification</string>
+       <string>background-processing</string>
+       <string>background-fetch</string>
+    </array>
+
+    <!-- ✅ Camera Permission -->
+    <key>NSCameraUsageDescription</key>
+    <string>This app needs access to camera to take photos and videos for your profile and documents.</string>
+
+    <!-- ✅ Photo Library Permissions -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to photo library to select images and videos.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>This app needs permission to save photos and videos to your photo library.</string>
+
+    <!-- ✅ Microphone Permission -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app requires microphone access to record and send voice messages.</string>
+
+
+    <!-- ✅ Push Notification Permissions -->
+    <key>NSUserNotificationUsageDescription</key>
+    <string>This app wants to send you important notifications about your HR activities and updates.</string>
+    <key>NSUserNotificationAlertUsageDescription</key>
+    <string>This app wants to show you alert notifications.</string>
+    <key>NSUserNotificationSoundUsageDescription</key>
+    <string>This app wants to play notification sounds.</string>
+    <key>NSUserNotificationBadgeUsageDescription</key>
+    <string>This app wants to update the app badge count.</string>
+
+    <!-- ✅ Face ID / Touch ID Permission -->
+    <key>NSFaceIDUsageDescription</key>
+    <string>This app uses Face ID for secure authentication and payments.</string>
+
+    <!-- ✅ Location Permission -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app needs location access to provide location-based services.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs location access to provide location-based services.</string>
+
+    <!-- ✅ Contacts Permission -->
+    <key>NSContactsUsageDescription</key>
+    <string>This app needs access to contacts to help you connect with colleagues.</string>
+
+    <!-- ✅ Calendar Permission -->
+    <key>NSCalendarsUsageDescription</key>
+    <string>This app needs access to calendar to schedule meetings and events.</string>
+
+    <!-- ✅ Reminders Permission -->
+    <key>NSRemindersUsageDescription</key>
+    <string>This app needs access to reminders to set up task reminders.</string>
+
+    <!-- ✅ Motion & Fitness Permission -->
+    <key>NSMotionUsageDescription</key>
+    <string>This app uses motion data for activity tracking features.</string>
+
+    <!-- ✅ Health Data Permission -->
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>This app needs permission to update health data.</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>This app needs permission to read health data.</string>
+
+    <!-- ✅ Network Usage -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
+
+    <!-- ✅ Apple Pay Configuration -->
+    <key>com.apple.developer.in-app-payments</key>
+    <array>
+        <string>merchant.com.lynxova.hrlnyx</string>
+    </array>
+
+    <!-- ✅ NFC Permission -->
+    <key>NFCReaderUsageDescription</key>
+    <string>This app uses NFC for contactless payments and data transfer.</string>
+
+    <!-- ✅ Keychain Access -->
+    <key>keychain-access-groups</key>
+    <array>
+        <string>$(AppIdentifierPrefix)com.lynxova.hrlnyx</string>
+    </array>
+
+    <!-- ✅ File Access Permission -->
+    <key>NSDocumentsFolderUsageDescription</key>
+    <string>This app needs access to documents folder to save and manage files.</string>
+
+    <!-- ✅ Bluetooth Permission -->
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>This app uses Bluetooth for device connectivity.</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>This app uses Bluetooth to connect with peripheral devices.</string>
+
+    <!-- ✅ Speech Recognition Permission -->
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>This app uses speech recognition for voice commands.</string>
+
+    <!-- ✅ Siri Integration -->
+    <key>NSSiriUsageDescription</key>
+    <string>This app integrates with Siri for voice shortcuts.</string>
+
+    <!-- ✅ HomeKit Permission -->
+    <key>NSHomeKitUsageDescription</key>
+    <string>This app integrates with HomeKit for smart home features.</string>
+
+    <!-- ✅ Music Library Permission -->
+    <key>NSAppleMusicUsageDescription</key>
+    <string>This app needs access to your music library.</string>
+
+    <!-- ✅ TV Provider Permission -->
+    <key>NSVideoSubscriberAccountUsageDescription</key>
+    <string>This app needs access to your TV provider account.</string>
+
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+       <string>UIInterfaceOrientationPortrait</string>
+       <string>UIInterfaceOrientationLandscapeLeft</string>
+       <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+       <string>UIInterfaceOrientationPortrait</string>
+       <string>UIInterfaceOrientationPortraitUpsideDown</string>
+       <string>UIInterfaceOrientationLandscapeLeft</string>
+       <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
 </dict>
 </plist>

@@ -4,6 +4,8 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:hr/app/api_servies/api_Constant.dart';
 import 'package:hr/app/api_servies/neteork_api_services.dart';
 import 'package:hr/app/modules/congratulaion_screen/congratulation_view.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
+import 'dart:async';
 
 class SubscriptionPlan {
   final int id;
@@ -12,6 +14,7 @@ class SubscriptionPlan {
   final String price;
   final String interval;
   final String stripePriceId;
+  final String? googlePlayProductId; // Add this for Google Play
   final bool isActive;
 
   SubscriptionPlan({
@@ -21,6 +24,7 @@ class SubscriptionPlan {
     required this.price,
     required this.interval,
     required this.stripePriceId,
+    this.googlePlayProductId,
     required this.isActive,
   });
 
@@ -32,6 +36,7 @@ class SubscriptionPlan {
       price: json['price'],
       interval: json['interval'],
       stripePriceId: json['stripe_price_id'],
+      googlePlayProductId: json['google_play_product_id'], // Add this
       isActive: json['is_active'],
     );
   }
@@ -44,17 +49,25 @@ class PaymentController extends GetxController {
   var plans = <SubscriptionPlan>[].obs;
   var hasPlans = false.obs;
   var paymentInProgress = false.obs;
+  var useGooglePlay = false.obs; // Toggle between Stripe and Google Play
 
   // Stripe payment variables
   String? _clientSecret;
   String? _setupIntentId;
   String? _paymentMethodId;
 
+  // Google Play In-App Purchase variables
+  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  late StreamSubscription<List<PurchaseDetails>> _subscription;
+  var isGooglePlayAvailable = false.obs;
+  var googlePlayProducts = <ProductDetails>[].obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchPlans();
     _initializeStripe();
+    _initializeGooglePlay();
   }
 
   // Initialize Stripe
@@ -65,6 +78,176 @@ class PaymentController extends GetxController {
     } catch (e) {
       print('❌ Error initializing Stripe: $e');
     }
+  }
+
+  // Initialize Google Play In-App Purchase
+  Future<void> _initializeGooglePlay() async {
+    try {
+      // Check if Google Play is available
+      final bool available = await _inAppPurchase.isAvailable();
+      isGooglePlayAvailable.value = available;
+
+      if (available) {
+        // Listen for purchase updates
+        final Stream<List<PurchaseDetails>> purchaseUpdated = _inAppPurchase.purchaseStream;
+        _subscription = purchaseUpdated.listen(
+          _onPurchaseUpdated,
+          onDone: () => _subscription.cancel(),
+          onError: (error) => print('❌ Purchase stream error: $error'),
+        );
+
+        print('✅ Google Play In-App Purchase initialized successfully');
+        _loadGooglePlayProducts();
+      } else {
+        print('⚠️ Google Play In-App Purchase not available');
+      }
+    } catch (e) {
+      print('❌ Error initializing Google Play: $e');
+    }
+  }
+
+  // Load Google Play products
+  Future<void> _loadGooglePlayProducts() async {
+    if (!isGooglePlayAvailable.value) return;
+
+    try {
+      // Get product IDs from your plans
+      final Set<String> productIds = plans
+          .where((plan) => plan.googlePlayProductId != null)
+          .map((plan) => plan.googlePlayProductId!)
+          .toSet();
+
+      if (productIds.isEmpty) {
+        print('⚠️ No Google Play product IDs found');
+        return;
+      }
+
+      final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(productIds);
+
+      if (response.notFoundIDs.isNotEmpty) {
+        print('⚠️ Products not found: ${response.notFoundIDs}');
+      }
+
+      googlePlayProducts.assignAll(response.productDetails);
+      print('✅ Loaded ${googlePlayProducts.length} Google Play products');
+    } catch (e) {
+      print('❌ Error loading Google Play products: $e');
+    }
+  }
+
+  // Handle Google Play purchase updates
+  void _onPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
+    for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
+      if (purchaseDetails.status == PurchaseStatus.pending) {
+        // Show pending UI
+        print('🔄 Purchase pending...');
+      } else if (purchaseDetails.status == PurchaseStatus.error) {
+        // Handle error
+        print('❌ Purchase error: ${purchaseDetails.error}');
+        _handlePurchaseError(purchaseDetails.error!);
+      } else if (purchaseDetails.status == PurchaseStatus.purchased ||
+          purchaseDetails.status == PurchaseStatus.restored) {
+        // Handle successful purchase
+        print('✅ Purchase successful: ${purchaseDetails.productID}');
+        _handleGooglePlayPurchaseSuccess(purchaseDetails);
+      }
+
+      // Complete the purchase
+      if (purchaseDetails.pendingCompletePurchase) {
+        _inAppPurchase.completePurchase(purchaseDetails);
+      }
+    }
+  }
+
+  // Handle Google Play purchase success
+  Future<void> _handleGooglePlayPurchaseSuccess(PurchaseDetails purchaseDetails) async {
+    try {
+      // Send purchase details to your backend for verification
+      final response = await _verifyGooglePlayPurchase(purchaseDetails);
+
+      if (response != null && response['success'] == true) {
+        Get.snackbar(
+          'Success!',
+          'Subscription activated successfully!',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+        Get.off(() => CongratulationView());
+      } else {
+        throw Exception('Failed to verify purchase');
+      }
+    } catch (e) {
+      print('❌ Error handling purchase success: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to activate subscription',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      paymentInProgress.value = false;
+      isLoading.value = false;
+    }
+  }
+
+  // Handle Google Play purchase error
+  void _handlePurchaseError(IAPError error) {
+    paymentInProgress.value = false;
+    isLoading.value = false;
+
+    String errorMessage = 'Purchase failed';
+
+    switch (error.code) {
+      case 'user_cancelled':
+        errorMessage = 'Purchase was cancelled';
+        break;
+      case 'payment_invalid':
+        errorMessage = 'Payment method is invalid';
+        break;
+      case 'payment_not_allowed':
+        errorMessage = 'Payment is not allowed';
+        break;
+      default:
+        errorMessage = 'Purchase failed: ${error.message}';
+    }
+
+    Get.snackbar(
+      'Purchase Failed',
+      errorMessage,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+    );
+  }
+
+  // Verify Google Play purchase on backend
+  Future<Map<String, dynamic>?> _verifyGooglePlayPurchase(PurchaseDetails purchaseDetails) async {
+    try {
+      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/verify/";
+      final body = {
+        "product_id": purchaseDetails.productID,
+        "purchase_token": purchaseDetails.purchaseID,
+        "package_name": "com.lynxova.hrlnyx", // Your package name
+        "purchase_details": {
+          "orderId": purchaseDetails.purchaseID,
+          "productId": purchaseDetails.productID,
+          "purchaseTime": DateTime.now().millisecondsSinceEpoch,
+          "purchaseState": purchaseDetails.status.index,
+        }
+      };
+
+      final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
+      return response;
+    } catch (e) {
+      print('❌ Error verifying Google Play purchase: $e');
+      return null;
+    }
+  }
+
+  // Toggle payment method
+  void togglePaymentMethod() {
+    useGooglePlay.value = !useGooglePlay.value;
+    print('💳 Payment method switched to: ${useGooglePlay.value ? "Google Play" : "Stripe"}');
   }
 
   // Select plan
@@ -96,6 +279,11 @@ class PaymentController extends GetxController {
         }
 
         print('✅ Plans fetched successfully: ${plans.length} plans');
+
+        // Load Google Play products after plans are loaded
+        if (isGooglePlayAvailable.value) {
+          await _loadGooglePlayProducts();
+        }
       } else {
         print('❌ Failed to fetch plans: Invalid response');
         Get.snackbar('Error', 'Failed to load subscription plans');
@@ -117,23 +305,75 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Start free trial process
+  // Start free trial process - Updated to support both payment methods
   Future<void> startFreeTrial() async {
     if (isLoading.value || selectedPlanData == null) {
       print('⚠️ Cannot start trial: Loading or no plan selected');
       return;
     }
 
+    if (useGooglePlay.value && isGooglePlayAvailable.value) {
+      await _startGooglePlayPurchase();
+    } else {
+      await _startStripePurchase();
+    }
+  }
+
+  // Start Google Play purchase
+  Future<void> _startGooglePlayPurchase() async {
     try {
       isLoading.value = true;
       paymentInProgress.value = true;
-      print('🚀 Starting free trial process for plan: ${selectedPlanData!.planType}');
+      print('🚀 Starting Google Play purchase for plan: ${selectedPlanData!.planType}');
+
+      // Find the corresponding Google Play product
+      final productId = selectedPlanData!.googlePlayProductId;
+      if (productId == null) {
+        throw Exception('Google Play product ID not found for this plan');
+      }
+
+      final product = googlePlayProducts.firstWhereOrNull((p) => p.id == productId);
+      if (product == null) {
+        throw Exception('Google Play product not loaded: $productId');
+      }
+
+      // Create purchase param
+      final PurchaseParam purchaseParam = PurchaseParam(productDetails: product);
+
+      // Start the purchase flow
+      final bool success = await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+
+      if (!success) {
+        throw Exception('Failed to initiate Google Play purchase');
+      }
+
+      print('✅ Google Play purchase flow initiated');
+    } catch (e) {
+      print('❌ Error in Google Play purchase: $e');
+      paymentInProgress.value = false;
+      isLoading.value = false;
+
+      Get.snackbar(
+        'Error',
+        'Failed to start Google Play purchase: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  // Start Stripe purchase (your existing code)
+  Future<void> _startStripePurchase() async {
+    try {
+      isLoading.value = true;
+      paymentInProgress.value = true;
+      print('🚀 Starting Stripe purchase for plan: ${selectedPlanData!.planType}');
 
       // Step 1: Check current subscription status
       print('📋 Step 1: Checking subscription status...');
       final statusResponse = await _checkSubscriptionStatus();
       if (statusResponse?['data']?['is_active'] == true ||
-          statusResponse?['data']?['is_trial_active'] == true ) {
+          statusResponse?['data']?['is_trial_active'] == true) {
         print('✅ User already has active subscription/trial');
         Get.off(() => CongratulationView());
         return;
@@ -181,7 +421,7 @@ class PaymentController extends GetxController {
       Get.off(() => CongratulationView());
 
     } catch (e) {
-      print('❌ Error in startFreeTrial: $e');
+      print('❌ Error in Stripe purchase: $e');
 
       String errorMessage = 'There was a problem with the payment process';
 
@@ -204,7 +444,7 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Check existing plans API call
+  // Your existing Stripe methods (unchanged)
   Future<Map<String, dynamic>?> _checkExistingPlans() async {
     try {
       String url = "${ApiConstants.baseUrl}/api/subscription/setup/check-plans/";
@@ -216,7 +456,6 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Check subscription status API call
   Future<Map<String, dynamic>?> _checkSubscriptionStatus() async {
     try {
       String url = "${ApiConstants.baseUrl}/api/subscription/status/";
@@ -228,7 +467,6 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Create setup intent API call
   Future<Map<String, dynamic>?> _createSetupIntent() async {
     try {
       String url = "${ApiConstants.baseUrl}/api/subscription/payment/setup-intent/";
@@ -247,24 +485,18 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Present Stripe payment sheet - FIXED VERSION
   Future<void> _presentPaymentSheet() async {
     if (_clientSecret == null) {
       throw Exception('Client secret not found');
     }
 
     try {
-      // google pay -------
-
       var gpay = const PaymentSheetGooglePay(
-        merchantCountryCode: "US", // or your actual country
+        merchantCountryCode: "US",
         currencyCode: "USD",
-        testEnv: true, // Set true for development testing
-
+        testEnv: true,
       );
 
-
-      // Initialize payment sheet
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           googlePay: gpay,
@@ -306,10 +538,8 @@ class PaymentController extends GetxController {
         ),
       );
 
-      // Present payment sheet and get the result
       await Stripe.instance.presentPaymentSheet();
 
-      // After successful payment sheet presentation, retrieve the setup intent to get payment method ID
       final setupIntent = await Stripe.instance.retrieveSetupIntent(_clientSecret!);
       _paymentMethodId = setupIntent.paymentMethodId;
 
@@ -331,7 +561,6 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Add payment method API call
   Future<Map<String, dynamic>?> _addPaymentMethod() async {
     if (_paymentMethodId == null) {
       throw Exception('Payment method ID not found');
@@ -357,7 +586,6 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Create subscription API call
   Future<Map<String, dynamic>?> _createSubscription() async {
     if (_paymentMethodId == null || selectedPlanData == null) {
       throw Exception('Payment method or plan not found');
@@ -395,6 +623,7 @@ class PaymentController extends GetxController {
 
   @override
   void onClose() {
+    _subscription.cancel();
     resetPaymentState();
     super.onClose();
   }

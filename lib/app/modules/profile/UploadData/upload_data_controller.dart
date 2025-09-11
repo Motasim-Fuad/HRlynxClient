@@ -17,24 +17,43 @@ class UploadDataController extends GetxController {
   var dateOfBirth = ''.obs;
   var isLoading = false.obs;
 
+  // SIMPLE image picker that works on both platforms
   void pickImage() async {
     try {
-      var status = await Permission.photos.request();
-      if (!status.isGranted) {
-        Get.snackbar("Permission", "Access to gallery denied");
-        return;
-      }
+      // Just pick the image directly - let ImagePicker handle permissions
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
 
-      final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (picked != null) {
         selectedImage.value = File(picked.path);
+        print("✅ Image selected: ${picked.path}");
       } else {
         Get.snackbar("Cancelled", "No image selected.");
       }
     } catch (e) {
-      print("Image picking error: $e");
-      Get.snackbar("Error", "Failed to pick image: $e");
+      print("❌ Error: $e");
+
+      // Only if image picker fails, then check permissions
+      if (e.toString().toLowerCase().contains('permission')) {
+        _handlePermissionError();
+      } else {
+        Get.snackbar("Error", "Failed to pick image");
+      }
     }
+  }
+
+  void _handlePermissionError() {
+    Get.snackbar(
+      "Permission Required",
+      "Please enable photo access in Settings",
+      duration: Duration(seconds: 4),
+      mainButton: TextButton(
+        onPressed: () => openAppSettings(),
+        child: Text("Open Settings", style: TextStyle(color: Colors.white)),
+      ),
+    );
   }
 
   void pickDate(BuildContext context) async {
@@ -46,13 +65,11 @@ class UploadDataController extends GetxController {
       lastDate: now,
     );
     if (picked != null) {
-      // Format date as YYYY-MM-DD for API
       dateOfBirth.value = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
     }
   }
 
   void saveData() async {
-    // Validation
     if (nameController.text.isEmpty) {
       Get.snackbar("Error", "Please enter your name");
       return;
@@ -61,19 +78,10 @@ class UploadDataController extends GetxController {
       Get.snackbar("Error", "Please enter your phone number");
       return;
     }
-    // if (selectedGender.value.isEmpty) {
-    //   Get.snackbar("Error", "Please select your gender");
-    //   return;
-    // }
-    // if (dateOfBirth.value.isEmpty) {
-    //   Get.snackbar("Error", "Please select your date of birth");
-    //   return;
-    // }
 
     try {
       isLoading.value = true;
 
-      // Prepare form data
       Map<String, dynamic> profileData = {
         'name': nameController.text.trim(),
         'phone': phoneController.text.trim(),
@@ -82,39 +90,27 @@ class UploadDataController extends GetxController {
         'gender': selectedGender.value.toLowerCase(),
       };
 
-      print("🚀 Uploading profile data: $profileData");
-      print("🖼️ Selected image: ${selectedImage.value?.path}");
-
       final response = await _authRepository.uploadProfileData(
         profileData,
         imageFile: selectedImage.value,
       );
 
-      print("✅ Upload response: $response");
-
       if (response != null && response['success'] == true) {
-     print("profile update successfull");
+        nameController.clear();
+        phoneController.clear();
+        bioController.clear();
+        selectedGender.value = '';
+        dateOfBirth.value = '';
+        selectedImage.value = null;
 
-          nameController.clear();
-          phoneController.clear();
-          bioController.clear();
-          selectedGender.value = ''; // <-- Clear selected radio button
-          dateOfBirth.value = '';     // <-- Optionally clear date
-          selectedImage.value = null; // <-- Optionally clear selected image
-        // Get the ProfileController and refresh the profile data
         try {
           final ProfileController profileController = Get.find<ProfileController>();
-          // FIXED: Now properly awaiting the Future<void> method
           await profileController.refreshProfile();
-          print("✅ Profile refreshed successfully");
         } catch (e) {
-          print("⚠️ ProfileController not found, creating new one");
           final ProfileController profileController = Get.put(ProfileController());
-          // FIXED: Now properly awaiting the Future<void> method
           await profileController.refreshProfile();
         }
 
-        // Navigate back to profile page
         Get.back();
       } else {
         Get.snackbar(
@@ -125,7 +121,6 @@ class UploadDataController extends GetxController {
         );
       }
     } catch (e) {
-      print("❌ Error uploading profile: $e");
       Get.snackbar(
         "Error",
         "Failed to update profile: $e",

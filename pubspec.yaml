@@ -57,6 +57,7 @@ dependencies:
   pay: ^2.0.0
   flutter_local_notifications: ^19.4.0
   in_app_purchase: ^3.2.3
+  device_info_plus: ^9.1.0
 
 
 

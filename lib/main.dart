@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -7,14 +6,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hr/app/api_servies/firebase_message.dart';
 import 'app/SplashServices.dart';
 import 'app/api_servies/notification_services.dart';
-
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  //
-  // );
 
   await Firebase.initializeApp();
 
@@ -56,7 +49,7 @@ class MyApp extends StatelessWidget {
 
 class InitScreen extends StatefulWidget {
   const InitScreen({super.key});
- 
+
   @override
   State<InitScreen> createState() => _InitScreenState();
 }

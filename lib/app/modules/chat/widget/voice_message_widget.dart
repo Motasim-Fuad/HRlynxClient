@@ -285,8 +285,8 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
             final isThisPlaying = _isCurrentlyPlaying();
             final duration = voiceService.totalDuration.value;
             final position = voiceService.playbackPosition.value;
-
-            String timeText = "0:15"; // Default
+            String timeText="15.0";
+           // String timeText = voiceService.totalDuration.value as String; // voise duration is here
 
             if (widget.audioDuration != null) {
               // Use provided duration

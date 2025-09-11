@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/common_widgets/button.dart';
@@ -25,7 +24,7 @@ class UploadDataView extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Profile Image Picker
+                  // SIMPLE Profile Image Picker
                   GestureDetector(
                     onTap: controller.isLoading.value ? null : controller.pickImage,
                     child: Container(
@@ -72,53 +71,17 @@ class UploadDataView extends StatelessWidget {
                     hintText: "Write something about you",
                     maxLines: 4,
                   ),
-                  const SizedBox(height: 10),
-
-                  // // Date of Birth
-                  // GestureDetector(
-                  //   onTap: controller.isLoading.value
-                  //       ? null
-                  //       : () => controller.pickDate(context),
-                  //   child: AbsorbPointer(
-                  //     child: CustomTextFormField(
-                  //       controller: dobController
-                  //         ..text = controller.dateOfBirth.value,
-                  //       hintText: "Select your birth date",
-                  //       suffixIcon: const Icon(Icons.calendar_month),
-                  //     ),
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 10),
-
-                  // Gender Radio Buttons
-                  // Column(
-                  //   crossAxisAlignment: CrossAxisAlignment.start,
-                  //   children: [
-                  //     const Text(
-                  //         "Gender",
-                  //         style: TextStyle(fontWeight: FontWeight.bold)
-                  //     ),
-                  //     Row(
-                  //       children: [
-                  //         _genderOption("Male", controller),
-                  //         _genderOption("Female", controller),
-                  //         _genderOption("Other", controller),
-                  //       ],
-                  //     )
-                  //   ],
-                  // ),
-
                   const SizedBox(height: 20),
 
                   // Save Button
                   Button(
                     title: controller.isLoading.value ? "Saving..." : "Save",
-                    onTap: (){
-                      controller.isLoading.value ? null : controller.saveData();
+                    onTap: controller.isLoading.value
+                        ? null
+                        : () {
+                      controller.saveData();
                       dobController.clear();
                     },
-
-
                   ),
                 ],
               ),
@@ -135,9 +98,7 @@ class UploadDataView extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(
-                            color: Colors.blue,
-                          ),
+                          CircularProgressIndicator(color: Colors.blue),
                           SizedBox(height: 16),
                           Text(
                             "Uploading profile data...",
@@ -156,27 +117,5 @@ class UploadDataView extends StatelessWidget {
         );
       }),
     );
-  }
-
-  Widget _genderOption(String gender, UploadDataController controller) {
-    return Obx(() => Row(
-      children: [
-        Radio<String>(
-          value: gender,
-          groupValue: controller.selectedGender.value,
-          onChanged: controller.isLoading.value
-              ? null
-              : (value) => controller.selectedGender.value = value!,
-          activeColor: Colors.red,
-        ),
-        Text(
-          gender,
-          style: TextStyle(
-            color: controller.isLoading.value ? Colors.grey : Colors.black,
-          ),
-        ),
-        const SizedBox(width: 10),
-      ],
-    ));
   }
 }
