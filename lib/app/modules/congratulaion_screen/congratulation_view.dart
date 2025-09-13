@@ -34,7 +34,7 @@ class CongratulationView extends StatelessWidget {
             SizedBox(height: screenHeight * 0.17),
             Image(image: AssetImage(AppImages.coffee)),
             
-            Text("Congratulations!",style: TextStyle(fontWeight: FontWeight.bold,fontSize: screenWidth *0.1),),
+            Text("Congratulations!",style: TextStyle(fontWeight: FontWeight.bold,fontSize: screenWidth *0.08),),
             SizedBox(height: screenHeight *0.05,),
             // Benefits Unlocked Title
             Text(

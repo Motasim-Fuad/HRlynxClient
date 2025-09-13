@@ -1,316 +1,349 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/common_widgets/button.dart';
+import 'package:hr/app/common_widgets/privacy_policy.dart';
+import 'package:hr/app/modules/congratulaion_screen/congratulation_view.dart';
+import 'package:hr/app/modules/main_screen/main_screen_view.dart';
 import 'package:hr/app/modules/payment/payment_controller.dart';
+import 'package:hr/app/modules/terms_of_use/terms_of_use.dart';
+import 'package:hr/app/utils/app_colors.dart';
+import 'package:hr/app/utils/app_images.dart';
 
-class SubscriptionScreen extends StatelessWidget {
+class SubscriptionScreen extends StatefulWidget {
+  const SubscriptionScreen({super.key});
+
+  @override
+  State<SubscriptionScreen> createState() => _SubscriptionScreenState();
+}
+
+class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProviderStateMixin {
   final PaymentController controller = Get.put(PaymentController());
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
-  SubscriptionScreen({super.key});
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Explorer Pro Subscription'),
-        centerTitle: true,
-        backgroundColor: Colors.teal[700],
-        foregroundColor: Colors.white,
-      ),
-      body: Obx(() {
-        return Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+      backgroundColor: AppColors.primarycolor,
+      body: SafeArea(
+        child: Obx(() {
+          // Loading state when fetching plans
+          if (controller.isLoading.value && controller.plans.isEmpty) {
+            return Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Header Section
-                  _buildHeaderSection(),
-
-                  const SizedBox(height: 24),
-
-                  // Plan Selection
-                  _buildPlanSelection(),
-
-                  const SizedBox(height: 24),
-
-                  // Features List
-                  _buildFeaturesList(),
-
-                  const SizedBox(height: 32),
-
-                  // Google Play Info
-                  _buildGooglePlayInfo(),
-
-                  const SizedBox(height: 32),
-
-                  // Start Trial Button
-                  _buildTrialButton(),
-
-                  const SizedBox(height: 16),
-
-                  // Terms and Conditions
-                  _buildTermsAndConditions(),
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Loading plans...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ],
               ),
-            ),
+            );
+          }
 
-            // Loading Overlay
-            if (controller.isLoading.value || controller.paymentInProgress.value)
-              Container(
-                color: Colors.black.withOpacity(0.5),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+          // No plans available state
+          if (controller.plans.isEmpty && !controller.isLoading.value) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.white70,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+                    const SizedBox(height: 20),
+                    Text(
+                      'No subscription plans available',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Please try again later',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 30),
+                    ElevatedButton(
+                      onPressed: () => controller.fetchPlans(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.teal.shade700,
+                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          controller.paymentInProgress.value
-                              ? 'Processing payment...'
-                              : 'Loading plans...',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                      ),
+                      child: Text(
+                        'Try Again',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final yearlyPlan = controller.plans.firstWhereOrNull(
+                  (plan) => plan.interval == 'year'
+          );
+          final monthlyPlan = controller.plans.firstWhereOrNull(
+                  (plan) => plan.interval == 'month'
+          );
+
+          return Stack(
+            children: [
+              // Main content
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: SingleChildScrollView(
+                    physics: BouncingScrollPhysics(),
+                    child: Column(
+                      children: [
+                        // Header image
+                        Container(
+                          width: double.infinity,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(20),
+                              bottomRight: Radius.circular(20),
+                            ),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(20),
+                              bottomRight: Radius.circular(20),
+                            ),
+                            child: Image.asset(
+                              AppImages.splash,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
+
+                        const SizedBox(height: 5),
+
+                        // Title
+                        Text(
+                          'Explorer Pro',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 34,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Subtitle
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.shade700.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Start your 7-day free trial',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 10),
+
+                        // Features list
+                        Padding(
+                          padding: const EdgeInsets.only(left: 58, bottom: 0, right: 0, top: 0),
+                          child: Column(
+                            children: [
+                              _buildFeatureRow('HR QuickScan™ News Highlights', Icons.newspaper),
+                              const SizedBox(height: 8),
+                              _buildFeatureRow('Expert AI HR Persona Suite', Icons.psychology),
+                              const SizedBox(height: 8),
+                              _buildFeatureRow('Priority Chat Access', Icons.chat_bubble_outline),
+                              const SizedBox(height: 8),
+                              _buildFeatureRow('Save & Revisit Conversations', Icons.save_outlined),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Plan cards
+                        if (yearlyPlan != null)
+                          _buildPlanCard(
+                            context,
+                            controller,
+                            yearlyPlan.planType,
+                            yearlyPlan.name,
+                            '\$${yearlyPlan.price}/',
+                            yearlyPlan.interval,
+                            'Save 25% - Get 3 months free',
+                            true,
+                          ),
+
+                        if (monthlyPlan != null) ...[
+                          const SizedBox(height: 20),
+                          _buildPlanCard(
+                            context,
+                            controller,
+                            monthlyPlan.planType,
+                            monthlyPlan.name,
+                            '\$${monthlyPlan.price}/',
+                            monthlyPlan.interval,
+                            'Less than a daily latte. Much more satisfying.',
+                            false,
+                          ),
+                        ],
+
+                        const SizedBox(height: 16),
+
+                        // Start trial button
+                        _buildStartTrialButton(controller),
+
+                        const SizedBox(height: 16),
+
+                        // Skip trial text
+                        _buildSkipTrialText(),
+
+                        const SizedBox(height: 13),
+
+                        // Policy links
+                        _buildPolicyLinks(),
+                        const SizedBox(height: 30),
                       ],
                     ),
                   ),
                 ),
               ),
-          ],
-        );
-      }),
-    );
-  }
 
-  Widget _buildHeaderSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.teal[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.teal[100]!),
-      ),
-      child:  Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.star_outlined,
-            size: 48,
-            color: Colors.teal,
-          ),
-          SizedBox(height: 12),
-          Text(
-            'Upgrade to Explorer Pro',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.teal,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Unlock all premium features with a 7-day free trial',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.teal.shade800,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlanSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Choose your plan:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        if (controller.plans.isEmpty && !controller.isLoading.value)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.orange),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'No subscription plans available. Please try again later.',
-                    style: TextStyle(color: Colors.orange),
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          Column(
-            children: controller.plans.map((plan) {
-              final isSelected = controller.selectedPlan.value == plan.planType;
-              final isMonthly = plan.interval == 'month';
-
-              return GestureDetector(
-                onTap: () => controller.selectedPlan.value = plan.planType,
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isSelected ? Colors.teal[50] : Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? Colors.teal : Colors.grey[300]!,
-                      width: isSelected ? 2 : 1,
+              // Payment processing overlay
+              if (controller.paymentInProgress.value)
+                Container(
+                  color: Colors.black.withOpacity(0.8),
+                  child: Center(
+                    child: Container(
+                      padding: EdgeInsets.all(30),
+                      margin: EdgeInsets.symmetric(horizontal: 40),
+                      decoration: BoxDecoration(
+                        color: AppColors.primarycolor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.teal.shade700, width: 2),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.teal.shade700),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Processing payment...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Please wait',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Radio(
-                        value: plan.planType,
-                        groupValue: controller.selectedPlan.value,
-                        onChanged: (value) => controller.selectedPlan.value = value.toString(),
-                        activeColor: Colors.teal,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              plan.name,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '\$${plan.price}/${plan.interval}',
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                            if (isMonthly)
-                              const SizedBox(height: 4),
-                            if (isMonthly)
-                              Text(
-                                'Billed monthly',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      if (isSelected)
-                        Icon(
-                          Icons.check_circle,
-                          color: Colors.teal,
-                        ),
-                    ],
-                  ),
                 ),
-              );
-            }).toList(),
-          ),
-      ],
+            ],
+          );
+        }),
+      ),
     );
   }
 
-  Widget _buildFeaturesList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'What you get:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildFeatureItem('Unlimited job searches and applications'),
-        _buildFeatureItem('Advanced resume builder with AI suggestions'),
-        _buildFeatureItem('Priority support from our career experts'),
-        _buildFeatureItem('Exclusive networking events and webinars'),
-        _buildFeatureItem('Personalized career path recommendations'),
-        _buildFeatureItem('No ads - clean, distraction-free experience'),
-      ],
-    );
-  }
-
-  Widget _buildFeatureItem(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+  Widget _buildFeatureRow(String text, IconData icon) {
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.check_circle,
-            color: Colors.teal[400],
-            size: 20,
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.teal.shade700.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 15,
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGooglePlayInfo() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          Image.asset(
-            'assets/images/google.png', // Make sure to add this asset
-            width: 40,
-            height: 40,
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Text(
-              'Payment will be processed through Google Play. Subscriptions automatically renew unless canceled.',
               style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
+                color: Colors.white,
+                fontSize: 16,
               ),
             ),
           ),
@@ -319,100 +352,280 @@ class SubscriptionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTrialButton() {
-    final selectedPlan = controller.selectedPlanData;
-    final isYearly = selectedPlan?.interval == 'year';
+  Widget _buildPlanCard(
+      BuildContext context,
+      PaymentController controller,
+      String planType,
+      String title,
+      String price,
+      String interval,
+      String subtitle,
+      bool isPopular,
+      ) {
+    final isSelected = controller.selectedPlan.value == planType;
 
-    return Column(
-      children: [
-        if (selectedPlan != null)
-          Text(
-            'Start your 7-day free trial, then \$${selectedPlan.price}/${selectedPlan.interval}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: Button(
-            title: 'Start 7-Day Free Trial',
-            onTap: controller.plans.isEmpty || controller.isLoading.value
-                ? null
-                : () => controller.startFreeTrial(),
-            // backgroundColor: Colors.teal,
-            // textColor: Colors.white,
-            // height: 50,
-            // borderRadius: 12,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTermsAndConditions() {
-    return Column(
-      children: [
-        const Divider(),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return GestureDetector(
+      onTap: () => controller.selectedPlan.value = planType,
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            GestureDetector(
-              onTap: () {
-                // Navigate to terms screen
-              },
-              child: Text(
-                'Terms of Service',
-                style: TextStyle(
-                  color: Colors.teal[700],
-                  decoration: TextDecoration.underline,
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : Colors.transparent,
+                border: Border.all(
+                  width: isSelected ? 3 : 2,
+                  color: isSelected ? Colors.teal.shade700 : Colors.white.withOpacity(0.7),
                 ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: isSelected ? [
+                  BoxShadow(
+                    color: Colors.teal.shade700.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: Offset(0, 8),
+                  ),
+                ] : null,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Plan name
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 19,
+                          color: isSelected ? AppColors.primarycolor : Colors.white,
+                        ),
+                      ),
+                      // Price
+                      Row(
+                        children: [
+                          Text(
+                            price,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 22,
+                              color: isSelected ? AppColors.primarycolor: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            interval,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                              color: isSelected ? AppColors.primarycolor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Subtitle
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      color: isSelected ? AppColors.primarycolor.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
               ),
             ),
-            GestureDetector(
-              onTap: () {
-                // Navigate to privacy policy screen
-              },
-              child: Text(
-                'Privacy Policy',
-                style: TextStyle(
-                  color: Colors.teal[700],
-                  decoration: TextDecoration.underline,
+
+            // Popular badge
+            if (isPopular)
+              Positioned(
+                top: -12,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Colors.teal.shade600, Colors.teal.shade700],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.teal.shade700.withOpacity(0.4),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'Most Popular',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-            GestureDetector(
-              onTap: () {
-                // Navigate to restore purchases
-                _restorePurchases();
-              },
-              child: Text(
-                'Restore Purchases',
-                style: TextStyle(
-                  color: Colors.teal[700],
-                  decoration: TextDecoration.underline,
-                ),
-              ),
-            ),
           ],
         ),
-      ],
+      ),
     );
   }
 
-  void _restorePurchases() {
-    // Implement restore purchases functionality
-    Get.snackbar(
-      'Restore Purchases',
-      'Checking for existing subscriptions...',
-      backgroundColor: Colors.teal,
-      colorText: Colors.white,
+  Widget _buildStartTrialButton(PaymentController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        width: double.infinity,
+        height: 65,
+        child: ElevatedButton(
+          onPressed: controller.isLoading.value ? null : controller.startFreeTrial,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal.shade700,
+            disabledBackgroundColor: Colors.teal.shade700.withOpacity(0.6),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            elevation: 8,
+            shadowColor: Colors.teal.shade700.withOpacity(0.4),
+          ),
+          child: controller.isLoading.value
+              ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Loading...',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          )
+              : Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(width: 8),
+                  Text(
+                    'Start Free Trial',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  'No commitment. Cancel anytime during trial.',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
 
-    // You would typically call a method to check subscription status
-    controller.checkSubscriptionStatus();
+  Widget _buildSkipTrialText() {
+    return GestureDetector(
+      onTap: () => Get.to(() => CongratulationView()),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: Text(
+          'Skip trial, continue with limited free access.',
+          style: TextStyle(
+            decoration: TextDecoration.underline,
+            decorationColor: Colors.white.withOpacity(0.8),
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+            color: Colors.white.withOpacity(0.8),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPolicyLinks() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () => Get.to(() => TermsOfUse()),
+            child: Text(
+              'Terms of Use',
+              style: TextStyle(
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.white.withOpacity(0.8),
+                color: Colors.white.withOpacity(0.8),
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Text(
+            ' and ',
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 13,
+            ),
+          ),
+          GestureDetector(
+            onTap: () => Get.to(() => PrivacyPolicy()),
+            child: Text(
+              'Privacy Policy.',
+              style: TextStyle(
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.white.withOpacity(0.8),
+                color: Colors.white.withOpacity(0.8),
+                fontWeight: FontWeight.w400,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
