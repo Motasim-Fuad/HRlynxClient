@@ -6,6 +6,7 @@ import 'package:hr/app/api_servies/firebase_message.dart'; // ✅ FCM service im
 import 'package:hr/app/api_servies/notification_services.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart' show UserController;
 import 'package:hr/app/modules/payment/payment_view.dart';
+import 'package:hr/app/modules/payment/subcription_view.dart' show SubscriptionScreen;
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart'; // Import TokenStorage
 import '../main_screen/main_screen_view.dart';
@@ -79,7 +80,7 @@ class GoogleSignUpController extends GetxController {
 
         Get.snackbar("Success", "Google sign-in complete and persona set.");
         print("Google signin successful with persona ID: $storedPersonaId");
-        Get.to(PaymentView());
+        Get.to(SubscriptionScreen());
       } else {
         Get.snackbar("Error", "Failed to set persona after Google login.");
       }

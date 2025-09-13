@@ -51,10 +51,6 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
 
-            <!-- ✅ Stripe Configuration -->
-            <meta-data
-                android:name="com.stripe.android.PaymentConfiguration.PublishableKey"
-                android:value="pk_test_51RVMTHQU9tGM4LXBf8ZHLjC18DYzzWu4HnxSCojMGP58ZO8x1K2sFbNZ5xGLmIRt6KjZpo77V0RKs4m6dwoxoFLi00u06pnafX" />
 
             <!-- ✅ Google Pay Configuration -->
             <meta-data

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/modules/payment/payment_view.dart';
+import 'package:hr/app/modules/payment/subcription_view.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 import '../../model/onbordingModel.dart';
@@ -113,7 +114,7 @@ class OtpController extends GetxController {
 
       if (response['status'] == true || response['success'] == true) {
         print("✅ Persona selection success: ${response['message']}");
-        Get.offAll(() => PaymentView());
+        Get.offAll(() => SubscriptionScreen());
       } else {
         print("❌ Persona API error: ${response['message']}");
         Get.snackbar("Error", response['message'] ?? "Failed to select persona");

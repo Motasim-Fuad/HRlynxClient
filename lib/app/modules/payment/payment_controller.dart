@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:hr/app/api_servies/api_Constant.dart';
 import 'package:hr/app/api_servies/neteork_api_services.dart';
 import 'package:hr/app/modules/congratulaion_screen/congratulation_view.dart';
@@ -13,8 +12,7 @@ class SubscriptionPlan {
   final String planType;
   final String price;
   final String interval;
-  final String stripePriceId;
-  final String? googlePlayProductId; // Add this for Google Play
+  final String? googlePlayProductId;
   final bool isActive;
 
   SubscriptionPlan({
@@ -23,7 +21,6 @@ class SubscriptionPlan {
     required this.planType,
     required this.price,
     required this.interval,
-    required this.stripePriceId,
     this.googlePlayProductId,
     required this.isActive,
   });
@@ -35,8 +32,7 @@ class SubscriptionPlan {
       planType: json['plan_type'],
       price: json['price'],
       interval: json['interval'],
-      stripePriceId: json['stripe_price_id'],
-      googlePlayProductId: json['google_play_product_id'], // Add this
+      googlePlayProductId: json['google_play_product_id'],
       isActive: json['is_active'],
     );
   }
@@ -49,12 +45,7 @@ class PaymentController extends GetxController {
   var plans = <SubscriptionPlan>[].obs;
   var hasPlans = false.obs;
   var paymentInProgress = false.obs;
-  var useGooglePlay = false.obs; // Toggle between Stripe and Google Play
-
-  // Stripe payment variables
-  String? _clientSecret;
-  String? _setupIntentId;
-  String? _paymentMethodId;
+  var useGooglePlay = true.obs; // Default to Google Play for Android
 
   // Google Play In-App Purchase variables
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
@@ -66,18 +57,7 @@ class PaymentController extends GetxController {
   void onInit() {
     super.onInit();
     fetchPlans();
-    _initializeStripe();
     _initializeGooglePlay();
-  }
-
-  // Initialize Stripe
-  void _initializeStripe() {
-    try {
-      Stripe.instance.applySettings();
-      print('✅ Stripe initialized successfully');
-    } catch (e) {
-      print('❌ Error initializing Stripe: $e');
-    }
   }
 
   // Initialize Google Play In-App Purchase
@@ -223,17 +203,11 @@ class PaymentController extends GetxController {
   // Verify Google Play purchase on backend
   Future<Map<String, dynamic>?> _verifyGooglePlayPurchase(PurchaseDetails purchaseDetails) async {
     try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/verify/";
+      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/verify-purchase/";
       final body = {
         "product_id": purchaseDetails.productID,
         "purchase_token": purchaseDetails.purchaseID,
         "package_name": "com.lynxova.hrlnyx", // Your package name
-        "purchase_details": {
-          "orderId": purchaseDetails.purchaseID,
-          "productId": purchaseDetails.productID,
-          "purchaseTime": DateTime.now().millisecondsSinceEpoch,
-          "purchaseState": purchaseDetails.status.index,
-        }
       };
 
       final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
@@ -244,32 +218,20 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Toggle payment method
-  void togglePaymentMethod() {
-    useGooglePlay.value = !useGooglePlay.value;
-    print('💳 Payment method switched to: ${useGooglePlay.value ? "Google Play" : "Stripe"}');
-  }
-
-  // Select plan
-  void selectPlan(String plan) {
-    selectedPlan.value = plan;
-    print('📋 Plan selected: $plan');
-  }
-
   // Fetch available plans from API
   Future<void> fetchPlans() async {
     try {
       isLoading.value = true;
       print('🔄 Fetching subscription plans...');
 
-      final response = await _checkExistingPlans();
+      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/plans/";
+      final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
 
       if (response != null && response['success'] == true) {
-        final data = response['data'];
-        final List<dynamic> plansData = data['plans'];
+        final List<dynamic> plansData = response['data'];
 
         plans.assignAll(plansData.map((plan) => SubscriptionPlan.fromJson(plan)).toList());
-        hasPlans.value = data['has_plans'];
+        hasPlans.value = plans.isNotEmpty;
 
         // Set default selection
         if (plans.any((plan) => plan.planType == 'explorer_yearly')) {
@@ -305,18 +267,14 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Start free trial process - Updated to support both payment methods
+  // Start free trial process
   Future<void> startFreeTrial() async {
     if (isLoading.value || selectedPlanData == null) {
       print('⚠️ Cannot start trial: Loading or no plan selected');
       return;
     }
 
-    if (useGooglePlay.value && isGooglePlayAvailable.value) {
-      await _startGooglePlayPurchase();
-    } else {
-      await _startStripePurchase();
-    }
+    await _startGooglePlayPurchase();
   }
 
   // Start Google Play purchase
@@ -362,103 +320,10 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Start Stripe purchase (your existing code)
-  Future<void> _startStripePurchase() async {
+  // Check subscription status
+  Future<Map<String, dynamic>?> checkSubscriptionStatus() async {
     try {
-      isLoading.value = true;
-      paymentInProgress.value = true;
-      print('🚀 Starting Stripe purchase for plan: ${selectedPlanData!.planType}');
-
-      // Step 1: Check current subscription status
-      print('📋 Step 1: Checking subscription status...');
-      final statusResponse = await _checkSubscriptionStatus();
-      if (statusResponse?['data']?['is_active'] == true ||
-          statusResponse?['data']?['is_trial_active'] == true) {
-        print('✅ User already has active subscription/trial');
-        Get.off(() => CongratulationView());
-        return;
-      }
-
-      // Step 2: Create setup intent
-      print('💳 Step 2: Creating setup intent...');
-      final setupIntentData = await _createSetupIntent();
-      if (setupIntentData == null) {
-        throw Exception('Failed to create setup intent');
-      }
-      print('✅ Setup intent created successfully');
-
-      // Step 3: Present Stripe payment sheet
-      print('🎨 Step 3: Presenting payment sheet...');
-      await _presentPaymentSheet();
-      print('✅ Payment method collected successfully');
-
-      // Step 4: Add payment method to backend
-      print('💾 Step 4: Adding payment method...');
-      final addMethodResponse = await _addPaymentMethod();
-      if (addMethodResponse == null || addMethodResponse['success'] != true) {
-        throw Exception('Failed to add payment method');
-      }
-      print('✅ Payment method added successfully');
-
-      // Step 5: Create subscription
-      print('📝 Step 5: Creating subscription...');
-      final subscriptionResponse = await _createSubscription();
-      if (subscriptionResponse == null || subscriptionResponse['success'] != true) {
-        throw Exception('Failed to create subscription');
-      }
-      print('✅ Subscription created successfully');
-
-      // Success feedback
-      Get.snackbar(
-        'Success!',
-        'Free trial started successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: Duration(seconds: 3),
-      );
-
-      // Navigate to congratulation screen
-      Get.off(() => CongratulationView());
-
-    } catch (e) {
-      print('❌ Error in Stripe purchase: $e');
-
-      String errorMessage = 'There was a problem with the payment process';
-
-      if (e.toString().contains('cancelled') || e.toString().contains('canceled')) {
-        errorMessage = 'Payment was cancelled';
-      } else if (e.toString().contains('network') || e.toString().contains('connection')) {
-        errorMessage = 'Internet connection problem';
-      }
-
-      Get.snackbar(
-        'Problem',
-        errorMessage,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: Duration(seconds: 4),
-      );
-    } finally {
-      isLoading.value = false;
-      paymentInProgress.value = false;
-    }
-  }
-
-  // Your existing Stripe methods (unchanged)
-  Future<Map<String, dynamic>?> _checkExistingPlans() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/setup/check-plans/";
-      final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-      return response;
-    } catch (e) {
-      print('❌ Error checking existing plans: $e');
-      return null;
-    }
-  }
-
-  Future<Map<String, dynamic>?> _checkSubscriptionStatus() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/status/";
+      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/status/";
       final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
       return response;
     } catch (e) {
@@ -467,164 +332,9 @@ class PaymentController extends GetxController {
     }
   }
 
-  Future<Map<String, dynamic>?> _createSetupIntent() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/payment/setup-intent/";
-      final response = await NetworkApiServices.postApi(url, {}, withAuth: true, tokenType: 'login');
-
-      if (response != null && response['success'] == true) {
-        _clientSecret = response['data']['client_secret'];
-        _setupIntentId = response['data']['setup_intent_id'];
-        print('✅ Setup intent created: $_setupIntentId');
-        return response;
-      }
-      return null;
-    } catch (e) {
-      print('❌ Error creating setup intent: $e');
-      return null;
-    }
-  }
-
-  Future<void> _presentPaymentSheet() async {
-    if (_clientSecret == null) {
-      throw Exception('Client secret not found');
-    }
-
-    try {
-      var gpay = const PaymentSheetGooglePay(
-        merchantCountryCode: "US",
-        currencyCode: "USD",
-        testEnv: true,
-      );
-
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          googlePay: gpay,
-          setupIntentClientSecret: _clientSecret!,
-          merchantDisplayName: 'Explorer Pro',
-          style: ThemeMode.dark,
-          appearance: PaymentSheetAppearance(
-            colors: PaymentSheetAppearanceColors(
-              primary: Colors.teal.shade700,
-              background: Color(0xFF1a1a1a),
-              componentBackground: Color(0xFF2a2a2a),
-              componentBorder: Color(0xFF3a3a3a),
-              componentDivider: Color(0xFF3a3a3a),
-              primaryText: Colors.white,
-              secondaryText: Colors.grey[300]!,
-              componentText: Colors.white,
-              icon: Colors.white,
-              placeholderText: Colors.grey[400]!,
-            ),
-            shapes: PaymentSheetShape(
-              borderRadius: 12,
-              borderWidth: 1,
-            ),
-            primaryButton: PaymentSheetPrimaryButtonAppearance(
-              colors: PaymentSheetPrimaryButtonTheme(
-                light: PaymentSheetPrimaryButtonThemeColors(
-                  background: Colors.teal.shade700,
-                  text: Colors.white,
-                  border: Colors.teal.shade700,
-                ),
-                dark: PaymentSheetPrimaryButtonThemeColors(
-                  background: Colors.teal.shade700,
-                  text: Colors.white,
-                  border: Colors.teal.shade700,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await Stripe.instance.presentPaymentSheet();
-
-      final setupIntent = await Stripe.instance.retrieveSetupIntent(_clientSecret!);
-      _paymentMethodId = setupIntent.paymentMethodId;
-
-      if (_paymentMethodId == null) {
-        throw Exception('Payment method ID not found after payment sheet');
-      }
-
-      print('✅ Payment method ID retrieved: $_paymentMethodId');
-
-    } catch (e) {
-      print('❌ Payment sheet error: $e');
-      if (e is StripeException) {
-        print('❌ Stripe Exception: ${e.error.localizedMessage}');
-        if (e.error.code == FailureCode.Canceled) {
-          throw Exception('Payment cancelled by user');
-        }
-      }
-      rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>?> _addPaymentMethod() async {
-    if (_paymentMethodId == null) {
-      throw Exception('Payment method ID not found');
-    }
-
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/payment/add-method/";
-      final body = {
-        "payment_method_id": _paymentMethodId,
-      };
-
-      print('📤 Adding payment method: $_paymentMethodId');
-      final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
-
-      if (response != null && response['success'] == true) {
-        print('✅ Payment method added successfully');
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error adding payment method: $e');
-      return null;
-    }
-  }
-
-  Future<Map<String, dynamic>?> _createSubscription() async {
-    if (_paymentMethodId == null || selectedPlanData == null) {
-      throw Exception('Payment method or plan not found');
-    }
-
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/create/";
-      final body = {
-        "plan_type": selectedPlanData!.planType,
-        "payment_method_id": _paymentMethodId,
-      };
-
-      print('📤 Creating subscription with plan: ${selectedPlanData!.planType}');
-      final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
-
-      if (response != null && response['success'] == true) {
-        print('✅ Subscription created successfully');
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error creating subscription: $e');
-      return null;
-    }
-  }
-
-  // Reset payment state
-  void resetPaymentState() {
-    _clientSecret = null;
-    _setupIntentId = null;
-    _paymentMethodId = null;
-    paymentInProgress.value = false;
-    isLoading.value = false;
-  }
-
   @override
   void onClose() {
     _subscription.cancel();
-    resetPaymentState();
     super.onClose();
   }
 }

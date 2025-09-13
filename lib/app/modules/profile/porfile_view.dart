@@ -11,6 +11,7 @@ import 'package:hr/app/modules/home/user_isSubcriptionController.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart';
 import 'package:hr/app/modules/notification/notification_view.dart';
 import 'package:hr/app/modules/payment/payment_view.dart';
+import 'package:hr/app/modules/payment/subcription_view.dart';
 import 'package:hr/app/modules/profile/UploadData/uploadDataView.dart';
 import 'package:hr/app/modules/profile/profile_controller.dart' show ProfileController;
 import 'package:hr/app/modules/terms_of_use/terms_of_use.dart';
@@ -133,7 +134,7 @@ class ProfileView extends StatelessWidget {
                     children: [
                       Button(
                         title: 'Subscribe Now',
-                        onTap: () => Get.to(PaymentView()),
+                        onTap: () => Get.to(SubscriptionScreen()),
                       ),
                       SizedBox(height: 20),
                     ],

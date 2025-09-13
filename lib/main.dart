@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hr/app/api_servies/firebase_message.dart';
@@ -18,14 +17,14 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  Stripe.publishableKey = 'pk_test_51RVMTHQU9tGM4LXBf8ZHLjC18DYzzWu4HnxSCojMGP58ZO8x1K2sFbNZ5xGLmIRt6KjZpo77V0RKs4m6dwoxoFLi00u06pnafX';
+  //Stripe.publishableKey = 'pk_test_51RVMTHQU9tGM4LXBf8ZHLjC18DYzzWu4HnxSCojMGP58ZO8x1K2sFbNZ5xGLmIRt6KjZpo77V0RKs4m6dwoxoFLi00u06pnafX';
 
-  try {
-    await Stripe.instance.applySettings();
-    print('✅ Stripe initialized successfully');
-  } catch (e) {
-    print('❌ Stripe initialization error: $e');
-  }
+  // try {
+  //   await Stripe.instance.applySettings();
+  //   print('✅ Stripe initialized successfully');
+  // } catch (e) {
+  //   print('❌ Stripe initialization error: $e');
+  // }
 
   runApp(const MyApp());
 }

@@ -53,18 +53,11 @@ dependencies:
   http_parser: ^4.1.2
   audioplayers: ^6.5.0
   record: ^6.0.0
-  flutter_stripe: ^10.1.1
   pay: ^2.0.0
   flutter_local_notifications: ^19.4.0
   in_app_purchase: ^3.2.3
   device_info_plus: ^9.1.0
 
-
-
-# Add this to avoid version conflicts
-dependency_overrides:
-  stripe_android: ^10.1.1
-  stripe_ios: ^10.1.1
 
 dev_dependencies:
   flutter_test:
