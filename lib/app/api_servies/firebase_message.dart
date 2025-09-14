@@ -33,6 +33,26 @@ class FirebaseMeg {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         print('User granted permission');
 
+      // ✅ GET AND PRINT FCM TOKEN IMMEDIATELY
+        String? fcmToken = await msgService.getToken();
+        if (fcmToken != null) {
+          print("🚀 FCM Token: $fcmToken"); // ✅ YOUR TOKEN WILL BE PRINTED HERE
+        } else {
+          print("❌ Failed to get FCM token");
+        }
+        // ✅ ADD THESE LINES HERE
+        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+        print("🍎 APNs Token: $apnsToken");
+
+
+
+        // ADD THIS LINE FOR iOS:
+        await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+
         // ✅ শুধু FCM setup করুন, token backend এ পাঠাবেন না এখনই
         // Token refresh listener
         msgService.onTokenRefresh.listen((newToken) {
@@ -57,6 +77,25 @@ class FirebaseMeg {
       handleInitialMessage();
     } catch (e) {
       print("Error initializing FCM: $e");
+    }
+  }
+
+  // Add to your Flutter app initialization
+  void debugFCMSetup() async {
+    print("📱 Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
+
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    print("🔔 Authorization Status: ${settings.authorizationStatus}");
+    print("🔊 Sound Setting: ${settings.sound}");
+    print("📢 Alert Setting: ${settings.alert}");
+    print("🔢 Badge Setting: ${settings.badge}");
+
+    if (Platform.isIOS) {
+      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      print("🍎🍎🍎 APNs Token Available: ${apnsToken != null}");
+      if (apnsToken != null) {
+        print("🍎🍎🍎 APNs Token: $apnsToken");
+      }
     }
   }
 
@@ -133,6 +172,8 @@ class FirebaseMeg {
   Future<void> sendTokenToBackend(String token) async {
     final accessToken = await TokenStorage.getLoginAccessToken();
 
+
+
     // ✅ Access token check করুন
     if (accessToken == null || accessToken.isEmpty) {
       print("❌ No access token available, cannot send FCM token");
@@ -171,6 +212,7 @@ class FirebaseMeg {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("✅ Token successfully sent to backend");
+        print("✅ @@@@@@@@@@@@@@@@@@@@@@@@Token successfully sent to backend:$token");
       } else if (response.statusCode == 400) {
         Map<String, dynamic> errorData = jsonDecode(response.body);
         if (errorData['errors'] != null &&
@@ -192,6 +234,8 @@ class FirebaseMeg {
       );
     }
   }
+
+
 
   // ✅ Handle foreground notifications - UPDATED
   Future<void> handleForegroundNotification(RemoteMessage message) async {
@@ -358,7 +402,99 @@ class FirebaseMeg {
       print("Snackbar: $title - $message");
     }
   }
+
+
+  // Add this method to your FirebaseMeg class
+  Future<void> debugIOSNotifications() async {
+    if (!Platform.isIOS) return;
+
+    print("🍎 === iOS Notification Debug ===");
+
+    final settings = await FirebaseMessaging.instance.getNotificationSettings();
+    print("🍎 Authorization Status: ${settings.authorizationStatus}");
+    print("🍎 Alert Setting: ${settings.alert}");
+    print("🍎 Badge Setting: ${settings.badge}");
+    print("🍎 Sound Setting: ${settings.sound}");
+
+    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    print("🍎 APNs Token Available: ${apnsToken != null}");
+    if (apnsToken != null) {
+      print("🍎 APNs Token: $apnsToken");
+    } else {
+      print("🍎 ❌ NO APNs TOKEN - This is your problem!");
+    }
+
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    print("🍎 FCM Token: $fcmToken");
+  }
+
+
+
+
+
+
+
+  // TEst  locally notification just fo seeing ios all permision okkkkkkk????
+
+
+  Future<void> fullNotificationDiagnostic() async {
+    print("🔥 === FULL NOTIFICATION DIAGNOSTIC ===");
+
+    // Test 1: Local notification
+    print("📱 Testing local notification...");
+    await testLocalNotification();
+
+    // Test 2: Check all settings again
+    await debugIOSNotifications();
+
+    // Test 3: Try to trigger a foreground message handler
+    print("🔥 Foreground message handler ready: ${FirebaseMessaging.onMessage != null}");
+    print("🔥 Background message handler ready: ${FirebaseMessaging.onBackgroundMessage != null}");
+
+    // Test 4: Check if backend is sending correctly
+    print("🔥 Backend expects this token format for iOS:");
+    print("🔥 Token: ${await FirebaseMessaging.instance.getToken()}");
+    print("🔥 Device type: ios");
+
+    print("🔥 If local notification works but push doesn't, backend is fucked");
+    print("🔥 If local notification fails, iOS setup is fucked");
+  }
+
+  Future<void> testLocalNotification() async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'test_channel',
+      'Test Channel',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.show(
+      999,
+      '🔥 DIAGNOSTIC TEST',
+      'If you see this, iOS notifications work! Problem is backend.',
+      notificationDetails,
+    );
+
+    print("🔥 Local test notification sent - check if you see it");
+  }
+
 }
+
+
+
+
+
 
 // ✅ Background message handler - UPDATED
 @pragma('vm:entry-point')

@@ -1,3 +1,4 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/api_servies/firebase_message.dart';
@@ -61,9 +62,16 @@ class LogInController extends GetxController {
       if (access != null && refresh != null) {
         await TokenStorage.saveLoginTokens(access, refresh);
 
+        await FirebaseMeg().debugIOSNotifications();
+        // await FirebaseMeg().sendFCMTokenAfterLogin();
         // ✅ Login successful হওয়ার পর notification service এবং FCM token setup করুন
         await initializeNotificationService();
         await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
+
+        //tessting ios permison setup is okey or not
+
+        await FirebaseMeg().fullNotificationDiagnostic();
+
 
         Get.snackbar("Success", response['message'] ?? "Login successful");
         Get.to(() => MainScreen());
@@ -93,10 +101,12 @@ class LogInController extends GetxController {
   // ✅ নতুন function: Login এর পর FCM token backend এ পাঠানোর জন্য
   Future<void> sendFCMTokenToBackend() async {
     try {
+
+      final fcmToken = await FirebaseMessaging.instance.getToken();
       // Firebase message service এর instance নিন
       final firebaseMsg = FirebaseMeg();
       await firebaseMsg.sendFCMTokenAfterLogin();
-      print('✅ FCM token sent to backend after login');
+      print('🔥✅@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ FCM token sent to backend after login . token==$fcmToken');
     } catch (e) {
       print('❌ Error sending FCM token after login: $e');
     }

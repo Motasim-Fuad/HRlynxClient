@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/api_servies/firebase_message.dart';
+import 'package:hr/app/api_servies/notification_services.dart';
 import 'package:hr/app/modules/payment/payment_view.dart';
 import 'package:hr/app/modules/payment/subcription_view.dart';
 import '../../api_servies/repository/auth_repo.dart';
@@ -128,6 +130,31 @@ class OtpController extends GetxController {
   }
 
 
+  Future<void> initializeNotificationService() async {
+    try {
+      if (!Get.isRegistered<NotificationService>()) {
+        Get.put(NotificationService());
+      }
+      final notificationService = NotificationService.instance;
+      await notificationService.enableConnection();
+      print('✅ Notification service initialized successfully');
+    } catch (e) {
+      print('❌ Error initializing notification service: $e');
+    }
+  }
+
+  // ✅ নতুন function: Login এর পর FCM token backend এ পাঠানোর জন্য
+  Future<void> sendFCMTokenToBackend() async {
+    try {
+      // Firebase message service এর instance নিন
+      final firebaseMsg = FirebaseMeg();
+      await firebaseMsg.sendFCMTokenAfterLogin();
+      print('✅ FCM token sent to backend after login');
+    } catch (e) {
+      print('❌ Error sending FCM token after login: $e');
+    }
+  }
+
   Future<void> verifyOtp() async {
     final otp = otpDigits.join();
     if (otp.length != 4) {
@@ -153,7 +180,19 @@ class OtpController extends GetxController {
         }
 
         Get.snackbar("Success", response['message']);
+
+        // sellected persona for chat
         await submitSelectedPersona();
+
+
+
+
+
+        //degug push notifiation
+        await FirebaseMeg().debugIOSNotifications();
+        //FCM token For notification
+        await initializeNotificationService();
+        await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
       } else {
         Get.snackbar("Failed", response['message'] ?? "OTP verification failed");
       }

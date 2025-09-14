@@ -1,6 +1,7 @@
 import UIKit
 import Flutter
 import FirebaseCore
+import FirebaseMessaging
 import GoogleSignIn
 import UserNotifications
 import AVFoundation
@@ -25,16 +26,21 @@ import AVFoundation
         // Register plugins
         GeneratedPluginRegistrant.register(with: self)
 
+        // ✅ CRITICAL: Set up Firebase Messaging delegate
+        Messaging.messaging().delegate = self
+
         // Notifications
         let center = UNUserNotificationCenter.current()
         center.delegate = self
         center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if let error = error {
-                print("Notification permission error: \(error.localizedDescription)")
+                print("❌ Notification permission error: \(error.localizedDescription)")
             } else {
-                print("Notification permission granted: \(granted)")
+                print("✅ Notification permission granted: \(granted)")
             }
         }
+
+        // ✅ CRITICAL: Register for remote notifications
         application.registerForRemoteNotifications()
 
         // Setup audio session
@@ -44,6 +50,19 @@ import AVFoundation
         requestMicrophonePermission()
 
         return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+
+    // ✅ CRITICAL: Handle APNs token registration
+    override func application(_ application: UIApplication,
+                            didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        print("✅ APNs token registered")
+        Messaging.messaging().apnsToken = deviceToken
+    }
+
+    // ✅ CRITICAL: Handle APNs registration failure
+    override func application(_ application: UIApplication,
+                            didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("❌ APNs registration failed: \(error.localizedDescription)")
     }
 
     // MARK: - Audio
@@ -80,12 +99,24 @@ import AVFoundation
     override func userNotificationCenter(_ center: UNUserNotificationCenter,
                                          willPresent notification: UNNotification,
                                          withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        print("✅ Foreground notification received: \(notification.request.content.title)")
         completionHandler([.alert, .badge, .sound])
     }
 
     override func userNotificationCenter(_ center: UNUserNotificationCenter,
                                          didReceive response: UNNotificationResponse,
                                          withCompletionHandler completionHandler: @escaping () -> Void) {
+        print("✅ Notification tapped: \(response.notification.request.content.title)")
         completionHandler()
+    }
+}
+
+// ✅ CRITICAL: Firebase Messaging delegate
+extension AppDelegate: MessagingDelegate {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        print("✅ FCM registration token: \(String(describing: fcmToken))")
+
+        // ✅ Send token to your server here if needed
+        // You can call your Flutter method to handle this
     }
 }

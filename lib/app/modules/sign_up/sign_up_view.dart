@@ -101,7 +101,7 @@ class _SignUpState extends State<SignUp> {
                           _label("Your Email"),
                           CustomTextFormField(
                             controller: emailController,
-                            hintText: 'arraihan815@gmail.com',
+                            hintText: 'example@gmail.com',
                             keyboardType: TextInputType.emailAddress,
                             obscureText: false,
                             onChanged: (value) => signUpController.email.value = value,
