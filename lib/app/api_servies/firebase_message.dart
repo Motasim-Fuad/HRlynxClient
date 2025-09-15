@@ -434,7 +434,7 @@ class FirebaseMeg {
 
 
 
-  // TEst  locally notification just fo seeing ios all permision okkkkkkk????
+  // Test  locally notification just fo seeing ios all permision okkkkkkk????
 
 
   Future<void> fullNotificationDiagnostic() async {

@@ -5,7 +5,7 @@ import 'package:hr/app/api_servies/neteork_api_services.dart';
 import 'package:hr/app/modules/congratulaion_screen/congratulation_view.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'dart:async';
-
+import 'package:flutter/foundation.dart'; // Add this line
 class SubscriptionPlan {
   final int id;
   final String name;
@@ -85,8 +85,7 @@ class PaymentController extends GetxController {
       print('❌ Error initializing Google Play: $e');
     }
   }
-
-  // Load Google Play products
+  // Load Google Play products(original)
   Future<void> _loadGooglePlayProducts() async {
     if (!isGooglePlayAvailable.value) return;
 
@@ -277,12 +276,15 @@ class PaymentController extends GetxController {
     await _startGooglePlayPurchase();
   }
 
-  // Start Google Play purchase
+  // Start Google Play purchase(original)
   Future<void> _startGooglePlayPurchase() async {
     try {
       isLoading.value = true;
       paymentInProgress.value = true;
       print('🚀 Starting Google Play purchase for plan: ${selectedPlanData!.planType}');
+      print('Plan type: ${selectedPlanData!.planType}');
+      print('Google Play Product ID: ${selectedPlanData!.googlePlayProductId}');
+      print('Available products: ${googlePlayProducts.map((p) => p.id).toList()}');
 
       // Find the corresponding Google Play product
       final productId = selectedPlanData!.googlePlayProductId;
