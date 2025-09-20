@@ -45,6 +45,34 @@ class FirebaseMeg {
         print("🍎 APNs Token: $apnsToken");
 
 
+        // iOS specific setup
+        if (Platform.isIOS) {
+          await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+
+          // APNs token পাওয়ার জন্য wait করুন
+          String? apnsToken;
+          int attempts = 0;
+          while (apnsToken == null && attempts < 10) {
+            apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+            if (apnsToken == null) {
+              print("⏳ APNs token এর জন্য wait করছি... ($attempts/10)");
+              await Future.delayed(Duration(seconds: 2));
+              attempts++;
+            }
+          }
+
+          if (apnsToken != null) {
+            print("✅ APNs Token finally received: $apnsToken");
+          } else {
+            print("❌ APNs Token পাওয়া যায়নি - Apple Developer account এর problem হতে পারে");
+          }
+        }
+
+
 
         // ADD THIS LINE FOR iOS:
         await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
@@ -77,6 +105,20 @@ class FirebaseMeg {
       handleInitialMessage();
     } catch (e) {
       print("Error initializing FCM: $e");
+    }
+  }
+
+  // এই method টা call করে check করুন
+  Future<void> verifyAPNsSetup() async {
+    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    if (apnsToken != null) {
+      print("✅ APNs Token পাওয়া গেছে: $apnsToken");
+    } else {
+      print("❌ APNs Token পাওয়া যায়নি - এটাই main problem");
+      // APNs token পেতে কিছুক্ষণ wait করুন
+      await Future.delayed(Duration(seconds: 5));
+      final retryToken = await FirebaseMessaging.instance.getAPNSToken();
+      print("🔄 Retry APNs Token: $retryToken");
     }
   }
 

@@ -1,20 +1,51 @@
-// Updated GoogleSignUpController
+
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hr/app/api_servies/firebase_message.dart'; // ✅ FCM service import করুন
 import 'package:hr/app/api_servies/notification_services.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart' show UserController;
-import 'package:hr/app/modules/payment/payment_view.dart';
 import 'package:hr/app/modules/payment/subcription_view.dart' show SubscriptionScreen;
 import '../../api_servies/repository/auth_repo.dart';
-import '../../api_servies/token.dart'; // Import TokenStorage
-import '../main_screen/main_screen_view.dart';
+import '../../api_servies/token.dart';
+import '../../model/onbordingModel.dart'; // Import TokenStorage
 
 class GoogleSignUpController extends GetxController {
   final userController = Get.put(UserController());
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
+
+  // final RxList<Data> personaList = <Data>[].obs;
+  // final RxInt selectedIndex = 0.obs;
+  //
+  //
+  //
+  // void selectPersona(int index) {
+  //   selectedIndex.value = index;
+  // }
+  //
+  //
+  // Future<void> fetchPersonas() async {
+  //   try {
+  //     isLoading.value = true;
+  //     final response = await authRepo.getParsonaType();
+  //     print("📥 Raw persona response: $response");
+  //
+  //     final model = OnbordingModel.fromJson(response);
+  //     personaList.value = model.data ?? [];
+  //
+  //     if (personaList.isEmpty) {
+  //       print("⚠️ Persona list is empty after parsing");
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar("Error", e.toString());
+  //     print("❌ fetchPersonas error: $e");
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
+
 
   Future<void> handleGoogleSignUp() async {
     try {
@@ -59,24 +90,25 @@ class GoogleSignUpController extends GetxController {
         "persona": storedPersonaId, // Use stored persona ID
       };
 
+
       final success = await authRepo.googleSignUpAndSetPersona(
         email: email,
         name: name,
         provider: 'google',
-        personaBody: personaBody,
       );
+      await authRepo.setParsonaType(personaBody);
+
+      print("send pelected persona id to api");
 
       userController.setUserEmail(user.email ?? 'No Email Found');
 
       // Step 4: Handle success or failure
       if (success) {
+
         // ✅ Google login successful হওয়ার পর notification service এবং FCM token setup করুন
         await initializeNotificationService();
         await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
 
-        // Clear stored persona ID after successful use
-        await TokenStorage.clearSelectedPersonaId();
-        print("✅ Cleared stored persona ID after successful Google sign-in");
 
         Get.snackbar("Success", "Google sign-in complete and persona set.");
         print("Google signin successful with persona ID: $storedPersonaId");
@@ -85,7 +117,11 @@ class GoogleSignUpController extends GetxController {
         Get.snackbar("Error", "Failed to set persona after Google login.");
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
+
+      if(e=="[firebase_auth/network-request-failed] A network error (such as timeout, interrupted connection or unreachable host) has occurred."){
+        Get.snackbar("Error", "I thing your Network problem or Timeout.    Please try again");
+      }
+
       print("GoogleSignUp Error: $e");
     } finally {
       isLoading.value = false;

@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/api_servies/firebase_message.dart';
 import 'package:hr/app/api_servies/notification_services.dart';
-import 'package:hr/app/modules/payment/payment_view.dart';
+
 import 'package:hr/app/modules/payment/subcription_view.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 import '../../model/onbordingModel.dart';
-import '../log_in/log_in_view.dart';
+
 
 class OtpController extends GetxController {
   final AuthRepository _authRepo = AuthRepository();

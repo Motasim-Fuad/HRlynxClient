@@ -34,8 +34,6 @@ class UploadDataController extends GetxController {
       }
     } catch (e) {
       print("❌ Error: $e");
-
-      // Only if image picker fails, then check permissions
       if (e.toString().toLowerCase().contains('permission')) {
         _handlePermissionError();
       } else {

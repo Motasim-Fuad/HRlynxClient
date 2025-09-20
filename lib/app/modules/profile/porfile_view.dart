@@ -4,13 +4,11 @@ import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hr/app/common_widgets/button.dart';
 import 'package:hr/app/common_widgets/privacy_policy.dart';
-import 'package:hr/app/modules/GooglePay/googlePay.dart';
 import 'package:hr/app/modules/change_password/change_password.dart' show ChangePassword;
 import 'package:hr/app/modules/home/chat_al_ai_persona_controller.dart';
 import 'package:hr/app/modules/home/user_isSubcriptionController.dart';
 import 'package:hr/app/modules/log_in/user_controller.dart';
 import 'package:hr/app/modules/notification/notification_view.dart';
-import 'package:hr/app/modules/payment/payment_view.dart';
 import 'package:hr/app/modules/payment/subcription_view.dart';
 import 'package:hr/app/modules/profile/UploadData/uploadDataView.dart';
 import 'package:hr/app/modules/profile/profile_controller.dart' show ProfileController;
@@ -116,6 +114,20 @@ class ProfileView extends StatelessWidget {
                       : userController.userEmail.string.isNotEmpty
                       ? userController.userEmail.string
                       : "email@example.com",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+
+              Center(
+                child: Text(
+
+                      userController.userID.string.isNotEmpty
+                      ? userController.userID.string
+                      : "12313",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
                     fontSize: 16,
@@ -377,18 +389,6 @@ class ProfileView extends StatelessWidget {
                 onTap: () => Get.to(NotificationView()),
               ),
 
-
-          // _buildMenuItem(
-          //       icon: Icons.notifications_active_outlined,
-          //       title: 'gapay',
-          //       onTap: () => Get.to(GooglePaymentScreen()),
-          //     ),
-
-              _buildMenuItem(
-                icon: Icons.g_mobiledata,
-                title: 'GooglePay',
-                onTap: () => Get.to(GooglePayView()),
-              ),
 
               _buildMenuItem(
                 icon: Icons.local_police_outlined,

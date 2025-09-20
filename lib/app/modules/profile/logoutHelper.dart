@@ -23,6 +23,7 @@ class LogoutController extends GetxController {
       // Clear all tokens
       await TokenStorage.clearAllTokens();
       await TokenStorage.clearAllPersonaSessions();
+      //await TokenStorage.clearSelectedPersonaId();
 
       Get.snackbar("Success", "Logged out successfully");
 

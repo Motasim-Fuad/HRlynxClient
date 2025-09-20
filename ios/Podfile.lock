@@ -133,9 +133,15 @@ PODS:
   - permission_handler_apple (9.3.0):
     - Flutter
   - PromisesObjC (2.4.0)
+  - purchases_flutter (9.6.2):
+    - Flutter
+    - PurchasesHybridCommon (= 17.7.0)
+  - PurchasesHybridCommon (17.7.0):
+    - RevenueCat (= 5.39.0)
   - RecaptchaInterop (101.0.0)
   - record_ios (1.0.0):
     - Flutter
+  - RevenueCat (5.39.0)
   - share_plus (0.0.1):
     - Flutter
   - shared_preferences_foundation (0.0.1):
@@ -161,6 +167,7 @@ DEPENDENCIES:
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - pay_ios (from `.symlinks/plugins/pay_ios/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+  - purchases_flutter (from `.symlinks/plugins/purchases_flutter/ios`)
   - record_ios (from `.symlinks/plugins/record_ios/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
@@ -187,7 +194,9 @@ SPEC REPOS:
     - GTMSessionFetcher
     - nanopb
     - PromisesObjC
+    - PurchasesHybridCommon
     - RecaptchaInterop
+    - RevenueCat
 
 EXTERNAL SOURCES:
   audioplayers_darwin:
@@ -216,6 +225,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/pay_ios/ios"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
+  purchases_flutter:
+    :path: ".symlinks/plugins/purchases_flutter/ios"
   record_ios:
     :path: ".symlinks/plugins/record_ios/ios"
   share_plus:
@@ -259,8 +270,11 @@ SPEC CHECKSUMS:
   pay_ios: 2c48d76615ded0cfaff66185669501b8b1dfc55e
   permission_handler_apple: 4ed2196e43d0651e8ff7ca3483a069d469701f2d
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  purchases_flutter: 6b62051d2bc7e2a977c7cd52c18a6281c4641361
+  PurchasesHybridCommon: 6bc96162fb0c061e1980f474be618c088cfd1428
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   record_ios: fee1c924aa4879b882ebca2b4bce6011bcfc3d8b
+  RevenueCat: 4743a5eee0004e1c03eabeb3498818f902a5d622
   share_plus: de6030e33b4e106470e09322d87cf2a4258d2d1d
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
   sqflite_darwin: 20b2a3a3b70e43edae938624ce550a3cbf66a3d0

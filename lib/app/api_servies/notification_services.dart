@@ -319,7 +319,7 @@ class NotificationService extends GetxController {
       if (existingIndex == -1) {
         notifications.insert(0, notification);
         _updateUnreadCount();
-        _showInAppNotification(notification);
+        // _showInAppNotification(notification);
         print('✅ New notification added: ${notification.title}');
       } else {
         print('ℹ️ Duplicate notification received: ${notification.id}');
@@ -360,23 +360,23 @@ class NotificationService extends GetxController {
   }
 
   /// Enhanced notification display
-  void _showInAppNotification(NotificationModel notification) {
-    // Avoid showing notifications if app is in background
-    if (Get.context != null) {
-      Get.snackbar(
-        notification.title,
-        notification.message,
-        duration: const Duration(seconds: 4),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Get.theme.colorScheme.surface,
-        colorText: Get.theme.colorScheme.onSurface,
-        margin: EdgeInsets.all(8),
-        borderRadius: 8,
-        isDismissible: true,
-        onTap: (_) => _handleNotificationTap(notification),
-      );
-    }
-  }
+  // void _showInAppNotification(NotificationModel notification) {
+  //   // Avoid showing notifications if app is in background
+  //   if (Get.context != null) {
+  //     Get.snackbar(
+  //       notification.title,
+  //       notification.message,
+  //       duration: const Duration(seconds: 4),
+  //       snackPosition: SnackPosition.TOP,
+  //       backgroundColor: Get.theme.colorScheme.surface,
+  //       colorText: Get.theme.colorScheme.onSurface,
+  //       margin: EdgeInsets.all(8),
+  //       borderRadius: 8,
+  //       isDismissible: true,
+  //       onTap: (_) => _handleNotificationTap(notification),
+  //     );
+  //   }
+  // }
 
   /// Handle notification tap
   void _handleNotificationTap(NotificationModel notification) {

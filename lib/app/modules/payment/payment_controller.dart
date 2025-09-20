@@ -1,18 +1,22 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hr/app/api_servies/api_Constant.dart';
 import 'package:hr/app/api_servies/neteork_api_services.dart';
 import 'package:hr/app/modules/congratulaion_screen/congratulation_view.dart';
-import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:hr/app/modules/log_in/user_controller.dart';
+import 'package:purchases_flutter/purchases_flutter.dart'; // RevenueCat import
 import 'dart:async';
-import 'package:flutter/foundation.dart'; // Add this line
+import 'package:flutter/foundation.dart';
+
 class SubscriptionPlan {
   final int id;
   final String name;
   final String planType;
   final String price;
   final String interval;
-  final String? googlePlayProductId;
+  final String? revenuecatProductId; // Changed from googlePlayProductId
   final bool isActive;
 
   SubscriptionPlan({
@@ -21,140 +25,275 @@ class SubscriptionPlan {
     required this.planType,
     required this.price,
     required this.interval,
-    this.googlePlayProductId,
+    this.revenuecatProductId, // Changed
     required this.isActive,
   });
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
+    // Platform specific product ID selection
+    String? productId;
+    if (Platform.isAndroid) {
+      productId = json['revenuecat_product_id_android'];
+    } else if (Platform.isIOS) {
+      productId = json['revenuecat_product_id_ios'];
+    }
+
     return SubscriptionPlan(
       id: json['id'],
       name: json['name'],
       planType: json['plan_type'],
       price: json['price'],
       interval: json['interval'],
-      googlePlayProductId: json['google_play_product_id'],
-      isActive: json['is_active'],
+      revenuecatProductId: productId,
+      isActive: json['is_active'] ?? true,
     );
   }
 }
 
 class PaymentController extends GetxController {
-  // Observable variables
+
+  final UserController userController = Get.put(UserController());
+
+  // Observable variables (same as before)
   var selectedPlan = 'yearly'.obs;
   var isLoading = false.obs;
   var plans = <SubscriptionPlan>[].obs;
   var hasPlans = false.obs;
   var paymentInProgress = false.obs;
-  var useGooglePlay = true.obs; // Default to Google Play for Android
 
-  // Google Play In-App Purchase variables
-  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
-  late StreamSubscription<List<PurchaseDetails>> _subscription;
-  var isGooglePlayAvailable = false.obs;
-  var googlePlayProducts = <ProductDetails>[].obs;
+  // RevenueCat variables
+  var isRevenueCatAvailable = false.obs;
+  var revenueCatPackages = <Package>[].obs;
 
   @override
   void onInit() {
     super.onInit();
     fetchPlans();
-    _initializeGooglePlay();
+    _initializeRevenueCat();
   }
 
-  // Initialize Google Play In-App Purchase
-  Future<void> _initializeGooglePlay() async {
+  // Initialize RevenueCat
+  Future<void> _initializeRevenueCat() async {
     try {
-      // Check if Google Play is available
-      final bool available = await _inAppPurchase.isAvailable();
-      isGooglePlayAvailable.value = available;
+      // Configure RevenueCat with your public key
 
-      if (available) {
-        // Listen for purchase updates
-        final Stream<List<PurchaseDetails>> purchaseUpdated = _inAppPurchase.purchaseStream;
-        _subscription = purchaseUpdated.listen(
-          _onPurchaseUpdated,
-          onDone: () => _subscription.cancel(),
-          onError: (error) => print('❌ Purchase stream error: $error'),
-        );
-
-        print('✅ Google Play In-App Purchase initialized successfully');
-        _loadGooglePlayProducts();
-      } else {
-        print('⚠️ Google Play In-App Purchase not available');
+      String getRevenueCatKey() {
+        if (Platform.isIOS) {
+          return "appl_DVYOGtnCsySsMcoKkRTVYpJlQZw"; // iOS key
+        } else {
+          return "goog_fHaUFeIYngJgHloZDbONohOyWSM"; // Android key
+        }
       }
+
+      PurchasesConfiguration configuration = PurchasesConfiguration(
+        getRevenueCatKey(),
+      );
+      await Purchases.configure(configuration);
+
+      isRevenueCatAvailable.value = true;
+      print('✅ RevenueCat initialized successfully');
+
+      // Login user if you have user ID
+      await _loginRevenueCatUser();
     } catch (e) {
-      print('❌ Error initializing Google Play: $e');
+      print('❌ Error initializing RevenueCat: $e');
+      isRevenueCatAvailable.value = false;
     }
   }
-  // Load Google Play products(original)
-  Future<void> _loadGooglePlayProducts() async {
-    if (!isGooglePlayAvailable.value) return;
 
+  // Login user to RevenueCat
+  Future<void> _loginRevenueCatUser() async {
     try {
-      // Get product IDs from your plans
-      final Set<String> productIds = plans
-          .where((plan) => plan.googlePlayProductId != null)
-          .map((plan) => plan.googlePlayProductId!)
-          .toSet();
+      // Replace with your actual user ID logic
+      String userId =
+          "user_${userController.userID}"; // Or get from your auth system
 
-      if (productIds.isEmpty) {
-        print('⚠️ No Google Play product IDs found');
-        return;
-      }
+      LogInResult result = await Purchases.logIn(userId);
 
-      final ProductDetailsResponse response = await _inAppPurchase.queryProductDetails(productIds);
+      // Link user to your backend
+      await _linkUserToBackend(result.customerInfo.originalAppUserId);
 
-      if (response.notFoundIDs.isNotEmpty) {
-        print('⚠️ Products not found: ${response.notFoundIDs}');
-      }
-
-      googlePlayProducts.assignAll(response.productDetails);
-      print('✅ Loaded ${googlePlayProducts.length} Google Play products');
+      print(
+        '✅ User logged in to RevenueCat: ${result.customerInfo.originalAppUserId}',
+      );
     } catch (e) {
-      print('❌ Error loading Google Play products: $e');
+      print('❌ Error logging in user: $e');
     }
   }
 
-  // Handle Google Play purchase updates
-  void _onPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {
-    for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
-      if (purchaseDetails.status == PurchaseStatus.pending) {
-        // Show pending UI
-        print('🔄 Purchase pending...');
-      } else if (purchaseDetails.status == PurchaseStatus.error) {
-        // Handle error
-        print('❌ Purchase error: ${purchaseDetails.error}');
-        _handlePurchaseError(purchaseDetails.error!);
-      } else if (purchaseDetails.status == PurchaseStatus.purchased ||
-          purchaseDetails.status == PurchaseStatus.restored) {
-        // Handle successful purchase
-        print('✅ Purchase successful: ${purchaseDetails.productID}');
-        _handleGooglePlayPurchaseSuccess(purchaseDetails);
-      }
-
-      // Complete the purchase
-      if (purchaseDetails.pendingCompletePurchase) {
-        _inAppPurchase.completePurchase(purchaseDetails);
-      }
-    }
-  }
-
-  // Handle Google Play purchase success
-  Future<void> _handleGooglePlayPurchaseSuccess(PurchaseDetails purchaseDetails) async {
+  // Link user to backend
+  Future<void> _linkUserToBackend(String revenueCatUserId) async {
     try {
-      // Send purchase details to your backend for verification
-      final response = await _verifyGooglePlayPurchase(purchaseDetails);
+      String url = "${ApiConstants.baseUrl}/api/subscription/revenuecat/link-user/";
+      final body = {"revenuecat_user_id": revenueCatUserId};
+
+      final response = await NetworkApiServices.postApi(
+        url,
+        body,
+        withAuth: true,
+        tokenType: 'login',
+      );
 
       if (response != null && response['success'] == true) {
-        Get.snackbar(
-          'Success!',
-          'Subscription activated successfully!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: Duration(seconds: 3),
+        print('✅ User linked to backend successfully');
+      }
+    } catch (e) {
+      print('❌ Error linking user to backend: $e');
+    }
+  }
+
+  // Load RevenueCat packages
+  Future<void> _loadRevenueCatPackages() async {
+    if (!isRevenueCatAvailable.value) return;
+
+    try {
+      Offerings offerings = await Purchases.getOfferings();
+
+      if (offerings.current != null) {
+        revenueCatPackages.assignAll(offerings.current!.availablePackages);
+        print('✅ Loaded ${revenueCatPackages.length} RevenueCat packages');
+      }
+    } catch (e) {
+      print('❌ Error loading RevenueCat packages: $e');
+    }
+  }
+
+  // Fetch available plans from API (same structure, different endpoint)
+  Future<void> fetchPlans() async {
+    try {
+      isLoading.value = true;
+      print('🔄 Fetching subscription plans...');
+
+      String url =
+          "${ApiConstants.baseUrl}/api/subscription/revenuecat/plans/";
+      final response = await NetworkApiServices.getApi(
+        url,
+        withAuth: true,
+        tokenType: 'login',
+      );
+
+      if (response != null && response['success'] == true) {
+        // Handle nested data structure
+        final List<dynamic> plansData =
+            response['data']['plans'] ?? response['data'];
+
+        plans.assignAll(
+          plansData.map((plan) => SubscriptionPlan.fromJson(plan)).toList(),
         );
-        Get.off(() => CongratulationView());
+        hasPlans.value = plans.isNotEmpty;
+
+        // Set default selection (same logic)
+        if (plans.any((plan) => plan.planType == 'explorer_yearly')) {
+          selectedPlan.value = 'yearly';
+        } else if (plans.isNotEmpty) {
+          selectedPlan.value = plans.first.planType.contains('monthly')
+              ? 'monthly'
+              : 'yearly';
+        }
+
+        print('✅ Plans fetched successfully: ${plans.length} plans');
+
+        // Load RevenueCat packages after plans are loaded
+        if (isRevenueCatAvailable.value) {
+          await _loadRevenueCatPackages();
+        }
       } else {
-        throw Exception('Failed to verify purchase');
+        print('❌ Failed to fetch plans: Invalid response');
+        Get.snackbar('Error', 'Failed to load subscription plans');
+      }
+    } catch (e) {
+      print('❌ Error fetching plans: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to load subscription plans: ${e.toString()}',
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Get currently selected plan data (same logic)
+  SubscriptionPlan? get selectedPlanData {
+    if (selectedPlan.value == 'yearly') {
+      return plans.firstWhereOrNull(
+        (plan) => plan.planType == 'explorer_yearly',
+      );
+    } else {
+      return plans.firstWhereOrNull(
+        (plan) => plan.planType == 'explorer_monthly',
+      );
+    }
+  }
+
+  // Start free trial process (same method name, different implementation)
+  Future<void> startFreeTrial() async {
+    if (isLoading.value || selectedPlanData == null) {
+      print('⚠️ Cannot start trial: Loading or no plan selected');
+      return;
+    }
+
+    await _startRevenueCatPurchase();
+  }
+
+  // Start RevenueCat purchase
+  Future<void> _startRevenueCatPurchase() async {
+    try {
+      isLoading.value = true;
+      paymentInProgress.value = true;
+      print(
+        '🚀 Starting RevenueCat purchase for plan: ${selectedPlanData!.planType}',
+      );
+
+      // Find the corresponding RevenueCat package
+      final productId = selectedPlanData!.revenuecatProductId;
+      if (productId == null) {
+        throw Exception('RevenueCat product ID not found for this plan');
+      }
+
+      final package = revenueCatPackages.firstWhereOrNull(
+        (p) => p.storeProduct.identifier == productId,
+      );
+      if (package == null) {
+        throw Exception('RevenueCat package not loaded: $productId');
+      }
+
+      // Start the purchase flow
+      PurchaseResult result = await Purchases.purchasePackage(package);
+
+      // Handle successful purchase
+      await _handleRevenueCatPurchaseSuccess(result.customerInfo);
+
+      print('✅ RevenueCat purchase completed');
+    } catch (e) {
+      print('❌ Error in RevenueCat purchase: $e');
+      _handlePurchaseError(e.toString());
+    }
+  }
+
+  // Handle RevenueCat purchase success
+  Future<void> _handleRevenueCatPurchaseSuccess(
+    CustomerInfo customerInfo,
+  ) async {
+    try {
+      // Check if user has active entitlements
+      if (customerInfo.entitlements.active.isNotEmpty) {
+        // Sync with your backend
+        final response = await checkSubscriptionStatus();
+
+        if (response != null && response['success'] == true) {
+          Get.snackbar(
+            'Success!',
+            'Subscription activated successfully!',
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: Duration(seconds: 3),
+          );
+          Get.off(() => CongratulationView());
+        } else {
+          throw Exception('Failed to sync subscription status');
+        }
+      } else {
+        throw Exception('No active entitlements found');
       }
     } catch (e) {
       print('❌ Error handling purchase success: $e');
@@ -170,25 +309,17 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Handle Google Play purchase error
-  void _handlePurchaseError(IAPError error) {
+  // Handle purchase error (similar to before)
+  void _handlePurchaseError(String errorMessage) {
     paymentInProgress.value = false;
     isLoading.value = false;
 
-    String errorMessage = 'Purchase failed';
-
-    switch (error.code) {
-      case 'user_cancelled':
-        errorMessage = 'Purchase was cancelled';
-        break;
-      case 'payment_invalid':
-        errorMessage = 'Payment method is invalid';
-        break;
-      case 'payment_not_allowed':
-        errorMessage = 'Payment is not allowed';
-        break;
-      default:
-        errorMessage = 'Purchase failed: ${error.message}';
+    // Handle different error types
+    if (errorMessage.contains('user cancelled') ||
+        errorMessage.contains('cancelled')) {
+      errorMessage = 'Purchase was cancelled';
+    } else if (errorMessage.contains('payment')) {
+      errorMessage = 'Payment failed';
     }
 
     Get.snackbar(
@@ -199,134 +330,16 @@ class PaymentController extends GetxController {
     );
   }
 
-  // Verify Google Play purchase on backend
-  Future<Map<String, dynamic>?> _verifyGooglePlayPurchase(PurchaseDetails purchaseDetails) async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/verify-purchase/";
-      final body = {
-        "product_id": purchaseDetails.productID,
-        "purchase_token": purchaseDetails.purchaseID,
-        "package_name": "com.lynxova.hrlnyx", // Your package name
-      };
-
-      final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
-      return response;
-    } catch (e) {
-      print('❌ Error verifying Google Play purchase: $e');
-      return null;
-    }
-  }
-
-  // Fetch available plans from API
-  Future<void> fetchPlans() async {
-    try {
-      isLoading.value = true;
-      print('🔄 Fetching subscription plans...');
-
-      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/plans/";
-      final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-
-      if (response != null && response['success'] == true) {
-        final List<dynamic> plansData = response['data'];
-
-        plans.assignAll(plansData.map((plan) => SubscriptionPlan.fromJson(plan)).toList());
-        hasPlans.value = plans.isNotEmpty;
-
-        // Set default selection
-        if (plans.any((plan) => plan.planType == 'explorer_yearly')) {
-          selectedPlan.value = 'yearly';
-        } else if (plans.isNotEmpty) {
-          selectedPlan.value = plans.first.planType.contains('monthly') ? 'monthly' : 'yearly';
-        }
-
-        print('✅ Plans fetched successfully: ${plans.length} plans');
-
-        // Load Google Play products after plans are loaded
-        if (isGooglePlayAvailable.value) {
-          await _loadGooglePlayProducts();
-        }
-      } else {
-        print('❌ Failed to fetch plans: Invalid response');
-        Get.snackbar('Error', 'Failed to load subscription plans');
-      }
-    } catch (e) {
-      print('❌ Error fetching plans: $e');
-      Get.snackbar('Error', 'Failed to load subscription plans: ${e.toString()}');
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // Get currently selected plan data
-  SubscriptionPlan? get selectedPlanData {
-    if (selectedPlan.value == 'yearly') {
-      return plans.firstWhereOrNull((plan) => plan.planType == 'explorer_yearly');
-    } else {
-      return plans.firstWhereOrNull((plan) => plan.planType == 'explorer_monthly');
-    }
-  }
-
-  // Start free trial process
-  Future<void> startFreeTrial() async {
-    if (isLoading.value || selectedPlanData == null) {
-      print('⚠️ Cannot start trial: Loading or no plan selected');
-      return;
-    }
-
-    await _startGooglePlayPurchase();
-  }
-
-  // Start Google Play purchase(original)
-  Future<void> _startGooglePlayPurchase() async {
-    try {
-      isLoading.value = true;
-      paymentInProgress.value = true;
-      print('🚀 Starting Google Play purchase for plan: ${selectedPlanData!.planType}');
-      print('Plan type: ${selectedPlanData!.planType}');
-      print('Google Play Product ID: ${selectedPlanData!.googlePlayProductId}');
-      print('Available products: ${googlePlayProducts.map((p) => p.id).toList()}');
-
-      // Find the corresponding Google Play product
-      final productId = selectedPlanData!.googlePlayProductId;
-      if (productId == null) {
-        throw Exception('Google Play product ID not found for this plan');
-      }
-
-      final product = googlePlayProducts.firstWhereOrNull((p) => p.id == productId);
-      if (product == null) {
-        throw Exception('Google Play product not loaded: $productId');
-      }
-
-      // Create purchase param
-      final PurchaseParam purchaseParam = PurchaseParam(productDetails: product);
-
-      // Start the purchase flow
-      final bool success = await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
-
-      if (!success) {
-        throw Exception('Failed to initiate Google Play purchase');
-      }
-
-      print('✅ Google Play purchase flow initiated');
-    } catch (e) {
-      print('❌ Error in Google Play purchase: $e');
-      paymentInProgress.value = false;
-      isLoading.value = false;
-
-      Get.snackbar(
-        'Error',
-        'Failed to start Google Play purchase: ${e.toString()}',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
-  }
-
-  // Check subscription status
+  // Check subscription status (same endpoint structure)
   Future<Map<String, dynamic>?> checkSubscriptionStatus() async {
     try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/google-play/status/";
-      final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
+      String url =
+          "${ApiConstants.baseUrl}/api/subscription/revenuecat/status/"; // Changed from google-play/status
+      final response = await NetworkApiServices.getApi(
+        url,
+        withAuth: true,
+        tokenType: 'login',
+      );
       return response;
     } catch (e) {
       print('❌ Error checking subscription status: $e');
@@ -336,7 +349,6 @@ class PaymentController extends GetxController {
 
   @override
   void onClose() {
-    _subscription.cancel();
     super.onClose();
   }
 }

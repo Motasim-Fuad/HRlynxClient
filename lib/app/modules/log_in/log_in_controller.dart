@@ -56,8 +56,12 @@ class LogInController extends GetxController {
       final data = response['data'];
       final access = data?['access'];
       final refresh = data?['refresh'];
+      final user = data?['user'];
+      final userid = user?['id'];
+      final useremail = user?['email'];
 
-      userController.setUserEmail(email);
+      userController.setUserEmail(useremail);
+      userController.setUserID(userid);
 
       if (access != null && refresh != null) {
         await TokenStorage.saveLoginTokens(access, refresh);
@@ -80,6 +84,8 @@ class LogInController extends GetxController {
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
+
+      print(e);
     } finally {
       isLoading.value = false;
     }

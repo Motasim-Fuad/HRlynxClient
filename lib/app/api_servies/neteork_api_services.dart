@@ -246,7 +246,13 @@ class NetworkApiServices {
         }
         return jsonDecode(response.body);
       }
+      if (response.statusCode == 401) {
+        throw Exception('Invalid email or password.');
+      }
 
+      if (response.statusCode == 500) {
+        throw Exception(' Please try again later !');
+      }
       // Handle CloudFlare specific errors
       if (response.statusCode == 523) {
         throw Exception('Server temporarily unavailable (CloudFlare tunnel down). Please try again later.');
@@ -286,38 +292,7 @@ class NetworkApiServices {
     }
   }
 
-  /// Handle API responses with improved error handling
-  // static dynamic _handleResponse(http.Response response) {
-  //   print('🔎 Response Code: ${response.statusCode}');
-  //   print('📦 Raw Response Body: ${response.body}');
-  //
-  //   try {
-  //     // Handle empty responses for successful requests
-  //     if (response.statusCode >= 200 && response.statusCode < 300) {
-  //       if (response.body.isEmpty) {
-  //         return {'success': true, 'message': 'Request completed successfully'};
-  //       }
-  //       return jsonDecode(response.body);
-  //     }
-  //
-  //     // Handle error responses
-  //     if (response.body.isNotEmpty) {
-  //       final responseBody = jsonDecode(response.body);
-  //       final errorMsg = responseBody['message'] ??
-  //           responseBody['detail'] ??
-  //           responseBody['error'] ??
-  //           'Unknown error (${response.statusCode})';
-  //       throw Exception('API Error: $errorMsg');
-  //     } else {
-  //       throw Exception('API Error: ${response.statusCode} - ${response.reasonPhrase}');
-  //     }
-  //   } catch (e) {
-  //     if (e is Exception) {
-  //       rethrow;
-  //     }
-  //     throw FormatException('Unexpected response format: ${response.body}');
-  //   }
-  // }
+
 
   /// Helper method for handling common HTTP status codes
   static bool isSuccessResponse(int statusCode) {

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -5,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hr/app/api_servies/firebase_message.dart';
 import 'app/SplashServices.dart';
 import 'app/api_servies/notification_services.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -16,6 +20,17 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+// iOS notification debug
+  if (Platform.isIOS) {
+    final settings = await FirebaseMessaging.instance.requestPermission();
+    print("🔔 Permission status: ${settings.authorizationStatus}");
+
+    // APNs token check
+    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+    print("🍎 APNs immediate check: $apnsToken");
+  }
+
 
 
   runApp(const MyApp());

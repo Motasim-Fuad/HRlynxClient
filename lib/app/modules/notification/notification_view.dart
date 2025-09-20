@@ -115,7 +115,7 @@ class NotificationView extends StatelessWidget {
                     Get.snackbar(
                       'Error',
                       'Failed to refresh notifications',
-                      snackPosition: SnackPosition.BOTTOM,
+                      snackPosition: SnackPosition.TOP,
                     );
                   }
                 },
@@ -134,20 +134,6 @@ class NotificationView extends StatelessWidget {
                     );
                   },
                 ),
-
-
-                // // show just in app notification
-                // child: ListView.builder(
-                //   padding: const EdgeInsets.symmetric(vertical: 8),
-                //   itemCount: filteredNotifications.length,
-                //   itemBuilder: (context, index) {
-                //     final notification = filteredNotifications[index];
-                //     return NotificationTile(
-                //       notification: notification,
-                //       onTap: () => _handleNotificationTap(context, notification, notificationService),
-                //     );
-                //   },
-                // ),
               );
             }),
           ),
@@ -188,7 +174,7 @@ class NotificationView extends StatelessWidget {
         Get.snackbar(
           'Error',
           'Failed to open notification',
-          snackPosition: SnackPosition.BOTTOM,
+          snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red,
           colorText: Colors.white,
           duration: const Duration(seconds: 3),
@@ -585,105 +571,6 @@ class NotificationDetailSheet extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 24),
-
-                  // Additional data
-                  // if (notification.data.isNotEmpty) ...[
-                  //   const Text(
-                  //     'Additional Information',
-                  //     style: TextStyle(
-                  //       fontSize: 18,
-                  //       fontWeight: FontWeight.w600,
-                  //       color: Colors.black87,
-                  //     ),
-                  //   ),
-                  //   const SizedBox(height: 12),
-                  //   Container(
-                  //     width: double.infinity,
-                  //     padding: const EdgeInsets.all(16),
-                  //     decoration: BoxDecoration(
-                  //       color: Colors.blue[50],
-                  //       borderRadius: BorderRadius.circular(12),
-                  //       border: Border.all(color: Colors.blue[100]!),
-                  //     ),
-                  //     child: Column(
-                  //       crossAxisAlignment: CrossAxisAlignment.start,
-                  //       children: notification.data.entries.map((entry) {
-                  //         return Padding(
-                  //           padding: const EdgeInsets.only(bottom: 8),
-                  //           child: Row(
-                  //             crossAxisAlignment: CrossAxisAlignment.start,
-                  //             children: [
-                  //               SizedBox(
-                  //                 width: 100,
-                  //                 child: Text(
-                  //                   '${entry.key}:',
-                  //                   style: TextStyle(
-                  //                     fontWeight: FontWeight.w600,
-                  //                     color: Colors.blue[700],
-                  //                   ),
-                  //                 ),
-                  //               ),
-                  //               Expanded(
-                  //                 child: Text(
-                  //                   entry.value?.toString() ?? 'N/A',
-                  //                   style: TextStyle(
-                  //                     color: Colors.blue[600],
-                  //                   ),
-                  //                 ),
-                  //               ),
-                  //             ],
-                  //           ),
-                  //         );
-                  //       }).toList(),
-                  //     ),
-                  //   ),
-                  //   const SizedBox(height: 24),
-                  // ],
-
-                  // Metadata
-                  // const Text(
-                  //   'Notification Details',
-                  //   style: TextStyle(
-                  //     fontSize: 18,
-                  //     fontWeight: FontWeight.w600,
-                  //     color: Colors.black87,
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 12),
-                  // Container(
-                  //   width: double.infinity,
-                  //   padding: const EdgeInsets.all(16),
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.grey[50],
-                  //     borderRadius: BorderRadius.circular(12),
-                  //     border: Border.all(color: Colors.grey[200]!),
-                  //   ),
-                  //   child: Column(
-                  //     children: [
-                  //       _buildDetailRow(
-                  //           'ID',
-                  //           notification.id.toString(),
-                  //           Icons.tag
-                  //       ),
-                  //       _buildDetailRow(
-                  //           'Type',
-                  //           notification.notificationType.toUpperCase(),
-                  //           Icons.category
-                  //       ),
-                  //       _buildDetailRow(
-                  //           'Created',
-                  //           _formatDateTime(notification.createdAt),
-                  //           Icons.schedule
-                  //       ),
-                  //       if (notification.sentAt != null)
-                  //         _buildDetailRow(
-                  //             'Sent',
-                  //             _formatDateTime(notification.sentAt!),
-                  //             Icons.send
-                  //         ),
-                  //     ],
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -693,50 +580,7 @@ class NotificationDetailSheet extends StatelessWidget {
     );
   }
 
-  // Widget _buildDetailRow(String label, String value, IconData icon) {
-  //   return Padding(
-  //     padding: const EdgeInsets.only(bottom: 12),
-  //     child: Row(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         Icon(
-  //           icon,
-  //           size: 20,
-  //           color: Colors.grey[600],
-  //         ),
-  //         const SizedBox(width: 12),
-  //         SizedBox(
-  //           width: 80,
-  //           child: Text(
-  //             '$label:',
-  //             style: TextStyle(
-  //               fontWeight: FontWeight.w600,
-  //               color: Colors.grey[700],
-  //             ),
-  //           ),
-  //         ),
-  //         Expanded(
-  //           child: Text(
-  //             value,
-  //             style: TextStyle(
-  //               color: Colors.grey[600],
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
-  // String _formatDateTime(String dateTimeString) {
-  //   try {
-  //     final dateTime = DateTime.parse(dateTimeString);
-  //     return '${dateTime.day.toString().padLeft(2, '0')}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.year} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-  //   } catch (e) {
-  //     print('❌ Error formatting date: $e');
-  //     return 'Invalid date';
-  //   }
-  // }
 
   Color _getNotificationColor(String type) {
     try {

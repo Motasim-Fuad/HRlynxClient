@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hr/app/modules/log_in/user_controller.dart';
 
 import '../api_Constant.dart';
 import '../neteork_api_services.dart';
@@ -9,6 +10,8 @@ import '../token.dart';
 
 class AuthRepository {
   final _api = NetworkApiServices();
+
+  final userController = Get.put(UserController());
 
   // ---------- Persona ----------
   Future<dynamic> getParsonaType() async {
@@ -118,7 +121,6 @@ class AuthRepository {
     required String email,
     required String name,
     required String provider,
-    required Map<String, dynamic> personaBody,
   }) async {
     try {
       final url = "${ApiConstants.baseUrl}/api/auth/social-auth/";
@@ -135,6 +137,13 @@ class AuthRepository {
       final data = response['data'];
       final access = data['access'];
       final refresh = data['refresh'];
+      final user = data['user'];
+      final userEmail = user['email'];
+      final userID = user['id'];
+
+
+      userController.setUserEmail(userEmail);
+      userController.setUserID(userID);
 
       await TokenStorage.saveLoginTokens(access, refresh);
       return true;
@@ -476,7 +485,7 @@ class AuthRepository {
   }) async {
     try {
       // Use the correct endpoint format from your API
-      String url = "${ApiConstants.baseUrl}/api/affiliate/products?category_slug=$categorySlug";
+      String url = "${ApiConstants.baseUrl}/api/affiliate/products/?category_slug=$categorySlug";
 
       // Add page parameter if not first page
       if (page > 1) {
