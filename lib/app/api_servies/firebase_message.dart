@@ -13,13 +13,12 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 class FirebaseMeg {
   final msgService = FirebaseMessaging.instance;
 
-  // ✅ Local Notifications Plugin - ADDED
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
   initFCM() async {
     try {
-      // ✅ Initialize local notifications - ADDED
+      // Initialize local notifications
       await initializeLocalNotifications();
 
       // Request permission
@@ -33,19 +32,7 @@ class FirebaseMeg {
       if (settings.authorizationStatus == AuthorizationStatus.authorized) {
         print('User granted permission');
 
-      // ✅ GET AND PRINT FCM TOKEN IMMEDIATELY
-        String? fcmToken = await msgService.getToken();
-        if (fcmToken != null) {
-          print("🚀 FCM Token: $fcmToken"); // ✅ YOUR TOKEN WILL BE PRINTED HERE
-        } else {
-          print("❌ Failed to get FCM token");
-        }
-        // ✅ ADD THESE LINES HERE
-        String? apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-        print("🍎 APNs Token: $apnsToken");
-
-
-        // iOS specific setup
+        // iOS specific setup - শুধু একবার করুন
         if (Platform.isIOS) {
           await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
             alert: true,
@@ -53,49 +40,31 @@ class FirebaseMeg {
             sound: true,
           );
 
-          // APNs token পাওয়ার জন্য wait করুন
-          String? apnsToken;
-          int attempts = 0;
-          while (apnsToken == null && attempts < 10) {
-            apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-            if (apnsToken == null) {
-              print("⏳ APNs token এর জন্য wait করছি... ($attempts/10)");
-              await Future.delayed(Duration(seconds: 2));
-              attempts++;
-            }
-          }
-
-          if (apnsToken != null) {
-            print("✅ APNs Token finally received: $apnsToken");
-          } else {
-            print("❌ APNs Token পাওয়া যায়নি - Apple Developer account এর problem হতে পারে");
-          }
+          // APNs token এর জন্য wait করুন
+          await waitForAPNsToken();
         }
 
+        // FCM token get করুন
+        String? fcmToken = await msgService.getToken();
+        if (fcmToken != null) {
+          print("🚀 FCM Token: $fcmToken");
+        } else {
+          print("❌ Failed to get FCM token");
+        }
 
-
-        // ADD THIS LINE FOR iOS:
-        await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-
-        // ✅ শুধু FCM setup করুন, token backend এ পাঠাবেন না এখনই
         // Token refresh listener
         msgService.onTokenRefresh.listen((newToken) {
           print("Token refreshed: $newToken");
-          // ✅ Token refresh এর সময়ও check করুন access token আছে কিনা
           _sendTokenIfLoggedIn(newToken);
         });
       } else {
         print('User declined or has not accepted permission');
       }
 
-      // ✅ Handle background messages - UPDATED
+      // Handle background messages
       FirebaseMessaging.onBackgroundMessage(handleBackgroundNotification);
 
-      // ✅ Handle foreground messages - UPDATED
+      // Handle foreground messages
       FirebaseMessaging.onMessage.listen(handleForegroundNotification);
 
       // Handle notification taps
@@ -108,40 +77,28 @@ class FirebaseMeg {
     }
   }
 
-  // এই method টা call করে check করুন
-  Future<void> verifyAPNsSetup() async {
-    final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-    if (apnsToken != null) {
-      print("✅ APNs Token পাওয়া গেছে: $apnsToken");
-    } else {
-      print("❌ APNs Token পাওয়া যায়নি - এটাই main problem");
-      // APNs token পেতে কিছুক্ষণ wait করুন
-      await Future.delayed(Duration(seconds: 5));
-      final retryToken = await FirebaseMessaging.instance.getAPNSToken();
-      print("🔄 Retry APNs Token: $retryToken");
-    }
-  }
+  // APNs token এর জন্য অপেক্ষা করার function
+  Future<void> waitForAPNsToken() async {
+    String? apnsToken;
+    int attempts = 0;
 
-  // Add to your Flutter app initialization
-  void debugFCMSetup() async {
-    print("📱 Platform: ${Platform.isIOS ? 'iOS' : 'Android'}");
-
-    final settings = await FirebaseMessaging.instance.getNotificationSettings();
-    print("🔔 Authorization Status: ${settings.authorizationStatus}");
-    print("🔊 Sound Setting: ${settings.sound}");
-    print("📢 Alert Setting: ${settings.alert}");
-    print("🔢 Badge Setting: ${settings.badge}");
-
-    if (Platform.isIOS) {
-      final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-      print("🍎🍎🍎 APNs Token Available: ${apnsToken != null}");
-      if (apnsToken != null) {
-        print("🍎🍎🍎 APNs Token: $apnsToken");
+    while (apnsToken == null && attempts < 15) { // আরো বেশি সময় দিন
+      apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+      if (apnsToken == null) {
+        print("⏳ APNs token এর জন্য wait করছি... ($attempts/15)");
+        await Future.delayed(Duration(seconds: 3)); // একটু বেশি সময় দিন
+        attempts++;
       }
     }
+
+    if (apnsToken != null) {
+      print("✅ APNs Token received: $apnsToken");
+    } else {
+      print("❌ APNs Token পাওয়া যায়নি");
+    }
   }
 
-  // ✅ নতুন function: Login এর পর এটা call করুন
+  // Login এর পর এই method call করুন
   Future<void> sendFCMTokenAfterLogin() async {
     try {
       String? token = await msgService.getToken();
@@ -156,7 +113,7 @@ class FirebaseMeg {
     }
   }
 
-  // ✅ Helper function: শুধু logged in user দের জন্য token send করুন
+  // Helper function: শুধু logged in user দের জন্য token send করুন
   Future<void> _sendTokenIfLoggedIn(String token) async {
     final accessToken = await TokenStorage.getLoginAccessToken();
     if (accessToken != null && accessToken.isNotEmpty) {
@@ -166,16 +123,16 @@ class FirebaseMeg {
     }
   }
 
-  // ✅ Initialize Local Notifications - NEW FUNCTION
+  // Initialize Local Notifications
   Future<void> initializeLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings initializationSettingsIOS =
     DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false, // আমরা manually request করবো
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const InitializationSettings initializationSettings =
@@ -189,14 +146,13 @@ class FirebaseMeg {
       onDidReceiveNotificationResponse: onNotificationTap,
     );
 
-    // ✅ Create notification channel for Android - IMPORTANT
     await createNotificationChannel();
   }
 
-  // ✅ Create Notification Channel - NEW FUNCTION
+  // Create Notification Channel
   Future<void> createNotificationChannel() async {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'high_importance_channel', // Same as in AndroidManifest
+      'high_importance_channel',
       'High Importance Notifications',
       description: 'This channel is used for important notifications.',
       importance: Importance.high,
@@ -214,9 +170,6 @@ class FirebaseMeg {
   Future<void> sendTokenToBackend(String token) async {
     final accessToken = await TokenStorage.getLoginAccessToken();
 
-
-
-    // ✅ Access token check করুন
     if (accessToken == null || accessToken.isEmpty) {
       print("❌ No access token available, cannot send FCM token");
       return;
@@ -232,8 +185,8 @@ class FirebaseMeg {
       };
 
       print("Sending token to backend...");
-      print("URL: $apiUrl");
-      print("Body: ${jsonEncode(requestBody)}");
+      print("Device Type: $deviceType"); // এটা নিশ্চিত করুন
+      print("Token: $token");
 
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -247,14 +200,8 @@ class FirebaseMeg {
       print("Response Status Code: ${response.statusCode}");
       print("Response Body: ${response.body}");
 
-      if (response.statusCode == 400 &&
-          response.body.contains("already exists")) {
-        print('✅ Token already exists in backend, skipping insert.');
-      }
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         print("✅ Token successfully sent to backend");
-        print("✅ @@@@@@@@@@@@@@@@@@@@@@@@Token successfully sent to backend:$token");
       } else if (response.statusCode == 400) {
         Map<String, dynamic> errorData = jsonDecode(response.body);
         if (errorData['errors'] != null &&
@@ -269,27 +216,23 @@ class FirebaseMeg {
       }
     } catch (e) {
       print("❌ Error sending token to backend: $e");
-      _showSnackbarSafely(
-        title: "Network Error",
-        message: "Failed to connect to server",
-        backgroundColor: Colors.red,
-      );
     }
   }
 
-
-
-  // ✅ Handle foreground notifications - UPDATED
+  // Handle foreground notifications - iOS এর জন্য local notification show করবে না
   Future<void> handleForegroundNotification(RemoteMessage message) async {
     print('Received foreground message: ${message.messageId}');
     print('Title: ${message.notification?.title}');
     print('Body: ${message.notification?.body}');
     print('Data: ${message.data}');
 
-    // ✅ Show local notification when app is in foreground
-    await showLocalNotification(message);
+    // iOS এর জন্য local notification show করার দরকার নেই
+    // কারণ iOS automatically foreground notification show করে
+    if (Platform.isAndroid) {
+      await showLocalNotification(message);
+    }
 
-    // Also show snackbar
+    // Snackbar show করুন
     _showSnackbarSafely(
       title: message.notification?.title ?? "Notification",
       message: message.notification?.body ?? "New message received",
@@ -298,7 +241,7 @@ class FirebaseMeg {
     );
   }
 
-  // ✅ Show Local Notification - NEW FUNCTION
+  // Show Local Notification (শুধু Android এর জন্য)
   Future<void> showLocalNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidNotificationDetails =
     AndroidNotificationDetails(
@@ -310,21 +253,11 @@ class FirebaseMeg {
       showWhen: true,
       enableVibration: true,
       playSound: true,
-      icon: '@drawable/ic_notification', // ✅ Custom notification icon
-      color: Color(0xFF2196F3), // ✅ আপনার app color
-      largeIcon:DrawableResourceAndroidBitmap('@drawable/ic_notification'), // ✅ App icon as large icon
-    );
-
-    const DarwinNotificationDetails iosNotificationDetails =
-    DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
     );
 
     const NotificationDetails notificationDetails = NotificationDetails(
       android: androidNotificationDetails,
-      iOS: iosNotificationDetails,
+      iOS: null, // iOS এর জন্য null
     );
 
     await flutterLocalNotificationsPlugin.show(
@@ -336,7 +269,7 @@ class FirebaseMeg {
     );
   }
 
-  // ✅ Handle notification tap from local notifications - NEW FUNCTION
+  // Handle notification tap from local notifications
   void onNotificationTap(NotificationResponse notificationResponse) {
     print('Local notification tapped');
 
@@ -356,24 +289,9 @@ class FirebaseMeg {
     handleNotificationData(message.data);
   }
 
-  // ✅ Handle notification data - NEW FUNCTION
-  // void handleNotificationData(Map<String, dynamic> data) {
-  //   if (data.isNotEmpty) {
-  //     String? screen = data['screen'];
-  //     String? id = data['id'];
-  //
-  //     if (screen != null) {
-  //       // Navigate to specific screen
-  //       Get.to(() => NotificationView(), arguments: {'id': id});
-  //       print('Should navigate to: $screen with id: $id');
-  //     }
-  //   }
-  // }
-
+  // Handle notification data
   void handleNotificationData(Map<String, dynamic> data) {
-    // যাই আসুক, সবসময় NotificationView এ ন্যাভিগেট করবে
-    String? id = data['id']; // যদি backend থেকে id আসে তাহলে সাথে পাঠান
-
+    String? id = data['id'];
     Get.to(() => NotificationView(), arguments: {'id': id});
     print('Navigated to NotificationView with id: $id');
   }
@@ -422,22 +340,6 @@ class FirebaseMeg {
             snackPosition: SnackPosition.TOP,
           ),
         );
-      } else {
-        Future.delayed(Duration(milliseconds: 500), () {
-          if (Get.context != null) {
-            Get.showSnackbar(
-              GetSnackBar(
-                title: title,
-                message: message,
-                backgroundColor: backgroundColor,
-                duration: Duration(seconds: 3),
-                onTap: onTap != null ? (snack) => onTap() : null,
-              ),
-            );
-          } else {
-            print("Snackbar: $title - $message (Context not available)");
-          }
-        });
       }
     } catch (e) {
       print("Snackbar Error: $e");
@@ -445,8 +347,7 @@ class FirebaseMeg {
     }
   }
 
-
-  // Add this method to your FirebaseMeg class
+  // iOS Notification Debug
   Future<void> debugIOSNotifications() async {
     if (!Platform.isIOS) return;
 
@@ -463,45 +364,14 @@ class FirebaseMeg {
     if (apnsToken != null) {
       print("🍎 APNs Token: $apnsToken");
     } else {
-      print("🍎 ❌ NO APNs TOKEN - This is your problem!");
+      print("🍎 ❌ NO APNs TOKEN - This is the main problem!");
     }
 
     final fcmToken = await FirebaseMessaging.instance.getToken();
     print("🍎 FCM Token: $fcmToken");
   }
 
-
-
-
-
-
-
-  // Test  locally notification just fo seeing ios all permision okkkkkkk????
-
-
-  Future<void> fullNotificationDiagnostic() async {
-    print("🔥 === FULL NOTIFICATION DIAGNOSTIC ===");
-
-    // Test 1: Local notification
-    print("📱 Testing local notification...");
-    await testLocalNotification();
-
-    // Test 2: Check all settings again
-    await debugIOSNotifications();
-
-    // Test 3: Try to trigger a foreground message handler
-    print("🔥 Foreground message handler ready: ${FirebaseMessaging.onMessage != null}");
-    print("🔥 Background message handler ready: ${FirebaseMessaging.onBackgroundMessage != null}");
-
-    // Test 4: Check if backend is sending correctly
-    print("🔥 Backend expects this token format for iOS:");
-    print("🔥 Token: ${await FirebaseMessaging.instance.getToken()}");
-    print("🔥 Device type: ios");
-
-    print("🔥 If local notification works but push doesn't, backend is fucked");
-    print("🔥 If local notification fails, iOS setup is fucked");
-  }
-
+  // Test করার জন্য local notification
   Future<void> testLocalNotification() async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'test_channel',
@@ -524,27 +394,41 @@ class FirebaseMeg {
     await flutterLocalNotificationsPlugin.show(
       999,
       '🔥 DIAGNOSTIC TEST',
-      'If you see this, iOS notifications work! Problem is backend.',
+      'যদি এটা দেখতে পান, iOS notifications কাজ করছে!',
       notificationDetails,
     );
 
-    print("🔥 Local test notification sent - check if you see it");
+    print("🔥 Local test notification sent - check করুন দেখা যাচ্ছে কিনা");
   }
 
+  // Full diagnostic test
+  Future<void> fullNotificationDiagnostic() async {
+    print("🔥 === FULL NOTIFICATION DIAGNOSTIC ===");
+
+    // Test 1: Local notification
+    print("📱 Testing local notification...");
+    await testLocalNotification();
+
+    // Test 2: Check all settings
+    await debugIOSNotifications();
+
+    // Test 3: Check handlers
+    print("🔥 Foreground message handler ready: ${FirebaseMessaging.onMessage != null}");
+
+    // Test 4: Check backend token format
+    print("🔥 Backend expects this token format for iOS:");
+    print("🔥 Token: ${await FirebaseMessaging.instance.getToken()}");
+    print("🔥 Device type: ios");
+
+    print("🔥 যদি local notification কাজ করে কিন্তু push না করে, backend এর সমস্যা");
+    print("🔥 যদি local notification fail করে, iOS setup এর সমস্যা");
+  }
 }
 
-
-
-
-
-
-// ✅ Background message handler - UPDATED
+// Background message handler
 @pragma('vm:entry-point')
 Future<void> handleBackgroundNotification(RemoteMessage message) async {
   print('Background message received: ${message.messageId}');
   print('Title: ${message.notification?.title}');
   print('Body: ${message.notification?.body}');
-
-  // ✅ Background এ local notification show করার জন্য - ADDED
-  // Note: Background এ local notification automatically handle হয়
 }
