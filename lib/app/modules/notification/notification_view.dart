@@ -9,10 +9,6 @@ class NotificationView extends StatelessWidget {
   Widget build(BuildContext context) {
     final notificationService = Get.find<NotificationService>();
 
-    // final filteredNotifications = notificationService.notifications
-    //     .where((n) => n.notificationType.toLowerCase() == 'in_app')
-    //     .toList();
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
