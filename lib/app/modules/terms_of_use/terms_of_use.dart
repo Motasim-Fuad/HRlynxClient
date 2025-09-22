@@ -1,10 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:hr/app/api_servies/api_Constant.dart' show ApiConstants;
+import 'package:hr/app/api_servies/neteork_api_services.dart';
+import 'package:hr/app/api_servies/repository/auth_repo.dart';
+import 'package:hr/app/model/tarmsAndConditionModel.dart';
 
-class TermsOfUse extends StatelessWidget {
-  const TermsOfUse({super.key});
+class TermsController extends GetxController {
+  final AuthRepository _authRepo = AuthRepository();
+
+  var termsData = Rxn<TermsandConditionsModel>();
+  var isLoading = true.obs;
+  var errorMessage = Rxn<String>();
+  var parsedContent = <Widget>[].obs;
 
   @override
-  Widget build(BuildContext context) {
+  void onInit() {
+    super.onInit();
+    fetchTermsAndConditions();
+  }
+
+  Future<void> fetchTermsAndConditions() async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = null;
+
+      final response = await _authRepo.getTermsAndConditions();
+
+      if (response != null) {
+        termsData.value = TermsandConditionsModel.fromJson(response);
+        if (termsData.value?.data?.content != null) {
+          parsedContent.value = _parseHtmlContent(termsData.value!.data!.content!);
+        }
+        isLoading.value = false;
+      } else {
+        errorMessage.value = 'Failed to load terms and conditions';
+        isLoading.value = false;
+      }
+    } catch (e) {
+      errorMessage.value = 'Error: ${e.toString()}';
+      isLoading.value = false;
+    }
+  }
+
+  List<Widget> _parseHtmlContent(String htmlContent) {
+    List<Widget> widgets = [];
+
     TextStyle headingStyle = const TextStyle(
       fontWeight: FontWeight.w500,
       fontSize: 18,
@@ -16,6 +56,129 @@ class TermsOfUse extends StatelessWidget {
       fontSize: 16,
       color: Color(0xff7D848D),
     );
+
+    TextStyle contactStyle = const TextStyle(
+      fontWeight: FontWeight.w400, // Not bold
+      fontSize: 16,
+      color: Color(0xff7D848D),
+    );
+
+    TextStyle copyrightStyle = const TextStyle(
+      fontWeight: FontWeight.w400,
+      fontSize: 16,
+      color: Color(0xff7D848D),
+      fontStyle: FontStyle.italic, // Italic style
+    );
+
+    // Remove HTML tags and split into sections
+    String cleanContent = htmlContent
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<p>', caseSensitive: false), '')
+        .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<div[^>]*>', caseSensitive: false), '')
+        .replaceAll(RegExp(r'</div>', caseSensitive: false), '\n')
+        .replaceAll(RegExp(r'<[^>]+>'), '') // Remove all other HTML tags
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"');
+
+    List<String> sections = cleanContent.split('\n');
+
+    bool isFirstSection = true;
+
+    for (String section in sections) {
+      String trimmedSection = section.trim();
+
+      if (trimmedSection.isEmpty) {
+        continue;
+      }
+
+      // Check different text types
+      bool isHeading = _isHeading(trimmedSection);
+      bool isCopyright = _isCopyright(trimmedSection);
+      bool isContact = _isContact(trimmedSection);
+
+      if (isHeading && !isContact) {
+        // Add spacing before heading (except first one)
+        if (!isFirstSection) {
+          widgets.add(const SizedBox(height: 30));
+        }
+
+        widgets.add(Text(trimmedSection, style: headingStyle));
+        widgets.add(const SizedBox(height: 8));
+        isFirstSection = false;
+      } else if (isCopyright) {
+        // Copyright text - italic style
+        widgets.add(Text(trimmedSection, style: copyrightStyle));
+
+        if (sections.indexOf(section) < sections.length - 1) {
+          widgets.add(const SizedBox(height: 12));
+        }
+      } else if (isContact) {
+        // Contact/Owner info - not bold
+        widgets.add(Text(trimmedSection, style: contactStyle));
+
+        if (sections.indexOf(section) < sections.length - 1) {
+          widgets.add(const SizedBox(height: 12));
+        }
+      } else {
+        // Regular body content
+        widgets.add(Text(trimmedSection, style: bodyStyle));
+
+        // Add small spacing between paragraphs
+        if (sections.indexOf(section) < sections.length - 1) {
+          widgets.add(const SizedBox(height: 12));
+        }
+      }
+    }
+
+    return widgets;
+  }
+
+  bool _isHeading(String text) {
+    // Check various heading patterns (excluding contact info)
+    return (text.startsWith(RegExp(r'\d+\.\s')) && !_isContact(text)) || // "1. ", "2. ", etc.
+        (text.contains('Terms & Conditions') && !text.contains('©')) ||
+        text.contains('Effective Date:') ||
+        text.startsWith('Acceptance of Terms') ||
+        text.startsWith('Description of Service') ||
+        text.startsWith('User Responsibilities') ||
+        text.startsWith('Subscription Terms') ||
+        text.startsWith('Limitation of Liability') ||
+        text.startsWith('Intellectual Property') ||
+        text.startsWith('Content Ownership') ||
+        text.startsWith('Modifications to Terms') ||
+        text.startsWith('Account Suspension') ||
+        text.startsWith('Jurisdiction') ||
+        text.startsWith('Future Phase') ||
+        (text.length < 60 && text.endsWith(':') && !_isContact(text)); // Short text ending with colon (excluding contact)
+  }
+
+  bool _isCopyright(String text) {
+    // Check if text contains copyright symbols or trademark info
+    return text.contains('©') ||
+        text.contains('All rights reserved') ||
+        text.contains('™') ||
+        text.contains('trademark');
+  }
+
+  bool _isContact(String text) {
+    // Check if text contains contact or owner information
+    return text.toLowerCase().contains('owner:') ||
+        text.toLowerCase().contains('contact:') ||
+        text.toLowerCase().contains('info@') ||
+        text.toLowerCase().contains('email:');
+  }
+}
+
+class TermsOfUse extends StatelessWidget {
+  const TermsOfUse({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.put(TermsController());
 
     return Scaffold(
       appBar: AppBar(
@@ -29,140 +192,72 @@ class TermsOfUse extends StatelessWidget {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('HRlynx – Terms & Conditions (v1.3)', style: headingStyle),
-              const SizedBox(height: 8),
-              Text('Effective Date: 8/15/2025', style: bodyStyle),
-              Text('Owner: Lynxova, LLC (a Colorado limited liability company)', style: bodyStyle),
-              Text('Contact: info@hrlynx.ai', style: bodyStyle),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-              const SizedBox(height: 30),
-              Text('1. Acceptance of Terms', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'By downloading, registering, or using the HRlynx app (“Service”), you agree to these Terms & Conditions, our Privacy Policy, and any future updates. If you do not agree, you must discontinue use of the Service.',
-                style: bodyStyle,
-              ),
+        if (controller.errorMessage.value != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Colors.red[300],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  controller.errorMessage.value!,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.red,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: controller.fetchTermsAndConditions,
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
 
-              const SizedBox(height: 30),
-              Text('2. Description of Service', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'HRlynx provides:\n'
-                    '• Access to curated HR news and information.\n'
-                    '• AI-generated guidance through role-based personas.\n'
-                    '• Ability to save chats, track interactions, and access subscription-based features.\n\n'
-                    'Important: AI-generated content is not legal advice and is intended for informational purposes only. Always consult a qualified HR or legal professional before making decisions that have legal, regulatory, or employment impacts.',
-                style: bodyStyle,
+        if (controller.parsedContent.isNotEmpty) {
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: controller.parsedContent,
               ),
+            ),
+          );
+        }
 
-              const SizedBox(height: 30),
-              Text('3. User Responsibilities', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'You agree to:\n'
-                    '• Provide accurate and current information during registration.\n'
-                    '• Use the Service for lawful purposes only.\n'
-                    '• Not rely solely on AI-generated responses for legally binding decisions.\n'
-                    '• Maintain the confidentiality of your account credentials.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('4. Subscription Terms, Auto-Renewal & Cancellation', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'HRlynx offers free, monthly, and annual subscription plans.\n\n'
-                    'Paid subscriptions are processed securely through the Apple App Store or Google Play Store using their respective billing systems.\n\n'
-                    'Subscriptions automatically renew unless canceled at least 24 hours before the end of the current billing period.\n\n'
-                    'Your account will be charged for renewal within 24 hours prior to the end of the current period at the price of your chosen plan.\n\n'
-                    'You can manage and cancel your subscription at any time in your Apple App Store or Google Play Store account settings.\n\n'
-                    'If you cancel, you will retain access until the end of the current billing period; no refunds are issued for unused time.\n\n'
-                    'Prices may change for future subscription periods; if they do, you will be notified in advance and given the option to cancel before renewal.\n\n'
-                    'Apple-required disclosure: Payment will be charged to your Apple ID account at the time of purchase. Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the current subscription period. You can manage or cancel your subscription in your account settings on the App Store after purchase.\n\n'
-                    'Google Play-required disclosure: Payment will be charged to your Google Play account at confirmation of purchase. Subscriptions automatically renew unless auto-renew is turned off at least 24 hours before the end of the subscription period. You can manage or cancel your subscription in your Google Play account settings at any time.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('5. Limitation of Liability', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'Lynxova, LLC, HRlynx, and their affiliates are not liable for:\n'
-                    '• Damages from reliance on AI-generated content or curated news.\n'
-                    '• Losses related to employment decisions or HR policy execution.\n'
-                    '• Errors, omissions, or unavailability of third-party content or links.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('6. Intellectual Property Rights', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'Trademarks: HRlynx™, HR QuickScan™, and all related logos, product names, and service marks are trademarks of Lynxova, LLC. Unauthorized use of these marks is strictly prohibited.\n\n'
-                    'Copyright: All content in the app, including but not limited to text, designs, UI/UX layouts, proprietary AI interaction flows, summaries, HR QuickScan™ format, and other features, is © 2025 Lynxova, LLC. All rights reserved.\n\n'
-                    'Trade Secrets: The structure, organization, source code, algorithms, and underlying technology of the HRlynx app are valuable trade secrets of Lynxova, LLC. You may not reverse engineer, decompile, disassemble, or otherwise attempt to derive the source code or underlying ideas of the Service without our express written consent.\n\n'
-                    'Third-Party Work Product: Any work performed by contractors, developers, or contributors for the HRlynx app is deemed “work made for hire” and is fully assigned to Lynxova, LLC.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('7. Content Ownership & Usage', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'All AI responses, chat transcripts, and user interactions are the intellectual property of Lynxova, LLC.\n'
-                    'We may use anonymized and aggregated data to improve the Service, train AI models, and develop new features.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('8. Modifications to Terms', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'We may update these Terms at any time. Continued use after changes are posted constitutes acceptance.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('9. Account Suspension or Termination', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'We reserve the right to suspend or terminate accounts for violations of these Terms, including but not limited to impersonation, misinformation, or illegal activity.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('10. Jurisdiction', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                'These Terms are governed by the laws of the State of Colorado, without regard to conflict-of-law principles.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text('11. Future Phase Disclaimers (Pre-Release)', style: headingStyle),
-              const SizedBox(height: 8),
-              Text(
-                '• Certification Prep Content: Not endorsed by, affiliated with, or representative of any official HR certification body.\n'
-                    '• Marketplace & Consulting Services: All third-party providers are independent contractors; Lynxova, LLC assumes no liability for their actions or omissions.\n'
-                    '• Affiliate & Monetization: Future features may include affiliate links or sponsored content, disclosed in accordance with FTC guidelines.',
-                style: bodyStyle,
-              ),
-
-              const SizedBox(height: 30),
-              Text(
-                '© 2025 Lynxova, LLC. All rights reserved. HRlynx™ and HR QuickScan™ are trademarks of Lynxova, LLC.',
-                style: bodyStyle,
-              ),
-            ],
+        return const Center(
+          child: Text(
+            'No terms and conditions available',
+            style: TextStyle(fontSize: 16),
           ),
-        ),
-      ),
+        );
+      }),
     );
+  }
+}
+
+// Add this method to your AuthRepository class
+extension TermsExtension on AuthRepository {
+  Future<dynamic> getTermsAndConditions() async {
+    String url = "${ApiConstants.baseUrl}/api/core/terms-and-conditions/";
+    try {
+      return await NetworkApiServices.getApi(url, withAuth: false);
+    } catch (e) {
+      print('❌ Error fetching terms and conditions: $e');
+      rethrow;
+    }
   }
 }

@@ -474,6 +474,27 @@ class AuthRepository {
     }
   }
 
+  // ---------- Terms & Conditions ----------
+  Future<dynamic> getTermsAndConditions() async {
+    String url = "${ApiConstants.baseUrl}/api/core/terms-and-conditions/";
+    try {
+      return await NetworkApiServices.getApi(url, withAuth: false);
+    } catch (e) {
+      print('❌ Error fetching terms and conditions: $e');
+      rethrow;
+    }
+  }
+
+  // ---------- Privacy Policy ----------
+  Future<dynamic> getPrivacyPolicy() async {
+    String url = "${ApiConstants.baseUrl}/api/core/privacy-policy/";
+    try {
+      return await NetworkApiServices.getApi(url, withAuth: false);
+    } catch (e) {
+      print('❌ Error fetching privacy policy: $e');
+      rethrow;
+    }
+  }
 
 
 
