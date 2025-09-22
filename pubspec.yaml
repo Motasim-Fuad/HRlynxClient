@@ -62,30 +62,51 @@ dependencies:
   crypto: ^3.0.6
 
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_launcher_icons: "^0.14.4"
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.6
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
-  image_path: "assets/images/AppIcon.png"
-  min_sdk_android: 21 # android min sdk min:16, default 21
-  web:
-    generate: true
-    image_path: "assets/images/AppIcon.png"
-    background_color: "#hexcode"
-    theme_color: "#hexcode"
-  windows:
-    generate: true
-    image_path: "assets/images/AppIcon.png"
-    icon_size: 48 # min:48, max:256, default: 48
-  macos:
-    generate: true
-    image_path: "assets/images/AppIcon.png"
+  image_path: "assets/images/applogo.png"   # 1024x1024 PNG (no transparency)
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#ffffff"                          # Splash background color
+  image: assets/images/appsplash.png      # তোমার লোগো (512x512 PNG transparent)
+  android: true
+  ios: true
+
+
+
+#dev_dependencies:
+#  flutter_test:
+#    sdk: flutter
+#
+#  flutter_launcher_icons: "^0.14.4"
+#
+#flutter_launcher_icons:
+#  android: "launcher_icon"
+#  ios: true
+#  image_path: "assets/images/AppIcon.png"
+#  min_sdk_android: 21 # android min sdk min:16, default 21
+#  web:
+#    generate: true
+#    image_path: "assets/images/AppIcon.png"
+#    background_color: "#hexcode"
+#    theme_color: "#hexcode"
+#  windows:
+#    generate: true
+#    image_path: "assets/images/AppIcon.png"
+#    icon_size: 48 # min:48, max:256, default: 48
+#  macos:
+#    generate: true
+#    image_path: "assets/images/AppIcon.png"
 
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -93,7 +114,7 @@ flutter_launcher_icons:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+#  flutter_lints: ^5.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
