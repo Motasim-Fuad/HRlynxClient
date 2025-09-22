@@ -116,8 +116,8 @@ class AuthRepository {
     return await NetworkApiServices.postApi(url, body, withAuth: false);
   }
 
-  // ---------- Google SignUp ----------
-  Future<bool> googleSignUpAndSetPersona({
+// ---------- Social SignUp (Google & Apple) ----------
+  Future<bool> SocialSignUpAndSetPersona({
     required String email,
     required String name,
     required String provider,

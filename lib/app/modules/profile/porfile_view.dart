@@ -122,19 +122,19 @@ class ProfileView extends StatelessWidget {
                 ),
               ),
 
-              Center(
-                child: Text(
-
-                      userController.userID.string.isNotEmpty
-                      ? userController.userID.string
-                      : "12313",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
-                ),
-              ),
+              // Center(
+              //   child: Text(
+              //
+              //         userController.userID.string.isNotEmpty
+              //         ? userController.userID.string
+              //         : "12313",
+              //     style: TextStyle(
+              //       fontWeight: FontWeight.w400,
+              //       fontSize: 16,
+              //       color: Colors.black54,
+              //     ),
+              //   ),
+              // ),
 
               SizedBox(height: 20),
 

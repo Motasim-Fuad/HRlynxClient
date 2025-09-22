@@ -4,6 +4,7 @@ import 'package:hr/app/common_widgets/button.dart';
 import 'package:hr/app/common_widgets/privacy_policy.dart' show PrivacyPolicy;
 import 'package:hr/app/common_widgets/text_field.dart';
 import 'package:hr/app/modules/foret_password/forget_password_view.dart';
+import 'package:hr/app/modules/log_in/apple_signup_controller.dart';
 import 'package:hr/app/modules/log_in/log_in_controller.dart';
 import 'package:hr/app/modules/sign_up/sign_up_view.dart' show SignUp;
 import 'package:hr/app/modules/terms_of_use/terms_of_use.dart' show TermsOfUse;
@@ -22,6 +23,7 @@ class LogInView extends StatefulWidget {
 class _LogInViewState extends State<LogInView> {
   late LogInController controller;
   late GoogleSignUpController googleSignUpController;
+  late AppleSignUpController appleSignUpController;
 
   @override
   void initState() {
@@ -34,10 +36,14 @@ class _LogInViewState extends State<LogInView> {
     if (Get.isRegistered<GoogleSignUpController>()) {
       Get.delete<GoogleSignUpController>();
     }
+   if (Get.isRegistered<AppleSignUpController>()) {
+      Get.delete<AppleSignUpController>();
+    }
 
     // Create fresh controllers
     controller = Get.put(LogInController(), permanent: false);
     googleSignUpController = Get.put(GoogleSignUpController(), permanent: false);
+    appleSignUpController = Get.put(AppleSignUpController(), permanent: false);
   }
 
   @override
@@ -213,7 +219,7 @@ class _LogInViewState extends State<LogInView> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () => print("Apple tapped"),
+                            onTap: () => appleSignUpController.handleAppleSignUp(),
                             child: Image.asset(AppImages.apple, height: 40),
                           ),
                           const SizedBox(width: 20),

@@ -15,38 +15,6 @@ class GoogleSignUpController extends GetxController {
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
 
-  // final RxList<Data> personaList = <Data>[].obs;
-  // final RxInt selectedIndex = 0.obs;
-  //
-  //
-  //
-  // void selectPersona(int index) {
-  //   selectedIndex.value = index;
-  // }
-  //
-  //
-  // Future<void> fetchPersonas() async {
-  //   try {
-  //     isLoading.value = true;
-  //     final response = await authRepo.getParsonaType();
-  //     print("📥 Raw persona response: $response");
-  //
-  //     final model = OnbordingModel.fromJson(response);
-  //     personaList.value = model.data ?? [];
-  //
-  //     if (personaList.isEmpty) {
-  //       print("⚠️ Persona list is empty after parsing");
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar("Error", e.toString());
-  //     print("❌ fetchPersonas error: $e");
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
-
-
   Future<void> handleGoogleSignUp() async {
     try {
       isLoading.value = true;
@@ -91,7 +59,7 @@ class GoogleSignUpController extends GetxController {
       };
 
 
-      final success = await authRepo.googleSignUpAndSetPersona(
+      final success = await authRepo.SocialSignUpAndSetPersona(
         email: email,
         name: name,
         provider: 'google',
