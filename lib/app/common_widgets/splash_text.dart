@@ -1,6 +1,6 @@
 
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:hr/app/utils/app_colors.dart';
 
 class SplashText extends StatelessWidget {
   const SplashText({super.key, required this.text});

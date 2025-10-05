@@ -1,11 +1,10 @@
 
+import 'package:HRlynx/app/modules/main_screen/main_screen_controller.dart';
+import 'package:HRlynx/app/modules/news/news_controller.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/main_screen/main_screen_controller.dart';
-import 'package:hr/app/modules/news/news_controller.dart';
-import 'package:hr/app/utils/app_colors.dart';
-import 'package:hr/app/utils/app_images.dart';
-
 import 'news_detail/news_detail_page_view.dart';
 
 class NewsView extends StatelessWidget {

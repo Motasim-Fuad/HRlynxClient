@@ -1,17 +1,18 @@
+import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
+import 'package:HRlynx/app/api_servies/token.dart';
+import 'package:HRlynx/app/api_servies/webSocketServices.dart';
+import 'package:HRlynx/app/common_widgets/customtooltip.dart';
+import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
+import 'package:HRlynx/app/modules/chat/widget/ai_guidance_widget.dart';
+import 'package:HRlynx/app/modules/chat/widget/chat_drawer.dart';
+import 'package:HRlynx/app/modules/chat/widget/chat_header.dart';
+import 'package:HRlynx/app/modules/chat/widget/chat_input_widget.dart';
+import 'package:HRlynx/app/modules/chat/widget/message_list_widget.dart';
+import 'package:HRlynx/app/modules/chat/widget/suggestions_widget.dart';
+import 'package:HRlynx/app/modules/chat/widget/typing_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/repository/auth_repo.dart';
-import 'package:hr/app/api_servies/token.dart';
-import 'package:hr/app/api_servies/webSocketServices.dart';
-import 'package:hr/app/common_widgets/customtooltip.dart';
-import 'package:hr/app/modules/chat/voice_service_controller.dart';
-import 'package:hr/app/modules/chat/widget/ai_guidance_widget.dart';
-import 'package:hr/app/modules/chat/widget/chat_drawer.dart';
-import 'package:hr/app/modules/chat/widget/chat_header.dart' show ChatHeader;
-import 'package:hr/app/modules/chat/widget/chat_input_widget.dart';
-import 'package:hr/app/modules/chat/widget/message_list_widget.dart';
-import 'package:hr/app/modules/chat/widget/suggestions_widget.dart';
-import 'package:hr/app/modules/chat/widget/typing_indicator.dart';
+
 
 import '../main_screen/main_screen_view.dart';
 import 'chat_controller.dart';

@@ -27,10 +27,11 @@
 
 
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/firebase_message.dart';
-import 'package:hr/app/api_servies/notification_services.dart';
-import 'package:hr/app/api_servies/token.dart';
-import 'package:hr/app/modules/main_screen/main_screen_view.dart';
+
+import 'api_servies/firebase_message.dart';
+import 'api_servies/notification_services.dart';
+import 'api_servies/token.dart' show TokenStorage;
+import 'modules/main_screen/main_screen_view.dart' show MainScreen;
 import 'modules/splash_screen/splash_screen.dart' show SplashScreen;
 
 

@@ -1,9 +1,10 @@
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/modules/splash_screen/second_splash.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/modules/splash_screen/second_splash.dart';
-import 'package:hr/app/utils/app_colors.dart';
-import 'package:hr/app/utils/app_images.dart' show AppImages;
+
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});

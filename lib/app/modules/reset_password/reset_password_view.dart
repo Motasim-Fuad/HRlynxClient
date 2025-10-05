@@ -1,8 +1,8 @@
 
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/modules/reset_password/reset_password_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/modules/reset_password/reset_password_controller.dart' show ResetPasswordController;
 
 class ResetPassword extends StatelessWidget {
   final ResetPasswordController controller = Get.put(ResetPasswordController());

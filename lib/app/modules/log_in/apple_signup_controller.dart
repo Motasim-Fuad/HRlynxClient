@@ -1,13 +1,13 @@
+import 'package:HRlynx/app/api_servies/firebase_message.dart';
+import 'package:HRlynx/app/api_servies/notification_services.dart';
+import 'package:HRlynx/app/modules/log_in/user_controller.dart';
+import 'package:HRlynx/app/modules/payment/subcription_view.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:math';
-import 'package:hr/app/api_servies/firebase_message.dart'; // FCM service import
-import 'package:hr/app/api_servies/notification_services.dart';
-import 'package:hr/app/modules/log_in/user_controller.dart' show UserController;
-import 'package:hr/app/modules/payment/subcription_view.dart' show SubscriptionScreen;
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 

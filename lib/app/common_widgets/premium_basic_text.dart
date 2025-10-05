@@ -1,7 +1,8 @@
+import 'package:HRlynx/app/utils/app_colors.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:hr/app/utils/app_colors.dart' show AppColors;
-import 'package:hr/app/utils/app_images.dart';
+
 
 class PremiumBasicText extends StatelessWidget {
   const PremiumBasicText({super.key, required this.tittle});

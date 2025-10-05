@@ -1,9 +1,9 @@
+import 'package:HRlynx/app/api_servies/firebase_message.dart';
+import 'package:HRlynx/app/api_servies/notification_services.dart';
+import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/firebase_message.dart';
-import 'package:hr/app/api_servies/notification_services.dart';
-import 'package:hr/app/modules/log_in/user_controller.dart' show UserController;
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 import '../main_screen/main_screen_view.dart';

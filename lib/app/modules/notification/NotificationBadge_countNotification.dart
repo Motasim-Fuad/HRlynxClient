@@ -1,7 +1,7 @@
+import 'package:HRlynx/app/api_servies/notification_services.dart';
+import 'package:HRlynx/app/modules/profile/logoutHelper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/notification_services.dart' show NotificationService;
-import 'package:hr/app/modules/profile/logoutHelper.dart' show LogoutController;
 import 'notification_view.dart';
 
 // Notification Badge Widget for AppBar

@@ -1,9 +1,9 @@
+import 'package:HRlynx/app/api_servies/api_Constant.dart';
+import 'package:HRlynx/app/api_servies/neteork_api_services.dart';
+import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
+import 'package:HRlynx/app/model/privacy_policy_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/api_Constant.dart';
-import 'package:hr/app/api_servies/neteork_api_services.dart';
-import 'package:hr/app/api_servies/repository/auth_repo.dart';
-import 'package:hr/app/model/privacy_policy_model.dart';
 class PrivacyController extends GetxController {
   final AuthRepository _authRepo = AuthRepository();
 

@@ -1,6 +1,6 @@
+import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/notification_services.dart';
 
 class NotificationView extends StatelessWidget {
   const NotificationView({Key? key}) : super(key: key);

@@ -1,6 +1,6 @@
 
+import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/log_in/log_in_view.dart';
 import '../../api_servies/repository/auth_repo.dart';
 
 class ResetPasswordController extends GetxController {

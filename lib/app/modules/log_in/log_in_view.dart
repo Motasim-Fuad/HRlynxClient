@@ -1,17 +1,16 @@
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
+import 'package:HRlynx/app/common_widgets/text_field.dart';
+import 'package:HRlynx/app/modules/foret_password/forget_password_view.dart';
+import 'package:HRlynx/app/modules/sign_up/sign_up_view.dart';
+import 'package:HRlynx/app/modules/terms_of_use/terms_of_use.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/common_widgets/privacy_policy.dart' show PrivacyPolicy;
-import 'package:hr/app/common_widgets/text_field.dart';
-import 'package:hr/app/modules/foret_password/forget_password_view.dart';
-import 'package:hr/app/modules/log_in/apple_signup_controller.dart';
-import 'package:hr/app/modules/log_in/log_in_controller.dart';
-import 'package:hr/app/modules/sign_up/sign_up_view.dart' show SignUp;
-import 'package:hr/app/modules/terms_of_use/terms_of_use.dart' show TermsOfUse;
-import 'package:hr/app/utils/app_colors.dart' show AppColors;
-import 'package:hr/app/utils/app_images.dart';
-
+import 'apple_signup_controller.dart';
 import 'googleSingUpController.dart';
+import 'log_in_controller.dart';
 
 class LogInView extends StatefulWidget {
   const LogInView({super.key});

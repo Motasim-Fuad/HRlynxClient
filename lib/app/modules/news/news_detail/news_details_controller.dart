@@ -1,12 +1,12 @@
+import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
+import 'package:HRlynx/app/api_servies/repository/news_repo.dart';
+import 'package:HRlynx/app/model/news/affiliate_model.dart';
+import 'package:HRlynx/app/model/news/news_details_model.dart';
+import 'package:HRlynx/app/modules/news/news_controller.dart';
+import 'package:HRlynx/app/modules/news/news_detail/affilate_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
-import 'package:hr/app/api_servies/repository/auth_repo.dart';
-import 'package:hr/app/api_servies/repository/news_repo.dart';
-import 'package:hr/app/model/news/affiliate_model.dart';
-import 'package:hr/app/model/news/news_details_model.dart';
-import 'package:hr/app/modules/news/news_controller.dart';
-import 'package:hr/app/modules/news/news_detail/affilate_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class NewsDetailsViewModel extends GetxController {

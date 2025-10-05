@@ -1,9 +1,10 @@
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/text_field.dart';
+import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
+import 'package:HRlynx/app/modules/sign_up/sign_up_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart' show Button;
-import 'package:hr/app/common_widgets/text_field.dart';
-import 'package:hr/app/modules/log_in/log_in_view.dart';
-import 'package:hr/app/modules/sign_up/sign_up_controller.dart' show SignUpController;
+
 
 import '../../utils/app_colors.dart' show AppColors;
 

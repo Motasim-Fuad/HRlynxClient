@@ -1,6 +1,6 @@
+import 'package:HRlynx/app/api_servies/repository/news_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/repository/news_repo.dart' show NewsRepository;
 
 
 class NewsController extends GetxController {

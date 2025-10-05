@@ -1,10 +1,11 @@
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/premium_basic_text.dart';
+import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/common_widgets/premium_basic_text.dart' show PremiumBasicText;
-import 'package:hr/app/modules/main_screen/main_screen_view.dart';
-import 'package:hr/app/utils/app_colors.dart' show AppColors;
-import 'package:hr/app/utils/app_images.dart';
+
 
 class CongratulationView extends StatelessWidget {
   const CongratulationView({super.key});

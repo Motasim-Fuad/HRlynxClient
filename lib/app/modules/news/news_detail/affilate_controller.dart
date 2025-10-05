@@ -1,7 +1,8 @@
+import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
+import 'package:HRlynx/app/model/news/affiliate_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/repository/auth_repo.dart';
-import 'package:hr/app/model/news/affiliate_model.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 class AffiliateProductsController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();

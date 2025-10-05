@@ -1,10 +1,9 @@
 import 'dart:async';
+import 'package:HRlynx/app/api_servies/firebase_message.dart';
+import 'package:HRlynx/app/api_servies/notification_services.dart';
+import 'package:HRlynx/app/modules/payment/subcription_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/firebase_message.dart';
-import 'package:hr/app/api_servies/notification_services.dart';
-
-import 'package:hr/app/modules/payment/subcription_view.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 import '../../model/onbordingModel.dart';

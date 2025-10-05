@@ -1,9 +1,10 @@
+import 'package:HRlynx/app/api_servies/api_Constant.dart';
+import 'package:HRlynx/app/api_servies/neteork_api_services.dart';
+import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
+import 'package:HRlynx/app/model/tarmsAndConditionModel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/api_Constant.dart' show ApiConstants;
-import 'package:hr/app/api_servies/neteork_api_services.dart';
-import 'package:hr/app/api_servies/repository/auth_repo.dart';
-import 'package:hr/app/model/tarmsAndConditionModel.dart';
+
 
 class TermsController extends GetxController {
   final AuthRepository _authRepo = AuthRepository();

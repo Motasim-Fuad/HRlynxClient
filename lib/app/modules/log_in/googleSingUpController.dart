@@ -1,11 +1,11 @@
 
+import 'package:HRlynx/app/api_servies/firebase_message.dart';
+import 'package:HRlynx/app/api_servies/notification_services.dart';
+import 'package:HRlynx/app/modules/log_in/user_controller.dart';
+import 'package:HRlynx/app/modules/payment/subcription_view.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:hr/app/api_servies/firebase_message.dart'; // ✅ FCM service import করুন
-import 'package:hr/app/api_servies/notification_services.dart';
-import 'package:hr/app/modules/log_in/user_controller.dart' show UserController;
-import 'package:hr/app/modules/payment/subcription_view.dart' show SubscriptionScreen;
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 import '../../model/onbordingModel.dart'; // Import TokenStorage

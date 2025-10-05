@@ -1,10 +1,10 @@
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/splash_text.dart';
+import 'package:HRlynx/app/modules/splash_screen/third_splash.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/common_widgets/splash_text.dart';
-import 'package:hr/app/modules/splash_screen/third_splash.dart';
-import 'package:hr/app/utils/app_colors.dart';
-import 'package:hr/app/utils/app_images.dart';
 
 class SecondSplash extends StatelessWidget {
   const SecondSplash({super.key});

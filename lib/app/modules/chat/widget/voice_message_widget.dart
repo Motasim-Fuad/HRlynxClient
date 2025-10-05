@@ -1,6 +1,6 @@
+import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/chat/voice_service_controller.dart';
 import 'dart:math' as math;
 
 class VoiceMessageBubble extends StatefulWidget {

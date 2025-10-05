@@ -1,7 +1,7 @@
+import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
+import 'package:HRlynx/app/model/onbordingModel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/api_servies/repository/auth_repo.dart';
-import 'package:hr/app/model/onbordingModel.dart';
 
 class HrRoleController extends GetxController {
   var selectedIndex = 0.obs;

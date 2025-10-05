@@ -1,9 +1,9 @@
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/text_field.dart';
+import 'package:HRlynx/app/modules/foret_password/forget_password_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/common_widgets/text_field.dart';
 
-import 'package:hr/app/modules/foret_password/forget_password_controller.dart' show ForgetPasswordController;
 
 class ForgetPassword extends StatelessWidget {
   const ForgetPassword({super.key});

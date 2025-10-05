@@ -1,9 +1,9 @@
+import 'package:HRlynx/app/modules/chat/widget/sessionTitle.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../api_servies/repository/auth_repo.dart';
 import '../../../model/chat/sessionHistoryModel.dart';
 import '../chat_controller.dart';
-import 'package:hr/app/modules/chat/widget/sessionTitle.dart' show SessionHistoryTile;
 
 // Separate widget for history list to avoid Obx issues
 class HistoryListWidget extends StatelessWidget {

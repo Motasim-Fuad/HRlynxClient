@@ -1,6 +1,7 @@
 
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:hr/app/utils/app_colors.dart';
+
 
 class Button extends StatelessWidget {
   final String title;

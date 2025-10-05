@@ -1,0 +1,76 @@
+{
+  "identifier" : "B8E2D84D",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21441285",
+      "localizations" : [],
+      "name" : "Explorer Pro Subscriptions",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "14.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6736950454",
+          "introductoryOffer" : {
+            "internalID" : "D87E4C0D",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Monthly subscription to Explorer Pro",
+              "displayName" : "Explorer Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "explorer_pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Explorer Pro Monthly",
+          "subscriptionGroupID" : "21441285",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "149.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6736950789",
+          "introductoryOffer" : {
+            "internalID" : "E98F5D1E",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Yearly subscription to Explorer Pro",
+              "displayName" : "Explorer Pro Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "explorer_pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Explorer Pro Yearly",
+          "subscriptionGroupID" : "21441285",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

@@ -1,7 +1,6 @@
+import 'package:HRlynx/app/modules/forgotPassOtpVerification/forgotPassOtpView.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/forgotPassOtpVerification/forgotPassOtpView.dart';
-
 import '../../api_servies/repository/auth_repo.dart';
 
 class ForgetPasswordController extends GetxController {

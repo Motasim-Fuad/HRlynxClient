@@ -1,13 +1,12 @@
+import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
+import 'package:HRlynx/app/modules/congratulaion_screen/congratulation_view.dart';
+import 'package:HRlynx/app/modules/payment/payment_controller.dart';
+import 'package:HRlynx/app/modules/terms_of_use/terms_of_use.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/common_widgets/privacy_policy.dart';
-import 'package:hr/app/modules/congratulaion_screen/congratulation_view.dart';
-import 'package:hr/app/modules/main_screen/main_screen_view.dart';
-import 'package:hr/app/modules/payment/payment_controller.dart';
-import 'package:hr/app/modules/terms_of_use/terms_of_use.dart';
-import 'package:hr/app/utils/app_colors.dart';
-import 'package:hr/app/utils/app_images.dart';
+
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});

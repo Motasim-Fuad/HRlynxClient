@@ -1,19 +1,19 @@
+import 'dart:io';
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
+import 'package:HRlynx/app/modules/change_password/change_password.dart';
+import 'package:HRlynx/app/modules/home/user_isSubcriptionController.dart';
+import 'package:HRlynx/app/modules/log_in/user_controller.dart';
+import 'package:HRlynx/app/modules/notification/notification_view.dart';
+import 'package:HRlynx/app/modules/payment/subcription_view.dart';
+import 'package:HRlynx/app/modules/profile/profile_controller.dart';
+import 'package:HRlynx/app/modules/terms_of_use/terms_of_use.dart';
+import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/common_widgets/privacy_policy.dart';
-import 'package:hr/app/modules/change_password/change_password.dart' show ChangePassword;
-import 'package:hr/app/modules/home/chat_al_ai_persona_controller.dart';
-import 'package:hr/app/modules/home/user_isSubcriptionController.dart';
-import 'package:hr/app/modules/log_in/user_controller.dart';
-import 'package:hr/app/modules/notification/notification_view.dart';
-import 'package:hr/app/modules/payment/subcription_view.dart';
-import 'package:hr/app/modules/profile/UploadData/uploadDataView.dart';
-import 'package:hr/app/modules/profile/profile_controller.dart' show ProfileController;
-import 'package:hr/app/modules/terms_of_use/terms_of_use.dart';
-import 'package:hr/app/utils/app_images.dart';
+import 'UploadData/uploadDataView.dart';
 import 'logoutHelper.dart';
 
 class ProfileView extends StatelessWidget {
@@ -122,39 +122,12 @@ class ProfileView extends StatelessWidget {
                 ),
               ),
 
-              // Center(
-              //   child: Text(
-              //
-              //         userController.userID.string.isNotEmpty
-              //         ? userController.userID.string
-              //         : "12313",
-              //     style: TextStyle(
-              //       fontWeight: FontWeight.w400,
-              //       fontSize: 16,
-              //       color: Colors.black54,
-              //     ),
-              //   ),
-              // ),
-
               SizedBox(height: 20),
 
-              // Subscription Status Section
+              // Subscription Status Section - SIMPLIFIED
               Obx(() {
-                // Show Subscribe Button - if not subscribed
-                if (!subController.isSubscribed.value && !subController.canReactivateSubscription) {
-                  return Column(
-                    children: [
-                      Button(
-                        title: 'Subscribe Now',
-                        onTap: () => Get.to(SubscriptionScreen()),
-                      ),
-                      SizedBox(height: 20),
-                    ],
-                  );
-                }
-
-                // Show Active Subscription Status - if fully subscribed
-                else if (subController.isSubscribed.value && subController.canCancelSubscription) {
+                // Show subscription status if subscribed
+                if (subController.isSubscribed.value) {
                   return Column(
                     children: [
                       Container(
@@ -202,22 +175,37 @@ class ProfileView extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                             SizedBox(height: 12),
-                            ElevatedButton(
-                              onPressed: () => _showCancelSubscriptionDialog(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.red.shade600,
-                                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                            // Info about managing subscription
+                            Container(
+                              padding: EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text(
-                                'Cancel Subscription',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.white, size: 20),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'To manage or cancel your subscription, please visit:',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(
+                                    Platform.isIOS ? 'App Store → Subscriptions' : 'Play Store → Subscriptions',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -228,158 +216,18 @@ class ProfileView extends StatelessWidget {
                   );
                 }
 
-                // Show Reactivation Option - if canceled but still in grace period
-                else if (subController.canReactivateSubscription) {
+                // Show Subscribe button if not subscribed
+                else {
                   return Column(
                     children: [
-                      Container(
-                        width: double.infinity,
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.orange.shade400, Colors.orange.shade600],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.orange.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.refresh,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Subscription Canceled',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              subController.subscriptionDisplayMessage,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 12),
-                            // Replace the reactivation button onPressed handler in ProfileView
-
-                            // Replace the reactivation button onPressed handler in your ProfileView
-
-                            ElevatedButton(
-                              onPressed: () async {
-                                // Show loading dialog
-                                Get.dialog(
-                                  Center(
-                                    child: Card(
-                                      child: Padding(
-                                        padding: EdgeInsets.all(20),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            CircularProgressIndicator(),
-                                            SizedBox(height: 16),
-                                            Text('Reactivating subscription...'),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  barrierDismissible: false,
-                                );
-
-                                try {
-                                  // Call the reactivate subscription API
-                                  bool success = await subController.reactivateSubscription();
-
-                                  Get.back(); // Close loading dialog
-
-                                  if (success) {
-                                    // Refresh home page data
-                                    try {
-                                      final homeController = Get.find<ChatAllAiPersona>();
-                                      await homeController.refreshAfterSubscriptionChange();
-                                    } catch (e) {
-                                      print("Home controller not found, data will refresh on next visit: $e");
-                                    }
-
-                                    // Show success message
-                                    Get.snackbar(
-                                      'Subscription Reactivated!',
-                                      'Your subscription has been reactivated successfully. You now have full access to all personas.',
-                                      snackPosition: SnackPosition.TOP,
-                                      backgroundColor: Colors.green,
-                                      colorText: Colors.white,
-                                      duration: Duration(seconds: 4),
-                                      icon: Icon(Icons.check_circle, color: Colors.white),
-                                    );
-                                  } else {
-                                    // Show error message if reactivation failed
-                                    Get.snackbar(
-                                      'Reactivation Failed',
-                                      'Failed to reactivate subscription. Please try again or contact support.',
-                                      snackPosition: SnackPosition.TOP,
-                                      backgroundColor: Colors.red,
-                                      colorText: Colors.white,
-                                      duration: Duration(seconds: 4),
-                                      icon: Icon(Icons.error, color: Colors.white),
-                                    );
-                                  }
-                                } catch (e) {
-                                  Get.back(); // Close loading dialog if still open
-
-                                  // Show error message
-                                  Get.snackbar(
-                                    'Error',
-                                    'An error occurred while reactivating subscription. Please try again.',
-                                    snackPosition: SnackPosition.TOP,
-                                    backgroundColor: Colors.red,
-                                    colorText: Colors.white,
-                                    duration: Duration(seconds: 3),
-                                    icon: Icon(Icons.error, color: Colors.white),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                foregroundColor: Colors.orange.shade600,
-                                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: Text(
-                                'Reactivate Subscription',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      Button(
+                        title: 'Subscribe Now',
+                        onTap: () => Get.to(SubscriptionScreen()),
                       ),
                       SizedBox(height: 20),
                     ],
                   );
                 }
-
-                return SizedBox.shrink();
               }),
 
               // Menu Items
@@ -388,7 +236,6 @@ class ProfileView extends StatelessWidget {
                 title: 'Notifications',
                 onTap: () => Get.to(NotificationView()),
               ),
-
 
               _buildMenuItem(
                 icon: Icons.local_police_outlined,
@@ -420,151 +267,6 @@ class ProfileView extends StatelessWidget {
           ),
         );
       }),
-    );
-  }
-
-// IMPROVED: Updated cancel subscription dialog method for ProfileView
-  void _showCancelSubscriptionDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: Column(
-          children: [
-            Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.orange,
-              size: 48,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Cancel Subscription?',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Are you sure you want to cancel your subscription?',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: Colors.black87, fontWeight: FontWeight.w500),
-            ),
-            SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.info_outline, color: Colors.orange.shade600, size: 20),
-                  SizedBox(height: 8),
-                  Text(
-                    'After cancellation, you will only have access to your selected persona from onboarding until your current period ends.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.orange.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20,),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop(); // Close dialog
-
-                // Show loading indicator
-                Get.dialog(
-                  Center(
-                    child: Card(
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
-                            Text('Cancelling subscription...'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  barrierDismissible: false,
-                );
-
-                try {
-                  // Cancel subscription
-                  await subController.cancelSubscription();
-
-                  // Close loading dialog
-
-                  // ADDED: Handle persona access changes after cancellation
-                  try {
-                    final homeController = Get.find<ChatAllAiPersona>();
-                    await homeController.handleSubscriptionCancellation();
-                    await homeController.refreshAfterSubscriptionChange();
-                  } catch (e) {
-                    print("Home controller not found, data will refresh on next visit: $e");
-                  }
-
-                  // Show success message with more specific information
-                  Get.snackbar(
-                    'Subscription Cancelled',
-                    'Your subscription has been cancelled. You now have access to your selected persona only until your current period ends.',
-                    snackPosition: SnackPosition.TOP,
-                    backgroundColor: Colors.orange,
-                    colorText: Colors.white,
-                    duration: Duration(seconds: 5),
-                    icon: Icon(Icons.info_outline, color: Colors.white),
-                  );
-
-                  Get.back();
-
-                } catch (e) {
-                  Get.back(); // Close loading dialog
-                  Get.snackbar(
-                    'Error',
-                    'Failed to cancel subscription. Please try again or contact support.',
-                    snackPosition: SnackPosition.TOP,
-                    backgroundColor: Colors.red,
-                    colorText: Colors.white,
-                    duration: Duration(seconds: 4),
-                    icon: Icon(Icons.error, color: Colors.white),
-                  );
-                }
-              },
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Text("Yes, Cancel", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-            SizedBox(height: 20,),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: Text("Keep Subscription", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-            ),
-          ],
-        ),
-
-      ),
     );
   }
 

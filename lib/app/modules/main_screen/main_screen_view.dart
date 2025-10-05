@@ -1,11 +1,11 @@
 
+import 'package:HRlynx/app/modules/home/home_view.dart';
+import 'package:HRlynx/app/modules/main_screen/main_screen_controller.dart';
+import 'package:HRlynx/app/modules/news/news_view.dart';
+import 'package:HRlynx/app/modules/profile/porfile_view.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/home/home_view.dart';
-import 'package:hr/app/modules/main_screen/main_screen_controller.dart';
-import 'package:hr/app/modules/news/news_view.dart';
-import 'package:hr/app/modules/profile/porfile_view.dart';
-import 'package:hr/app/utils/app_colors.dart' show AppColors;
 
 class MainScreen extends StatelessWidget {
   final BottomNavController navController = Get.put(BottomNavController());

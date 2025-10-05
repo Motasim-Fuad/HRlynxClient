@@ -1,10 +1,10 @@
 
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/modules/otp_verification/otp_verification_controller.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For input formatters
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/modules/otp_verification/otp_verification_controller.dart';
-import 'package:hr/app/utils/app_colors.dart';
 
 
 class OtpVerificationScreen extends StatelessWidget {

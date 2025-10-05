@@ -1,9 +1,9 @@
+import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
+import 'package:HRlynx/app/modules/chat/widget/voice_message_widget.dart';
+import 'package:HRlynx/app/utils/chat_utils.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/chat/voice_service_controller.dart';
-import 'package:hr/app/modules/chat/widget/voice_message_widget.dart';
-import 'package:hr/app/utils/chat_utils.dart';
 import '../../../api_servies/api_Constant.dart';
 import '../chat_controller.dart';
 

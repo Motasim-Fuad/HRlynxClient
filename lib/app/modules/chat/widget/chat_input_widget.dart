@@ -1,7 +1,7 @@
+import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
+import 'package:HRlynx/app/modules/chat/widget/voice_recording_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/chat/voice_service_controller.dart';
-import 'package:hr/app/modules/chat/widget/voice_recording_widget.dart' show VoiceRecordingWidget;
 import '../chat_controller.dart';
 
 class ChatInputWidget extends StatelessWidget {

@@ -1,8 +1,9 @@
 
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart' show Button;
-import 'package:hr/app/modules/main_screen/main_screen_view.dart';
+
 
 class ForgotPasswordHome extends StatelessWidget {
   const ForgotPasswordHome({super.key});

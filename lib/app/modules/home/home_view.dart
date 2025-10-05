@@ -1,9 +1,9 @@
+import 'package:HRlynx/app/modules/home/user_isSubcriptionController.dart';
+import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart' show CachedNetworkImage;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/home/user_isSubcriptionController.dart' show UserIsSubcribedController;
-import 'package:hr/app/modules/onboarding/onboarding_controller.dart';
-import 'package:hr/app/modules/profile/profile_controller.dart';
+
 import '../../utils/app_colors.dart';
 import '../../utils/app_images.dart';
 import '../../modules/news/news_view.dart';
@@ -16,12 +16,13 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     final ProfileController profileController = Get.put(ProfileController());
     final UserIsSubcribedController is_SubcribedController = Get.put(UserIsSubcribedController());
+    final controller = Get.put(ChatAllAiPersona());
 
+    // ✅ FIXED: শুধু একবার call করুন, এটাই সব handle করবে
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      is_SubcribedController.fetchIsSubcriptionData();
+      is_SubcribedController.checkAndUpdateSubscriptionStatus();
     });
 
-    final controller = Get.put(ChatAllAiPersona());
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
@@ -141,16 +142,29 @@ class HomeView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // Persona Grid
+
+                // ✅ Persona Grid with subscription check
                 Obx(() {
-                  if (controller.isLoading.value) {
-                    return const Center(child: CircularProgressIndicator());
+                  // Show loading for both persona and subscription
+                  if (controller.isLoading.value || is_SubcribedController.isLoading.value) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
                   }
 
                   if (controller.personaList.isEmpty) {
-                    return const Center(child: Text('No personas available'));
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(40),
+                        child: Text('No personas available'),
+                      ),
+                    );
                   }
 
+                  // Debug logs
                   print("📊 Subscription status in HomeView:");
                   print("   isActive: ${is_SubcribedController.isActive.value}");
                   print("   isSubscribed: ${is_SubcribedController.isSubscribed.value}");
@@ -160,17 +174,33 @@ class HomeView extends StatelessWidget {
 
                   return FutureBuilder<List<Widget>>(
                     future: _buildPersonaGrid(
-                        controller,
-                        is_SubcribedController,
-                        isTablet
+                      controller,
+                      is_SubcribedController,
+                      isTablet,
                     ),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(40),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
                       }
 
                       if (snapshot.hasError) {
-                        return Center(child: Text('Error loading personas'));
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(40),
+                            child: Column(
+                              children: [
+                                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                                const SizedBox(height: 10),
+                                Text('Error loading personas: ${snapshot.error}'),
+                              ],
+                            ),
+                          ),
+                        );
                       }
 
                       return GridView.count(
@@ -194,7 +224,7 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // IMPROVED: Build persona grid with better accessibility logic
+  // Build persona grid with subscription check
   Future<List<Widget>> _buildPersonaGrid(
       ChatAllAiPersona controller,
       UserIsSubcribedController is_SubcribedController,
@@ -206,7 +236,7 @@ class HomeView extends StatelessWidget {
       final persona = controller.personaList[index];
       final personaId = persona.id ?? 0;
 
-      // Check if this persona is accessible (await the async method)
+      // ✅ Check if this persona is accessible
       bool isPersonaActive = await is_SubcribedController.isPersonaAccessible(personaId);
 
       print("🎭 Persona ${persona.title} (ID: $personaId) - Active: $isPersonaActive");
@@ -220,7 +250,7 @@ class HomeView extends StatelessWidget {
             } else {
               print("❌ Persona not accessible: ${persona.title}");
 
-              // IMPROVED: Show different messages based on subscription status
+              // Show appropriate message based on subscription status
               String title = 'Access Restricted';
               String message = 'This persona is not available';
               Color backgroundColor = Colors.orange;
@@ -249,7 +279,7 @@ class HomeView extends StatelessWidget {
                 snackPosition: SnackPosition.TOP,
                 backgroundColor: backgroundColor,
                 colorText: Colors.white,
-                duration: Duration(seconds: 3),
+                duration: const Duration(seconds: 3),
                 icon: Icon(icon, color: Colors.white),
               );
             }
@@ -266,7 +296,7 @@ class HomeView extends StatelessWidget {
                 BoxShadow(
                   color: isPersonaActive ? Colors.black12 : Colors.black.withOpacity(0.05),
                   blurRadius: isPersonaActive ? 4 : 2,
-                  offset: Offset(0, 2),
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -295,13 +325,13 @@ class HomeView extends StatelessWidget {
                             color: Colors.grey,
                           ),
                         ),
-                        // IMPROVED: Better overlay for locked personas
+                        // Lock overlay for inaccessible personas
                         if (!isPersonaActive)
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.7),
-                                borderRadius: BorderRadius.only(
+                                borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(10),
                                   topRight: Radius.circular(10),
                                 ),
@@ -319,14 +349,14 @@ class HomeView extends StatelessWidget {
                                       color: Colors.white,
                                       size: 28,
                                     ),
-                                    SizedBox(height: 4),
+                                    const SizedBox(height: 4),
                                     Text(
                                       is_SubcribedController.canReactivateSubscription
                                           ? 'Reactivate'
                                           : is_SubcribedController.isCanceled.value
                                           ? 'Limited'
                                           : 'Subscribe',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -368,7 +398,6 @@ class HomeView extends StatelessWidget {
   // Build Profile Picture Widget
   Widget _buildProfilePicture(ProfileController profileController) {
     if (profileController.userProfilePicture.value.isEmpty) {
-      // No profile picture - show default avatar
       return Container(
         width: 40,
         height: 40,
@@ -387,7 +416,6 @@ class HomeView extends StatelessWidget {
       );
     }
 
-    // Has profile picture URL - use CachedNetworkImage
     return CachedNetworkImage(
       imageUrl: profileController.userProfilePicture.value,
       width: 40,
@@ -411,7 +439,7 @@ class HomeView extends StatelessWidget {
         ),
       ),
       errorWidget: (context, url, error) {
-        print('❌ Failed to load profile image in HomeView: $error');
+        print('❌ Failed to load profile image: $error');
         return Container(
           width: 40,
           height: 40,

@@ -1,10 +1,9 @@
 
+import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/text_field.dart';
+import 'package:HRlynx/app/modules/change_password/changePasswordController.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/common_widgets/button.dart';
-import 'package:hr/app/common_widgets/text_field.dart';
-import 'package:hr/app/modules/change_password/changePasswordController.dart';
-
 class ChangePassword extends StatelessWidget {
    ChangePassword({super.key});
   final Changepasswordcontroller controller = Get.put(Changepasswordcontroller());

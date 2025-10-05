@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:hr/app/modules/chat/voice_service_controller.dart' show VoiceService;
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/webSocketServices.dart';
 import '../../api_servies/token.dart';
