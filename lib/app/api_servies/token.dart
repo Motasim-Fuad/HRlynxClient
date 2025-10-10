@@ -13,6 +13,9 @@ class TokenStorage {
   static const _resetAccessTokenKey = 'reset_access_token';
   static const _resetRefreshTokenKey = 'reset_refresh_token';
 
+  // ✅ Subscription check flag
+  static const _subscriptionCheckDoneKey = 'subscription_check_done';
+
   /// ===== LOGIN TOKENS =====
   static Future<void> saveLoginTokens(String accessToken, String refreshToken) async {
     final prefs = await SharedPreferences.getInstance();
@@ -107,6 +110,45 @@ class TokenStorage {
     }
   }
 
+  /// ===== SUBSCRIPTION CHECK FLAG (NEW) =====
+
+  // Save subscription check done flag
+  static Future<void> saveSubscriptionCheckDone(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_subscriptionCheckDoneKey, value);
+      print('✅ Subscription check done flag saved: $value');
+    } catch (e) {
+      print('❌ Error saving subscription check done flag: $e');
+    }
+  }
+
+  // Get subscription check done flag
+  static Future<bool?> getSubscriptionCheckDone() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final value = prefs.getBool(_subscriptionCheckDoneKey);
+      print('📋 Subscription check done flag: $value');
+      return value;
+    } catch (e) {
+      print('❌ Error getting subscription check done flag: $e');
+      return null;
+    }
+  }
+
+  // Clear subscription check done flag
+  static Future<void> clearSubscriptionCheckFlag() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_subscriptionCheckDoneKey);
+      print('✅ Subscription check flag cleared');
+    } catch (e) {
+      print('❌ Error clearing subscription check flag: $e');
+    }
+  }
+
+  /// ===== CLEAR TOKENS =====
+
   //Clear login token
   static Future<void> clearLoginTokens() async {
     final prefs = await SharedPreferences.getInstance();
@@ -114,7 +156,6 @@ class TokenStorage {
     await prefs.remove(_loginRefreshTokenKey);
   }
 
-  /// ===== CLEAR TOKENS =====
   static Future<void> clearAllTokens() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_loginAccessTokenKey);
@@ -123,6 +164,7 @@ class TokenStorage {
     await prefs.remove(_otpRefreshTokenKey);
     await prefs.remove(_resetAccessTokenKey);
     await prefs.remove(_resetRefreshTokenKey);
-    await prefs.remove(_selectedPersonaIdKey);
+    // ✅ Also clear subscription check flag on logout
+    await prefs.remove(_subscriptionCheckDoneKey);
   }
 }

@@ -1,3 +1,4 @@
+import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
 import 'package:HRlynx/app/modules/congratulaion_screen/congratulation_view.dart';
 import 'package:HRlynx/app/modules/payment/payment_controller.dart';
@@ -565,7 +566,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
 
   Widget _buildSkipTrialText() {
     return GestureDetector(
-      onTap: () => Get.to(() => CongratulationView()),
+      onTap: () async {
+        // ✅ User skipped subscription, mark flag as done
+        await TokenStorage.saveSubscriptionCheckDone(true);
+
+        Get.offAll(() => CongratulationView());
+      },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         child: Text(

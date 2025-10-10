@@ -1,5 +1,6 @@
 // Updated LogoutController
 import 'package:HRlynx/app/api_servies/notification_services.dart';
+import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:HRlynx/app/modules/splash_screen/splash_screen.dart';
 import 'package:get/get.dart';
 import '../../api_servies/repository/auth_repo.dart';
@@ -22,12 +23,11 @@ class LogoutController extends GetxController {
       // Clear all tokens
       await TokenStorage.clearAllTokens();
       await TokenStorage.clearAllPersonaSessions();
-      //await TokenStorage.clearSelectedPersonaId();
 
       Get.snackbar("Success", "Logged out successfully");
 
       // Navigate to login screen
-      Get.offAll(() => SplashScreen());
+      Get.offAll(() => LogInView());
 
     } catch (e) {
       Get.snackbar("Error", "Logout failed: ${e.toString()}");

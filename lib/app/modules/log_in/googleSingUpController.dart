@@ -82,6 +82,9 @@ class GoogleSignUpController extends GetxController {
         await initializeNotificationService();
         await sendFCMTokenToBackend();
 
+        // ✅ Reset subscription check flag for first time user
+        await TokenStorage.clearSubscriptionCheckFlag();
+
         Get.snackbar("Success", "Google sign-in complete and persona set.");
         Get.to(SubscriptionScreen());
       } else {

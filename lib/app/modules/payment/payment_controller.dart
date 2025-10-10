@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:HRlynx/app/api_servies/api_Constant.dart';
 import 'package:HRlynx/app/api_servies/neteork_api_services.dart';
+import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/modules/congratulaion_screen/congratulation_view.dart';
 import 'package:HRlynx/app/modules/home/user_isSubcriptionController.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
@@ -357,6 +358,9 @@ class PaymentController extends GetxController {
         final response = await checkSubscriptionStatus();
 
         if (response != null && response['success'] == true) {
+          // ✅ User subscribed successfully, mark flag as done
+          await TokenStorage.saveSubscriptionCheckDone(true);
+
           // ✅ Refresh UserIsSubcribedController
           try {
             final subController = Get.find<UserIsSubcribedController>();

@@ -34,7 +34,7 @@ class CongratulationView extends StatelessWidget {
           children: [
             SizedBox(height: screenHeight * 0.17),
             Image(image: AssetImage(AppImages.coffee)),
-            
+
             Text("Congratulations!",style: TextStyle(fontWeight: FontWeight.bold,fontSize: screenWidth *0.08),),
             SizedBox(height: screenHeight *0.05,),
             // Benefits Unlocked Title
@@ -48,9 +48,9 @@ class CongratulationView extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-      
+
             SizedBox(height: screenHeight * 0.02),
-      
+
             // Benefits List
             Container(
               constraints: BoxConstraints(
@@ -68,9 +68,9 @@ class CongratulationView extends StatelessWidget {
                 ],
               ),
             ),
-      
+
             SizedBox(height: screenHeight * 0.04),
-      
+
             // Bottom motivational text
             Container(
               constraints: BoxConstraints(

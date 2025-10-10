@@ -84,9 +84,13 @@ class AppleSignUpController extends GetxController {
       userController.setUserEmail(user.email ?? 'No Email Found');
 
       // Step 5: Handle success or failure
+
       if (success) {
         await initializeNotificationService();
         await sendFCMTokenToBackend();
+
+        // ✅ Reset subscription check flag for first time user
+        await TokenStorage.clearSubscriptionCheckFlag();
 
         Get.snackbar("Success", "Apple sign-in complete and persona set.");
         print("Apple signin successful with persona ID: $storedPersonaId");
