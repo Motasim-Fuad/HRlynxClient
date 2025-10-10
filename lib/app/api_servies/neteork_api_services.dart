@@ -250,6 +250,10 @@ class NetworkApiServices {
         throw Exception('Invalid email or password.');
       }
 
+      if (response.statusCode == 429) {
+        throw Exception("AI usage limit exceeded. Please check your plan or billing.");
+      }
+
       if (response.statusCode == 500) {
         throw Exception(' Please try again later !');
       }

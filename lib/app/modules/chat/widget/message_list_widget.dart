@@ -76,7 +76,7 @@ class MessageListWidget extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
+                              SelectableText(
                                 message.content ?? '',
                                 style: const TextStyle(fontSize: 15),
                               ),

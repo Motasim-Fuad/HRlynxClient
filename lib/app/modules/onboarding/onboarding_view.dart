@@ -24,17 +24,18 @@ class OnboardingView extends StatelessWidget {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(w * 0.03),
+          padding: EdgeInsets.all(8.0),
           child: Column(
             children: [
+              SizedBox(height: h * 0.02),
               // Logo / Top Image
               Image.asset(
                 AppImages.splash,
-                height: h * 0.20,
+                height: h * 0.25,
                 fit: BoxFit.contain,
               ),
 
-              SizedBox(height: h * 0.015),
+              SizedBox(height: h * 0.00),
 
               // Title Text
               Text(
@@ -182,7 +183,7 @@ class OnboardingView extends StatelessWidget {
                 },
               ),
 
-              // SizedBox(height: h * 0.02),
+              SizedBox(height: h * 0.01),
             ],
           ),
         ),
