@@ -3,28 +3,41 @@ import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:HRlynx/app/modules/payment/subcription_view.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
-import '../../model/onbordingModel.dart'; // Import TokenStorage
 
 class GoogleSignUpController extends GetxController {
   final userController = Get.put(UserController());
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
 
+  // ✅ Terms & Conditions checkbox
+  final isChecked = false.obs;
+  late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  void toggleCheckbox(bool? value) {
+    isChecked.value = value ?? false;
+  }
+
   Future<void> handleGoogleSignUp() async {
+    // ✅ Check terms acceptance
+    if (!isChecked.value) {
+      Get.snackbar(
+        "Terms Not Accepted",
+        "Please agree to the Terms and Privacy Policy",
+      );
+      return;
+    }
+
     try {
       isLoading.value = true;
 
-      // Step 1: Sign in with Google via Firebase
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        isLoading.value = false;
-        return;
-      }
+      if (googleUser == null) return;
 
       final googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
@@ -32,7 +45,8 @@ class GoogleSignUpController extends GetxController {
         idToken: googleAuth.idToken,
       );
 
-      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final userCredential =
+      await FirebaseAuth.instance.signInWithCredential(credential);
       final user = userCredential.user;
 
       if (user == null || user.email == null) {
@@ -43,22 +57,18 @@ class GoogleSignUpController extends GetxController {
       final email = user.email!;
       final name = user.displayName ?? 'Google User';
 
-      // Step 2: Get stored persona ID from onboarding
+      // ✅ Get persona ID from onboarding
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
-
       if (storedPersonaId == null) {
-        Get.snackbar("Error", "No persona selected. Please complete onboarding first.");
+        Get.snackbar(
+          "Error",
+          "No persona selected. Please complete onboarding first.",
+        );
         return;
       }
 
-      print("✅ Using stored persona ID: $storedPersonaId");
-
-      // Step 3: Send to backend social login API with stored persona ID
-      final personaBody = {
-        "persona": storedPersonaId, // Use stored persona ID
-      };
-
-
+      // ✅ Send to backend
+      final personaBody = {"persona": storedPersonaId};
       final success = await authRepo.SocialSignUpAndSetPersona(
         email: email,
         name: name,
@@ -66,58 +76,46 @@ class GoogleSignUpController extends GetxController {
       );
       await authRepo.setParsonaType(personaBody);
 
-      print("send pelected persona id to api");
-
       userController.setUserEmail(user.email ?? 'No Email Found');
 
-      // Step 4: Handle success or failure
       if (success) {
-
-        // ✅ Google login successful হওয়ার পর notification service এবং FCM token setup করুন
         await initializeNotificationService();
-        await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
-
+        await sendFCMTokenToBackend();
 
         Get.snackbar("Success", "Google sign-in complete and persona set.");
-        print("Google signin successful with persona ID: $storedPersonaId");
         Get.to(SubscriptionScreen());
       } else {
         Get.snackbar("Error", "Failed to set persona after Google login.");
       }
     } catch (e) {
-
-      if(e=="[firebase_auth/network-request-failed] A network error (such as timeout, interrupted connection or unreachable host) has occurred."){
-        Get.snackbar("Error", "I thing your Network problem or Timeout.    Please try again");
+      if (e.toString().contains(
+          "[firebase_auth/network-request-failed]")) {
+        Get.snackbar(
+          "Error",
+          "I think your network has a problem or timeout. Please try again.",
+        );
       }
-
       print("GoogleSignUp Error: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Initialize notification service
   Future<void> initializeNotificationService() async {
     try {
-      // Register notification service if not already registered
       if (!Get.isRegistered<NotificationService>()) {
         Get.put(NotificationService());
       }
-
-      // Get instance and enable connection
       final notificationService = NotificationService.instance;
       await notificationService.enableConnection();
-
       print('✅ Notification service initialized successfully');
     } catch (e) {
       print('❌ Error initializing notification service: $e');
     }
   }
 
-  // ✅ নতুন function: Google login এর পর FCM token backend এ পাঠানোর জন্য
   Future<void> sendFCMTokenToBackend() async {
     try {
-      // Firebase message service এর instance নিন
       final firebaseMsg = FirebaseMeg();
       await firebaseMsg.sendFCMTokenAfterLogin();
       print('✅ FCM token sent to backend after Google login');

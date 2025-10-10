@@ -2,6 +2,7 @@ import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:HRlynx/app/modules/payment/subcription_view.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -16,12 +17,29 @@ class AppleSignUpController extends GetxController {
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
 
-  /// Google Sign-In এর exact same logic কিন্তু Apple Sign-In দিয়ে
+  // ✅ Terms & Conditions checkbox state
+  final isChecked = false.obs;
+  late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  void toggleCheckbox(bool? value) {
+    isChecked.value = value ?? false;
+  }
+
+  /// Apple Sign-In with terms check
   Future<void> handleAppleSignUp() async {
+    // ✅ Check terms acceptance
+    if (!isChecked.value) {
+      Get.snackbar(
+        "Terms Not Accepted",
+        "Please agree to the Terms and Privacy Policy",
+      );
+      return;
+    }
+
     try {
       isLoading.value = true;
 
-      // Step 1: Apple Sign-In এর availability check করুন
+      // Step 1: Check Apple Sign-In availability
       final isAvailable = await SignInWithApple.isAvailable();
       if (!isAvailable) {
         Get.snackbar("Error", "Apple Sign-In is not available on this device");
@@ -45,9 +63,8 @@ class AppleSignUpController extends GetxController {
       final email = user.email!;
       final name = user.displayName ?? 'Apple User';
 
-      // Step 3: Get stored persona ID from onboarding (same as Google)
+      // Step 3: Get stored persona ID from onboarding
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
-
       if (storedPersonaId == null) {
         Get.snackbar("Error", "No persona selected. Please complete onboarding first.");
         return;
@@ -55,25 +72,19 @@ class AppleSignUpController extends GetxController {
 
       print("✅ Using stored persona ID: $storedPersonaId");
 
-      // Step 4: Send to backend social login API with stored persona ID
-      final personaBody = {
-        "persona": storedPersonaId, // Use stored persona ID
-      };
-
+      // Step 4: Send to backend social login API
+      final personaBody = {"persona": storedPersonaId};
       final success = await authRepo.SocialSignUpAndSetPersona(
         email: email,
         name: name,
-        provider: 'apple', // 👈 Provider changed to 'apple'
+        provider: 'apple',
       );
       await authRepo.setParsonaType(personaBody);
 
-      print("send selected persona id to api");
-
       userController.setUserEmail(user.email ?? 'No Email Found');
 
-      // Step 5: Handle success or failure (same as Google)
+      // Step 5: Handle success or failure
       if (success) {
-        // Apple login successful হওয়ার পর notification service এবং FCM token setup করুন
         await initializeNotificationService();
         await sendFCMTokenToBackend();
 
@@ -92,7 +103,6 @@ class AppleSignUpController extends GetxController {
       } else {
         Get.snackbar("Error", "Apple Sign-In failed. Please try again.");
       }
-
       print("AppleSignUp Error: $e");
     } finally {
       isLoading.value = false;
@@ -102,11 +112,9 @@ class AppleSignUpController extends GetxController {
   /// Apple Sign-In with Firebase implementation
   Future<UserCredential?> signInWithApple() async {
     try {
-      // Generate nonce for security
       final rawNonce = generateNonce();
       final nonce = sha256ofString(rawNonce);
 
-      // Apple Sign-In request
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
@@ -115,22 +123,15 @@ class AppleSignUpController extends GetxController {
         nonce: nonce,
       );
 
-      print("Apple Sign-In Response:");
-      print("User ID: ${appleCredential.userIdentifier}");
-      print("Email: ${appleCredential.email}");
-      print("Full Name: ${appleCredential.givenName} ${appleCredential.familyName}");
-
-      // Create Firebase credential
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
         rawNonce: rawNonce,
         accessToken: appleCredential.authorizationCode,
       );
 
-      // Sign in to Firebase
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+      final UserCredential userCredential =
+      await FirebaseAuth.instance.signInWithCredential(oauthCredential);
 
-      // Update display name if it's a new user
       if (userCredential.additionalUserInfo?.isNewUser == true) {
         await updateUserDisplayName(
           userCredential.user,
@@ -139,9 +140,6 @@ class AppleSignUpController extends GetxController {
         );
       }
 
-      print("✅ Apple Sign-In Successful");
-      print("Firebase User: ${userCredential.user?.email}");
-
       return userCredential;
     } catch (e) {
       print("❌ Apple Sign-In Error: $e");
@@ -149,59 +147,43 @@ class AppleSignUpController extends GetxController {
     }
   }
 
-  /// Update user display name
   Future<void> updateUserDisplayName(User? user, String? givenName, String? familyName) async {
     if (user != null && (givenName != null || familyName != null)) {
       String displayName = '';
       if (givenName != null) displayName += givenName;
       if (familyName != null) displayName += ' $familyName';
-
       await user.updateDisplayName(displayName.trim());
       print("Display name updated: ${displayName.trim()}");
     }
   }
 
-  /// Generate random nonce for security
   String generateNonce([int length = 32]) {
     const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
     return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
   }
 
-  /// SHA256 hash
   String sha256ofString(String input) {
     final bytes = utf8.encode(input);
     final digest = sha256.convert(bytes);
     return digest.toString();
   }
 
-  /// Check if Apple Sign-In is available
-  Future<bool> isAppleSignInAvailable() async {
-    return await SignInWithApple.isAvailable();
-  }
-
-  // Initialize notification service (exact same as Google)
   Future<void> initializeNotificationService() async {
     try {
-      // Register notification service if not already registered
       if (!Get.isRegistered<NotificationService>()) {
         Get.put(NotificationService());
       }
-
-      // Get instance and enable connection
       final notificationService = NotificationService.instance;
       await notificationService.enableConnection();
-
       print('✅ Notification service initialized successfully');
     } catch (e) {
       print('❌ Error initializing notification service: $e');
     }
   }
 
-  /// Send FCM token to backend after Apple login (exact same as Google)
   Future<void> sendFCMTokenToBackend() async {
     try {
-      // Firebase message service এর instance নিন
       final firebaseMsg = FirebaseMeg();
       await firebaseMsg.sendFCMTokenAfterLogin();
       print('✅ FCM token sent to backend after Apple login');

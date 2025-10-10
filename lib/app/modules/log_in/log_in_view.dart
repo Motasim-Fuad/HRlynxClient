@@ -218,16 +218,25 @@ class _LogInViewState extends State<LogInView> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
-                            onTap: () => appleSignUpController.handleAppleSignUp(),
+                            onTap: () {
+                              // ✅ Sync checkbox state
+                              appleSignUpController.isChecked.value = controller.isChecked.value;
+                              appleSignUpController.handleAppleSignUp();
+                            },
                             child: Image.asset(AppImages.apple, height: 40),
                           ),
                           const SizedBox(width: 20),
                           GestureDetector(
-                            onTap: () => googleSignUpController.handleGoogleSignUp(),
+                            onTap: () {
+                              // ✅ Sync checkbox state
+                              googleSignUpController.isChecked.value = controller.isChecked.value;
+                              googleSignUpController.handleGoogleSignUp();
+                            },
                             child: Image.asset(AppImages.google, height: 40),
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 40),
                     ],
                   ),
