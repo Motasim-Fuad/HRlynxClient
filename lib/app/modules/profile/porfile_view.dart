@@ -56,214 +56,218 @@ class ProfileView extends StatelessWidget {
           );
         }
 
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ListView(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            children: [
-              SizedBox(height: 10),
+        return RefreshIndicator(
+          onRefresh: () async {
+            print("🔄 Pull-to-refresh triggered");
+            await profileController.refreshProfile();
+          },
+          color: Colors.blue,
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ListView(
+              physics: AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.symmetric(vertical: 16),
+              children: [
+                SizedBox(height: 10),
 
-              // Profile Picture
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey.shade300, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: ClipOval(
-                    child: _buildProfilePicture(),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 12),
-
-              // Name
-              Center(
-                child: Text(
-                  profileController.userName.value.isNotEmpty
-                      ? profileController.userName.value
-                      : 'Your Name',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 18,
-                    color: profileController.userName.value.isNotEmpty
-                        ? Color(0xFF1B1E28)
-                        : Colors.grey,
+                // Profile Picture
+                Center(
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade300, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: ClipOval(
+                      child: _buildProfilePicture(),
+                    ),
                   ),
                 ),
-              ),
 
-              SizedBox(height: 4),
+                SizedBox(height: 12),
 
-              // Email
-              Center(
-                child: Text(
-                  profileController.userEmail.value.isNotEmpty
-                      ? profileController.userEmail.value
-                      : userController.userEmail.string.isNotEmpty
-                      ? userController.userEmail.string
-                      : "email@example.com",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    fontSize: 16,
-                    color: Colors.black54,
+                // Name
+                Center(
+                  child: Text(
+                    profileController.userName.value.isNotEmpty
+                        ? profileController.userName.value
+                        : 'Your Name',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 18,
+                      color: profileController.userName.value.isNotEmpty
+                          ? Color(0xFF1B1E28)
+                          : Colors.grey,
+                    ),
                   ),
                 ),
-              ),
 
-              SizedBox(height: 20),
+                SizedBox(height: 4),
 
-              // Subscription Status Section - SIMPLIFIED
-              Obx(() {
-                // Show subscription status if subscribed
-                if (subController.isSubscribed.value) {
-                  return Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        margin: EdgeInsets.symmetric(horizontal: 16),
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.green.shade400, Colors.green.shade600],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                // Email
+                Center(
+                  child: Text(
+                    profileController.userEmail.value.isNotEmpty
+                        ? profileController.userEmail.value
+                        : userController.userEmail.string.isNotEmpty
+                        ? userController.userEmail.string
+                        : "email@example.com",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                      color: Colors.black54,
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 20),
+
+                // Subscription Status Section
+                Obx(() {
+                  if (subController.isSubscribed.value) {
+                    return Column(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          margin: EdgeInsets.symmetric(horizontal: 16),
+                          padding: EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.green.shade400, Colors.green.shade600],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.green.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.white,
-                              size: 32,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Active Subscription',
-                              style: TextStyle(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
                                 color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                                size: 32,
                               ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Full access to all AI personas',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 14,
+                              SizedBox(height: 8),
+                              Text(
+                                'Active Subscription',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                            SizedBox(height: 12),
-                            // Info about managing subscription
-                            Container(
-                              padding: EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
+                              SizedBox(height: 4),
+                              Text(
+                                'Full access to all AI personas',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: 14,
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.info_outline, color: Colors.white, size: 20),
-                                  SizedBox(height: 8),
-                                  Text(
-                                    'To manage or cancel your subscription, please visit:',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
+                              SizedBox(height: 12),
+                              Container(
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.info_outline, color: Colors.white, size: 20),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'To manage or cancel your subscription, please visit:',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    Platform.isIOS ? 'App Store → Subscriptions' : 'Play Store → Subscriptions',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
+                                    SizedBox(height: 4),
+                                    Text(
+                                      Platform.isIOS ? 'App Store → Subscriptions' : 'Play Store → Subscriptions',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 20),
-                    ],
-                  );
-                }
+                        SizedBox(height: 20),
+                      ],
+                    );
+                  } else {
+                    return Column(
+                      children: [
+                        Button(
+                          title: 'Subscribe Now',
+                          onTap: () => Get.to(SubscriptionScreen()),
+                        ),
+                        SizedBox(height: 20),
+                      ],
+                    );
+                  }
+                }),
 
-                // Show Subscribe button if not subscribed
-                else {
-                  return Column(
-                    children: [
-                      Button(
-                        title: 'Subscribe Now',
-                        onTap: () => Get.to(SubscriptionScreen()),
-                      ),
-                      SizedBox(height: 20),
-                    ],
-                  );
-                }
-              }),
+                // Menu Items
+                _buildMenuItem(
+                  icon: Icons.notifications_active_outlined,
+                  title: 'Notifications',
+                  onTap: () => Get.to(NotificationView()),
+                ),
 
-              // Menu Items
-              _buildMenuItem(
-                icon: Icons.notifications_active_outlined,
-                title: 'Notifications',
-                onTap: () => Get.to(NotificationView()),
-              ),
+                _buildMenuItem(
+                  icon: Icons.local_police_outlined,
+                  title: 'Privacy Policy',
+                  onTap: () => Get.to(PrivacyPolicy()),
+                ),
 
-              _buildMenuItem(
-                icon: Icons.local_police_outlined,
-                title: 'Privacy Policy',
-                onTap: () => Get.to(PrivacyPolicy()),
-              ),
+                _buildMenuItem(
+                  icon: Icons.insert_drive_file_outlined,
+                  title: 'Terms of Use',
+                  onTap: () => Get.to(TermsOfUse()),
+                ),
 
-              _buildMenuItem(
-                icon: Icons.insert_drive_file_outlined,
-                title: 'Terms of Use',
-                onTap: () => Get.to(TermsOfUse()),
-              ),
+                _buildMenuItem(
+                  icon: Icons.lock_outline_sharp,
+                  title: 'Change Password',
+                  onTap: () => Get.to(ChangePassword()),
+                ),
 
-              _buildMenuItem(
-                icon: Icons.lock_outline_sharp,
-                title: 'Change Password',
-                onTap: () => Get.to(ChangePassword()),
-              ),
-
-              // Logout Item
-              _buildMenuItem(
-                icon: Icons.logout_outlined,
-                title: 'Log out',
-                titleColor: Color(0xffD40606),
-                iconColor: Color(0xffD40606),
-                onTap: () => _showLogoutDialog(context),
-              ),
-            ],
+                // Logout Item
+                _buildMenuItem(
+                  icon: Icons.logout_outlined,
+                  title: 'Log out',
+                  titleColor: Color(0xffD40606),
+                  iconColor: Color(0xffD40606),
+                  onTap: () => _showLogoutDialog(context),
+                ),
+              ],
+            ),
           ),
         );
       }),

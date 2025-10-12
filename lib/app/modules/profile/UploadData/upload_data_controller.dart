@@ -9,12 +9,10 @@ import '../profile_controller.dart'; // Import ProfileController
 class UploadDataController extends GetxController {
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
-  final bioController = TextEditingController();
 
   final AuthRepository _authRepository = AuthRepository();
   var selectedImage = Rxn<File>();
-  var selectedGender = ''.obs;
-  var dateOfBirth = ''.obs;
+
   var isLoading = false.obs;
 
   // SIMPLE image picker that works on both platforms
@@ -54,18 +52,6 @@ class UploadDataController extends GetxController {
     );
   }
 
-  void pickDate(BuildContext context) async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: DateTime(1900),
-      lastDate: now,
-    );
-    if (picked != null) {
-      dateOfBirth.value = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-    }
-  }
 
   void saveData() async {
     if (nameController.text.isEmpty) {
@@ -83,9 +69,6 @@ class UploadDataController extends GetxController {
       Map<String, dynamic> profileData = {
         'name': nameController.text.trim(),
         'phone': phoneController.text.trim(),
-        'bio': bioController.text.trim(),
-        'date_of_birth': dateOfBirth.value,
-        'gender': selectedGender.value.toLowerCase(),
       };
 
       final response = await _authRepository.uploadProfileData(
@@ -96,9 +79,6 @@ class UploadDataController extends GetxController {
       if (response != null && response['success'] == true) {
         nameController.clear();
         phoneController.clear();
-        bioController.clear();
-        selectedGender.value = '';
-        dateOfBirth.value = '';
         selectedImage.value = null;
 
         try {
@@ -134,7 +114,6 @@ class UploadDataController extends GetxController {
   void onClose() {
     nameController.dispose();
     phoneController.dispose();
-    bioController.dispose();
     super.onClose();
   }
 }

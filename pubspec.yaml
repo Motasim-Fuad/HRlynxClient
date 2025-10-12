@@ -73,12 +73,12 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/applogo.png"   # 1024x1024 PNG (no transparency)
+  image_path: "assets/images/hrlynx_logo.png"   # 1024x1024 PNG (no transparency)
   min_sdk_android: 21
 
 flutter_native_splash:
   color: "#ffffff"                          # Splash background color
-  image: assets/images/appsplash.png      # তোমার লোগো (512x512 PNG transparent)
+  image: assets/images/hrlynx_splashopeninglogo.png      # তোমার লোগো (512x512 PNG transparent)
   android: true
   ios: true
 
