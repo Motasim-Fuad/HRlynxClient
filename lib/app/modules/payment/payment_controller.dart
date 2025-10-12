@@ -22,6 +22,7 @@ class PaymentController extends GetxController {
   var isRevenueCatAvailable = false.obs;
   var revenueCatPackages = <Package>[].obs;
   var customerInfo = Rxn<CustomerInfo>();
+  bool hasUsedTrial = false;
 
   @override
   void onInit() {
@@ -299,6 +300,25 @@ class PaymentController extends GetxController {
       isLoading.value = false;
     }
   }
+
+
+  Future<void> checkTrialStatus() async {
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+
+      if (customerInfo.nonSubscriptionTransactions.isNotEmpty ||
+          customerInfo.entitlements.active.isNotEmpty) {
+        hasUsedTrial = true;
+      } else {
+        hasUsedTrial = false;
+      }
+
+      print('Has used trial: $hasUsedTrial');
+    } catch (e) {
+      print('Error checking trial status: $e');
+    }
+  }
+
 
   // Test RevenueCat connection
   Future<void> testRevenueCatConnection() async {

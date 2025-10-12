@@ -42,7 +42,7 @@ class HomeView extends StatelessWidget {
           )),
         ),
         title: const Text(
-          'HRlynx Home',
+          'HRlynx',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
@@ -62,7 +62,7 @@ class HomeView extends StatelessWidget {
               children: [
                 // --- Breaking HR News Card ---
                 Container(
-                  height: size.height * 0.23,
+                  height: size.height * 0.20,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
@@ -101,28 +101,28 @@ class HomeView extends StatelessWidget {
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 20),
-                              GestureDetector(
-                                onTap: () => Get.to(() => const NewsView()),
-                                child: Container(
-                                  width: 120,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF013D3B),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: const Center(
-                                    child: Text(
-                                      'View Feed',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              // const SizedBox(height: 20),
+                              // GestureDetector(
+                              //   onTap: () => Get.to(() => const NewsView()),
+                              //   child: Container(
+                              //     width: 120,
+                              //     height: 40,
+                              //     decoration: BoxDecoration(
+                              //       color: const Color(0xFF013D3B),
+                              //       borderRadius: BorderRadius.circular(6),
+                              //     ),
+                              //     child: const Center(
+                              //       child: Text(
+                              //         'View Feed',
+                              //         style: TextStyle(
+                              //           fontWeight: FontWeight.w500,
+                              //           fontSize: 16,
+                              //           color: Colors.white,
+                              //         ),
+                              //       ),
+                              //     ),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),
@@ -137,7 +137,7 @@ class HomeView extends StatelessWidget {
                   'Chat with your AI HR Assistants:',
                   style: TextStyle(
                     fontWeight: FontWeight.w500,
-                    fontSize: isTablet ? 28 : 24,
+                    fontSize: isTablet ? 24 : 20,
                     color: AppColors.primarycolor,
                   ),
                 ),

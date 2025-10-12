@@ -33,13 +33,13 @@ class NewsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: GestureDetector(
-          onTap: () {
-            Get.put<BottomNavController>(BottomNavController()).changeTab(0);
-            Get.back();
-          },
-          child: Icon(Icons.arrow_back),
-        ),
+        // leading: GestureDetector(
+        //   onTap: () {
+        //     Get.put<BottomNavController>(BottomNavController()).changeTab(0);
+        //     Get.back();
+        //   },
+        //   child: Icon(Icons.arrow_back),
+        // ),
         title: Text(
           'Breaking HR News',
           style: TextStyle(

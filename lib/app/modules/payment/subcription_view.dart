@@ -534,11 +534,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                 children: [
                   const SizedBox(width: 8),
                   Text(
-                    'Start Free Trial',
+                    controller.hasUsedTrial
+                        ? "Subscribe Now"
+                        : "Subscribe with 7 Days Free Trial",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.w500,
-                      fontSize: 22,
+                      fontSize: 18,
                       color: Colors.white,
                     ),
                   ),
