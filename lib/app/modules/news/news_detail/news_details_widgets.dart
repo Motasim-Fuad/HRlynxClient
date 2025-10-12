@@ -39,7 +39,7 @@ class NewsDetailsWidgets {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _capitalizeFirstLetter(tag.name),
+              (tag.name.toUpperCase()),
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 14,
@@ -95,7 +95,7 @@ class NewsDetailsWidgets {
           ),
           SizedBox(height: 12),
           Text(
-            'Name: ${_capitalizeFirstLetter(tag.name)}',
+            'Name: ${(tag.name)}',
             style: TextStyle(
               fontSize: 13,
               color: Color(0xFF1B1E28),

@@ -224,7 +224,7 @@ class NewsView extends StatelessWidget {
                                   final isSelected = controller.selectedTag.value?['id'] == tag['id'];
                                   final tagName = tag['name']?.toString() ?? '';
                                   final capitalizedTagName = tagName.isNotEmpty
-                                      ? tagName[0].toUpperCase() + tagName.substring(1).toLowerCase()
+                                      ? tagName.toUpperCase()
                                       : '';
 
                                   return GestureDetector(
@@ -364,14 +364,6 @@ class NewsView extends StatelessWidget {
                                     color: Color(0xff7D848D),
                                   ),
                                   overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Text(
-                                '3min',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 12,
-                                  color: Color(0xff7D848D),
                                 ),
                               ),
                             ],

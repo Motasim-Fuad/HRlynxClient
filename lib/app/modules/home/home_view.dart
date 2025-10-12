@@ -62,7 +62,7 @@ class HomeView extends StatelessWidget {
               children: [
                 // --- Breaking HR News Card ---
                 Container(
-                  height: size.height * 0.30,
+                  height: size.height * 0.23,
                   width: double.infinity,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
@@ -85,7 +85,7 @@ class HomeView extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Breaking HR News',
+                                'HR QuickScan™ News',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
                                   fontSize: 24,
@@ -101,7 +101,7 @@ class HomeView extends StatelessWidget {
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 40),
+                              const SizedBox(height: 20),
                               GestureDetector(
                                 onTap: () => Get.to(() => const NewsView()),
                                 child: Container(
@@ -262,8 +262,8 @@ class HomeView extends StatelessWidget {
                 backgroundColor = Colors.blue;
                 icon = Icons.refresh;
               } else if (!is_SubcribedController.isActive.value) {
-                title = 'Subscribe Required';
-                message = 'Subscribe to access all AI personas';
+                title = 'Subscription Required';
+                message = 'Subscription to access all AI personas';
                 backgroundColor = Colors.purple;
                 icon = Icons.star;
               } else if (is_SubcribedController.isCanceled.value) {

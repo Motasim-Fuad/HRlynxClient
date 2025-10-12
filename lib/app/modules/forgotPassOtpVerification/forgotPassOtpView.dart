@@ -12,7 +12,7 @@ class Forgotpassotpview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("OTP Verification")),
+      appBar: AppBar(title: const Text("OTP Verification"),),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(

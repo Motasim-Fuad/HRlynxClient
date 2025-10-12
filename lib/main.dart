@@ -12,6 +12,10 @@ import 'app/api_servies/notification_services.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.white, // 🔹 এখানে তুমি চাও যেই রঙ সেট করো
+    statusBarIconBrightness: Brightness.dark, // 🔹 আইকনগুলো dark হবে যাতে দেখা যায়
+  ));
   await Firebase.initializeApp();
 
   // Initialize RevenueCat early

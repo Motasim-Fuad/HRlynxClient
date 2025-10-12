@@ -75,7 +75,7 @@ class NetworkApiServices {
     return _handleResponse(response);
   }
 
-  /// PATCH request - Missing method that was being used in NotificationService
+  /// PATCH request
   static Future<dynamic> patchApi(
       String url,
       dynamic body, {
@@ -231,32 +231,62 @@ class NetworkApiServices {
         }
       }
     }
+    throw Exception('Max retries reached');
   }
-
 
   static dynamic _handleResponse(http.Response response) {
     print('🔎 Response Code: ${response.statusCode}');
     print('📦 Raw Response Body: ${response.body}');
 
     try {
-      // Handle successful responses
+      // Handle successful responses (200-299)
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) {
           return {'success': true, 'message': 'Request completed successfully'};
         }
         return jsonDecode(response.body);
       }
+
+      // Handle 401 Unauthorized
       if (response.statusCode == 401) {
         throw Exception('Invalid email or password.');
       }
 
+      // ✅ FIXED: Handle 429 - Rate Limit/Quota Exceeded
       if (response.statusCode == 429) {
-        throw Exception("AI usage limit exceeded. Please check your plan or billing.");
+        String errorMessage = 'AI usage limit exceeded. Please check your plan or billing.';
+
+        // Try to get more specific error message from response
+        if (response.body.isNotEmpty) {
+          try {
+            final responseBody = jsonDecode(response.body);
+
+            // Handle OpenAI style error format
+            if (responseBody['error'] != null) {
+              final error = responseBody['error'];
+              if (error is Map) {
+                errorMessage = error['message'] ?? errorMessage;
+              } else if (error is String) {
+                errorMessage = error;
+              }
+            }
+            // Handle simple message format
+            else if (responseBody['message'] != null) {
+              errorMessage = responseBody['message'];
+            }
+          } catch (e) {
+            print('Could not parse 429 error details: $e');
+          }
+        }
+
+        throw Exception(errorMessage);
       }
 
+      // Handle 500 Internal Server Error
       if (response.statusCode == 500) {
-        throw Exception(' Please try again later !');
+        throw Exception('Server error. Please try again later!');
       }
+
       // Handle CloudFlare specific errors
       if (response.statusCode == 523) {
         throw Exception('Server temporarily unavailable (CloudFlare tunnel down). Please try again later.');
@@ -295,8 +325,6 @@ class NetworkApiServices {
       throw FormatException('Unexpected response format: ${response.body}');
     }
   }
-
-
 
   /// Helper method for handling common HTTP status codes
   static bool isSuccessResponse(int statusCode) {

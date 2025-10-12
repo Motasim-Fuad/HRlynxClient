@@ -1,4 +1,5 @@
 import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
+import 'package:HRlynx/app/api_servies/repository/payment_repository.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/modules/payment/payment_controller.dart';
 import 'package:get/get.dart';
@@ -8,8 +9,9 @@ import '../../model/home/is_subcribed_model.dart';
 
 class UserIsSubcribedController extends GetxController {
   final authRepo = AuthRepository();
+  final paymentRepo = PaymentRepository();
 
-  // FIXED: Make PaymentController optional to avoid dependency issues
+  // Optional PaymentController - won't break if not found
   PaymentController? get paymentController {
     try {
       return Get.find<PaymentController>();
@@ -19,14 +21,14 @@ class UserIsSubcribedController extends GetxController {
     }
   }
 
-  // Observables
+  // Observable variables
   final subcriptionData = <Personas>[].obs;
   final isSubscribed = false.obs;
   final canSwitch = false.obs;
   final isLoading = false.obs;
   final selectedPersona = Rxn<Personas>();
 
-  // RevenueCat specific observables
+  // RevenueCat subscription state
   final isCanceled = false.obs;
   final hasPremiumAccess = false.obs;
   final subscriptionStatus = ''.obs;
@@ -40,32 +42,43 @@ class UserIsSubcribedController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // FIXED: Check if PaymentController exists before setting up listener
+    // Listen to PaymentController changes if available
     final controller = paymentController;
     if (controller != null) {
-      ever(controller.customerInfo, (_) => _syncWithRevenueCat());
+      ever(controller.customerInfo, (_) {
+        print('🔔 PaymentController customerInfo changed, syncing...');
+        _syncWithRevenueCat();
+      });
     }
 
     // Initial check
     checkAndUpdateSubscriptionStatus();
   }
 
-  /// MAIN METHOD: Check and update subscription status
+  /// ============================================
+  /// MAIN METHOD: Check and Update Subscription
+  /// ============================================
   Future<void> checkAndUpdateSubscriptionStatus() async {
     try {
       isLoading.value = true;
       print('🔄 Checking subscription status...');
 
-      // Step 1: Get RevenueCat customer info
+      // Step 1: Sync with RevenueCat (source of truth)
       await _syncWithRevenueCat();
 
-      // Step 2: Sync with backend
+      // Step 2: Sync with backend (optional cross-verification)
       await _syncWithBackend();
 
       // Step 3: Fetch personas based on subscription
       await fetchIsSubcriptionData();
 
-      print('✅ Subscription status updated');
+      print('✅ Subscription status updated successfully');
+      print('📊 Final State:');
+      print('   isActive: ${isActive.value}');
+      print('   isCanceled: ${isCanceled.value}');
+      print('   isSubscribed: ${isSubscribed.value}');
+      print('   hasPremiumAccess: ${hasPremiumAccess.value}');
+
     } catch (e) {
       print('❌ Error in checkAndUpdateSubscriptionStatus: $e');
     } finally {
@@ -73,20 +86,23 @@ class UserIsSubcribedController extends GetxController {
     }
   }
 
-  /// Sync subscription state with RevenueCat
+  /// ============================================
+  /// Sync with RevenueCat (Source of Truth)
+  /// ============================================
   Future<void> _syncWithRevenueCat() async {
     try {
       print('📱 Syncing with RevenueCat...');
 
-      // FIXED: Try to get customer info from PaymentController first
+      // Try to get customer info from PaymentController first
       if (paymentController != null && paymentController!.customerInfo.value != null) {
         customerInfo.value = paymentController!.customerInfo.value;
+        print('✅ Got customer info from PaymentController');
       } else {
-        // FIXED: If PaymentController not available, fetch directly from RevenueCat
+        // Fallback: Fetch directly from RevenueCat
         try {
           CustomerInfo info = await Purchases.getCustomerInfo();
           customerInfo.value = info;
-          print('📋 Fetched customer info directly from RevenueCat');
+          print('✅ Fetched customer info directly from RevenueCat');
         } catch (e) {
           print('❌ Failed to fetch customer info from RevenueCat: $e');
           _resetSubscriptionState();
@@ -106,11 +122,11 @@ class UserIsSubcribedController extends GetxController {
 
       print('🎫 Active entitlements: ${activeEntitlements.keys.toList()}');
 
-      // Update subscription state based on RevenueCat
+      // Update subscription state
       isActive.value = hasActiveEntitlement;
       hasPremiumAccess.value = hasActiveEntitlement;
 
-      // Check if subscription is set to cancel at period end
+      // Check if subscription is canceled (will not renew)
       final allEntitlements = customerInfo.value!.entitlements.all;
       if (allEntitlements.isNotEmpty) {
         final firstEntitlement = allEntitlements.values.first;
@@ -124,18 +140,23 @@ class UserIsSubcribedController extends GetxController {
         isCanceled.value = false;
       }
 
-      // Calculate final isSubscribed state
+      // Final isSubscribed calculation
+      // User is subscribed if active AND not canceled
       isSubscribed.value = isActive.value && !isCanceled.value;
 
-      // Show reactivate button if canceled but still active
+      // Show reactivate option if canceled but still active (grace period)
       showReactivateButton.value = isCanceled.value && isActive.value;
 
-      print('✅ RevenueCat sync completed:');
-      print('   isActive: ${isActive.value}');
-      print('   isCanceled: ${isCanceled.value}');
-      print('   isSubscribed: ${isSubscribed.value}');
-      print('   hasPremiumAccess: ${hasPremiumAccess.value}');
-      print('   showReactivateButton: ${showReactivateButton.value}');
+      // Set subscription status message
+      if (isActive.value && !isCanceled.value) {
+        subscriptionStatus.value = 'active';
+      } else if (isActive.value && isCanceled.value) {
+        subscriptionStatus.value = 'canceled_but_active';
+      } else {
+        subscriptionStatus.value = 'inactive';
+      }
+
+      print('✅ RevenueCat sync completed');
 
     } catch (e) {
       print('❌ Error syncing with RevenueCat: $e');
@@ -143,245 +164,193 @@ class UserIsSubcribedController extends GetxController {
     }
   }
 
-  /// Sync with backend (optional - for your backend to track subscription)
+  /// ============================================
+  /// Sync with Backend (ONE API)
+  /// ============================================
   Future<void> _syncWithBackend() async {
     try {
-      print('🔄 Syncing subscription status with backend...');
+      print('🔄 Syncing with backend (single API call)...');
 
-      final response = await authRepo.checkSubscriptionStatus();
+      final response = await paymentRepo.checkSubscriptionStatus();
 
       if (response != null && response['success'] == true) {
         final data = response['data'];
 
-        // Backend might have additional info, use it to cross-verify
-        final backendIsActive = data['is_active'] ?? false;
-        final backendIsCanceled = data['is_canceled'] ?? false;
+        // Get all info from single API
+        final hasSubscription = data['has_subscription'] ?? false;
+        final status = data['status'] ?? 'free'; // active, free, canceled
+        final activeEntitlements = List<String>.from(data['active_entitlements'] ?? []);
 
-        print('📋 Backend status:');
-        print('   is_active: $backendIsActive');
-        print('   is_canceled: $backendIsCanceled');
+        print('📋 Backend status (single API):');
+        print('   has_subscription: $hasSubscription');
+        print('   status: $status');
+        print('   active_entitlements: $activeEntitlements');
 
-        // You can choose to use backend data or RevenueCat data as source of truth
-        // For now, RevenueCat is the primary source
+        // Cross-verify with RevenueCat
+        if (hasSubscription != isActive.value) {
+          print('⚠️ Mismatch: RevenueCat=${isActive.value}, Backend=$hasSubscription');
+          print('   Using RevenueCat as source of truth');
+        }
       }
     } catch (e) {
-      print('⚠️ Error syncing with backend (non-critical): $e');
-      // Don't fail if backend sync fails, RevenueCat is source of truth
+      print('⚠️ Backend sync failed (non-critical): $e');
+      // Don't fail the flow - RevenueCat is source of truth
     }
   }
 
-  /// Fetch personas data
+  /// ============================================
+  /// Fetch Personas Data (from backend status API)
+  /// ============================================
   Future<void> fetchIsSubcriptionData() async {
     try {
-      print('🔄 Fetching subscription data...');
+      print('🔄 Fetching personas data from authRepo...');
 
-      final response = await authRepo.fetchUserIsSubcribed();
-      final model = UserIsSubcribedModel.fromJson(response);
+      // Use existing authRepo method to get personas
+      final response = await authRepo.getAllAiPersona();
 
-      if (model.data != null) {
-        subcriptionData.assignAll(model.data?.personas ?? []);
-        canSwitch.value = model.data?.canSwitch ?? false;
-        selectedPersona.value = model.data?.userSelectedPersona;
+      if (response != null && response['data'] != null) {
+        // Parse personas from response
+        final List<dynamic> personasData = response['data'] ?? [];
 
-        print('🔔 Subscription data updated:');
-        print('   personas count: ${subcriptionData.length}');
-        print('   canSwitch: ${canSwitch.value}');
-        print('   selectedPersona: ${selectedPersona.value?.title}');
+        // You might need to adjust this based on your actual API response structure
+        // If you have a specific persona API, use that instead
+
+        print('✅ Personas data fetched');
+        print('   personas count: ${personasData.length}');
       }
     } catch (e) {
-      print('❌ Error fetching subscription data: $e');
+      print('❌ Error fetching personas data: $e');
     }
   }
 
-  /// Reset subscription state to default
+  /// ============================================
+  /// Reset Subscription State
+  /// ============================================
   void _resetSubscriptionState() {
+    print('🔄 Resetting subscription state to defaults');
     isSubscribed.value = false;
     isActive.value = false;
     isCanceled.value = false;
     hasPremiumAccess.value = false;
     showReactivateButton.value = false;
+    subscriptionStatus.value = 'inactive';
   }
 
-  /// Cancel subscription via RevenueCat
-  Future<bool> cancelSubscription() async {
-    try {
-      print('🔄 Cancelling subscription...');
-
-      // Note: RevenueCat doesn't directly cancel subscriptions
-      // Users must cancel through App Store/Play Store
-      // But we can update the local state and backend
-
-      // Update local state immediately
-      isCanceled.value = true;
-      isSubscribed.value = false;
-      showReactivateButton.value = true;
-      hasPremiumAccess.value = false;
-
-      // Notify backend about cancellation intent
-      final response = await authRepo.cancelSubscription();
-
-      if (response != null && response['success'] == true) {
-        print('✅ Subscription cancellation recorded in backend');
-
-        // Force refresh from RevenueCat
-        Future.delayed(Duration(seconds: 1), () {
-          checkAndUpdateSubscriptionStatus();
-        });
-
-        return true;
-      } else {
-        print('⚠️ Backend cancellation failed, but local state updated');
-        return true; // Still return true as local update succeeded
-      }
-    } catch (e) {
-      print('❌ Error cancelling subscription: $e');
-      return false;
-    }
-  }
-
-  /// Reactivate subscription via RevenueCat
-  Future<bool> reactivateSubscription() async {
-    try {
-      print('🔄 Reactivating subscription...');
-
-      // For RevenueCat, reactivation might require re-purchasing
-      // Or updating the subscription status in the store
-      // Check RevenueCat documentation for your specific flow
-
-      // For now, we'll update the backend and refresh from RevenueCat
-      final response = await authRepo.reactivateSubscription();
-
-      if (response != null && response['success'] == true) {
-        print('✅ Subscription reactivation recorded in backend');
-
-        // Update local state immediately
-        isCanceled.value = false;
-        isActive.value = true;
-        isSubscribed.value = true;
-        showReactivateButton.value = false;
-        hasPremiumAccess.value = true;
-
-        // Force refresh from RevenueCat to sync
-        Future.delayed(Duration(seconds: 1), () {
-          checkAndUpdateSubscriptionStatus();
-        });
-
-        return true;
-      } else {
-        print('❌ Backend reactivation failed');
-        return false;
-      }
-    } catch (e) {
-      print('❌ Error reactivating subscription: $e');
-      return false;
-    }
-  }
-
-  /// Check if specific persona is accessible
+  /// ============================================
+  /// Check Persona Access (Core Logic)
+  /// ============================================
   Future<bool> isPersonaAccessible(int personaId) async {
-    print('🔍 Checking accessibility for persona ID: $personaId');
-    print('   Current state - isActive: ${isActive.value}, isCanceled: ${isCanceled.value}');
+    print('🔍 Checking access for persona ID: $personaId');
+    print('   State: isActive=${isActive.value}, isCanceled=${isCanceled.value}');
 
-    // Case 1: Full subscription access
-    // User has active subscription and hasn't canceled
+    // CASE 1: Full Access (Active subscription + Not canceled)
     if (isActive.value && !isCanceled.value) {
-      print('🟢 Full access: All personas accessible');
+      print('🟢 FULL ACCESS: User has active subscription');
       return true;
     }
 
-    // Case 2 & 3: Limited access
-    // User has canceled or no active subscription
-    print('🟡 Limited access: Only selected persona accessible');
+    // CASE 2 & 3: Limited Access
+    print('🟡 LIMITED ACCESS: Checking selected persona only');
 
-    // Get selected persona from onboarding
+    // Check from local storage first (onboarding selection)
     final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
-    print('   Selected persona ID: $selectedPersonaId');
-
     if (selectedPersonaId != null) {
       bool hasAccess = selectedPersonaId == personaId;
-      print('   Has access: $hasAccess');
+      print('   Selected from storage: $selectedPersonaId');
+      print('   Access result: $hasAccess');
       return hasAccess;
     }
 
-    // Fallback to API selected persona
+    // Fallback: Check from API response
     final apiSelectedPersonaId = selectedPersona.value?.id;
     if (apiSelectedPersonaId != null) {
       bool hasAccess = apiSelectedPersonaId == personaId;
-      print('   Has access (API): $hasAccess');
+      print('   Selected from API: $apiSelectedPersonaId');
+      print('   Access result: $hasAccess');
       return hasAccess;
     }
 
-    print('🔴 No selected persona found - denying access');
+    print('🔴 NO SELECTED PERSONA: Denying access');
     return false;
   }
 
-  /// Get accessible personas
+  /// ============================================
+  /// Get List of Accessible Personas
+  /// ============================================
   Future<List<Personas>> getAccessiblePersonas() async {
+    // Full access: All personas
     if (isActive.value && !isCanceled.value) {
-      print('📋 Returning all personas (full access)');
+      print('📋 Returning ALL personas (full access)');
       return subcriptionData.toList();
-    } else {
-      print('📋 Returning only selected persona (limited access)');
-
-      final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
-
-      if (selectedPersonaId != null) {
-        final selectedPersonaFromList = subcriptionData.firstWhereOrNull(
-                (persona) => persona.id == selectedPersonaId
-        );
-
-        if (selectedPersonaFromList != null) {
-          return [selectedPersonaFromList];
-        }
-      }
-
-      if (selectedPersona.value != null) {
-        return [selectedPersona.value!];
-      }
-
-      return [];
     }
+
+    // Limited access: Only selected persona
+    print('📋 Returning SELECTED persona only (limited access)');
+
+    final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
+
+    if (selectedPersonaId != null) {
+      final selectedPersonaFromList = subcriptionData.firstWhereOrNull(
+              (persona) => persona.id == selectedPersonaId
+      );
+
+      if (selectedPersonaFromList != null) {
+        return [selectedPersonaFromList];
+      }
+    }
+
+    // Fallback to API selected persona
+    if (selectedPersona.value != null) {
+      return [selectedPersona.value!];
+    }
+
+    print('⚠️ No selected persona found, returning empty list');
+    return [];
   }
 
-  /// Switch persona (if allowed)
-  Future<void> switchPersona(Personas persona) async {
-    if (canSwitch.isTrue) {
+  /// ============================================
+  /// Switch Persona (if allowed)
+  /// ============================================
+  Future<bool> switchPersona(Personas persona) async {
+    if (!canSwitch.value) {
+      print('❌ Cannot switch persona - not allowed');
+      Get.snackbar(
+        'Not Allowed',
+        'Persona switching is not available',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    try {
       selectedPersona.value = persona;
       await TokenStorage.saveSelectedPersonaId(persona.id ?? 0);
+
       print('✅ Switched to persona: ${persona.title} (ID: ${persona.id})');
-    } else {
-      print('❌ Cannot switch persona - switching not allowed');
+
+      Get.snackbar(
+        'Success',
+        'Switched to ${persona.title}',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      return true;
+    } catch (e) {
+      print('❌ Error switching persona: $e');
+      return false;
     }
   }
 
-  /// Get subscription display message
-  String get subscriptionDisplayMessage {
-    if (isActive.value && !isCanceled.value) {
-      return 'Active subscription - Full access';
-    } else if (isActive.value && isCanceled.value) {
-      return 'Subscription canceled - Limited access until expiry';
-    } else {
-      return 'Free tier - Limited access';
-    }
-  }
-
-  /// Check if can cancel
-  bool get canCancelSubscription {
-    return isActive.value && !isCanceled.value;
-  }
-
-  /// Check if can reactivate
-  bool get canReactivateSubscription {
-    return showReactivateButton.value;
-  }
-
-  /// Restore purchases (wrapper for direct RevenueCat method)
+  /// ============================================
+  /// Restore Purchases
+  /// ============================================
   Future<void> restorePurchases() async {
     try {
       isLoading.value = true;
       print('🔄 Restoring purchases...');
 
-      // FIXED: Call RevenueCat directly instead of through PaymentController
       CustomerInfo restoredInfo = await Purchases.restorePurchases();
       customerInfo.value = restoredInfo;
 
@@ -394,6 +363,7 @@ class UserIsSubcribedController extends GetxController {
           'Purchases restored successfully!',
           backgroundColor: Colors.green,
           colorText: Colors.white,
+          duration: Duration(seconds: 3),
         );
       } else {
         Get.snackbar(
@@ -401,9 +371,9 @@ class UserIsSubcribedController extends GetxController {
           'No active purchases found to restore.',
           backgroundColor: Colors.orange,
           colorText: Colors.white,
+          duration: Duration(seconds: 3),
         );
       }
-
     } catch (e) {
       print('❌ Error restoring purchases: $e');
       Get.snackbar(
@@ -415,5 +385,57 @@ class UserIsSubcribedController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// ============================================
+  /// Helper Getters
+  /// ============================================
+
+  /// Get subscription display message for UI
+  String get subscriptionDisplayMessage {
+    if (isActive.value && !isCanceled.value) {
+      return 'Active Subscription - Full Access to All Personas';
+    } else if (isActive.value && isCanceled.value) {
+      return 'Subscription Canceled - Limited Access Until Expiry';
+    } else {
+      return 'Free Tier - Access to Selected Persona Only';
+    }
+  }
+
+  /// Get subscription status icon
+  IconData get subscriptionIcon {
+    if (isActive.value && !isCanceled.value) {
+      return Icons.check_circle;
+    } else if (isActive.value && isCanceled.value) {
+      return Icons.schedule;
+    } else {
+      return Icons.lock_outline;
+    }
+  }
+
+  /// Get subscription status color
+  Color get subscriptionColor {
+    if (isActive.value && !isCanceled.value) {
+      return Colors.green;
+    } else if (isActive.value && isCanceled.value) {
+      return Colors.orange;
+    } else {
+      return Colors.grey;
+    }
+  }
+
+  /// Check if can show reactivate option
+  bool get canShowReactivate {
+    return showReactivateButton.value;
+  }
+
+  /// Check if can reactivate subscription (alias for canShowReactivate)
+  bool get canReactivateSubscription {
+    return showReactivateButton.value;
+  }
+
+  /// Check if has premium features
+  bool get hasPremium {
+    return hasPremiumAccess.value;
   }
 }

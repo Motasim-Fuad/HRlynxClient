@@ -286,193 +286,193 @@ class AuthRepository {
 
 
 // ---------- Subscription & Payment Methods ----------
-  Future<dynamic> createSetupIntent() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/payment/setup-intent/";
-      print('🔗 Creating setup intent at: $url');
-
-      final response = await NetworkApiServices.postApi(url, {}, withAuth: true, tokenType: 'login');
-
-      if (response != null) {
-        print('✅ Setup intent response: $response');
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error creating setup intent: $e');
-      rethrow;
-    }
-  }
-
-
-  // Add this updated method to your AuthRepository class
-
-  Future<dynamic> cancelSubscription() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/cancel/";
-      print('🔗 Cancelling subscription: $url');
-
-      final response = await NetworkApiServices.postApi(
-        url,
-        {}, // Empty body or add if required
-        withAuth: true,
-        tokenType: 'login',
-      );
-
-      if (response != null) {
-        print('✅ Cancel subscription response: $response');
-        // Don't show snackbar here - let the controller handle UI feedback
-        return response;
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error cancelling subscription: $e');
-      // Don't show snackbar here - let the controller handle error feedback
-      rethrow; // Re-throw the error so controller can handle it
-    }
-  }
-
-
-  Future<dynamic> addPaymentMethod(String paymentMethodId) async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/payment/add-method/";
-      final body = {
-        "payment_method_id": paymentMethodId,
-      };
-
-      print('🔗 Adding payment method at: $url');
-      print('📤 Request body: $body');
-
-      final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
-
-      if (response != null) {
-        print('✅ Add payment method response: $response');
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error adding payment method: $e');
-      rethrow;
-    }
-  }
-
-  Future<dynamic> createSubscription(String planType, String paymentMethodId) async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/create/";
-      final body = {
-        "plan_type": planType,
-        "payment_method_id": paymentMethodId,
-      };
-
-      print('🔗 Creating subscription at: $url');
-      print('📤 Request body: $body');
-
-      final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
-
-      if (response != null) {
-        print('✅ Create subscription response: $response');
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error creating subscription: $e');
-      rethrow;
-    }
-  }
-
-  Future<Map<String, dynamic>?> checkExistingPlans() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/setup/check-plans/";
-      print('🔗 Checking existing plans at: $url');
-
-      final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-
-      if (response != null) {
-        print('✅ Check plans response: $response');
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error checking existing plans: $e');
-      return null;
-    }
-  }
-
-  Future<dynamic> checkSubscriptionStatus() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/status/";
-      print('🔗 Checking subscription status at: $url');
-
-      final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-
-      if (response != null) {
-        print('✅ Subscription status response: $response');
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error checking subscription status: $e');
-      rethrow;
-    }
-  }
-
-
-  Future<dynamic> reactivateSubscription() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/reactivate/";
-      print('🔗 Reactivating subscription: $url');
-
-      final response = await NetworkApiServices.postApi(
-        url,
-        {}, // Empty body or add required parameters
-        withAuth: true,
-        tokenType: 'login',
-      );
-
-      if (response != null) {
-        print('✅ Reactivate subscription response: $response');
-        return response;
-      }
-
-      return response;
-    } catch (e) {
-      print('❌ Error reactivating subscription: $e');
-      rethrow; // Re-throw the error so controller can handle it
-    }
-  }
-
-// Payment methods management
-  Future<dynamic> getPaymentMethods() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/payment/methods/";
-      return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-    } catch (e) {
-      print('❌ Error getting payment methods: $e');
-      return null;
-    }
-  }
-
-  Future<dynamic> deletePaymentMethod(String paymentMethodId) async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/subscription/payment/methods/$paymentMethodId/delete/";
-      return await NetworkApiServices.deleteApi(url, withAuth: true, tokenType: 'login');
-    } catch (e) {
-      print('❌ Error deleting payment method: $e');
-      return null;
-    }
-  }
-
-
-  Future<dynamic> fetchUserIsSubcribed() async {
-    try {
-      String url = "${ApiConstants.baseUrl}/api/aipersona/available-personas/";
-      return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
-    } catch (e) {
-      print('❌ Error is_subcribed auth method : $e');
-      return null;
-    }
-  }
+//   Future<dynamic> createSetupIntent() async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/payment/setup-intent/";
+//       print('🔗 Creating setup intent at: $url');
+//
+//       final response = await NetworkApiServices.postApi(url, {}, withAuth: true, tokenType: 'login');
+//
+//       if (response != null) {
+//         print('✅ Setup intent response: $response');
+//       }
+//
+//       return response;
+//     } catch (e) {
+//       print('❌ Error creating setup intent: $e');
+//       rethrow;
+//     }
+//   }
+//
+//
+//   // Add this updated method to your AuthRepository class
+//
+//   Future<dynamic> cancelSubscription() async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/cancel/";
+//       print('🔗 Cancelling subscription: $url');
+//
+//       final response = await NetworkApiServices.postApi(
+//         url,
+//         {}, // Empty body or add if required
+//         withAuth: true,
+//         tokenType: 'login',
+//       );
+//
+//       if (response != null) {
+//         print('✅ Cancel subscription response: $response');
+//         // Don't show snackbar here - let the controller handle UI feedback
+//         return response;
+//       }
+//
+//       return response;
+//     } catch (e) {
+//       print('❌ Error cancelling subscription: $e');
+//       // Don't show snackbar here - let the controller handle error feedback
+//       rethrow; // Re-throw the error so controller can handle it
+//     }
+//   }
+//
+//
+//   Future<dynamic> addPaymentMethod(String paymentMethodId) async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/payment/add-method/";
+//       final body = {
+//         "payment_method_id": paymentMethodId,
+//       };
+//
+//       print('🔗 Adding payment method at: $url');
+//       print('📤 Request body: $body');
+//
+//       final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
+//
+//       if (response != null) {
+//         print('✅ Add payment method response: $response');
+//       }
+//
+//       return response;
+//     } catch (e) {
+//       print('❌ Error adding payment method: $e');
+//       rethrow;
+//     }
+//   }
+//
+//   Future<dynamic> createSubscription(String planType, String paymentMethodId) async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/create/";
+//       final body = {
+//         "plan_type": planType,
+//         "payment_method_id": paymentMethodId,
+//       };
+//
+//       print('🔗 Creating subscription at: $url');
+//       print('📤 Request body: $body');
+//
+//       final response = await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
+//
+//       if (response != null) {
+//         print('✅ Create subscription response: $response');
+//       }
+//
+//       return response;
+//     } catch (e) {
+//       print('❌ Error creating subscription: $e');
+//       rethrow;
+//     }
+//   }
+//
+//   Future<Map<String, dynamic>?> checkExistingPlans() async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/setup/check-plans/";
+//       print('🔗 Checking existing plans at: $url');
+//
+//       final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
+//
+//       if (response != null) {
+//         print('✅ Check plans response: $response');
+//       }
+//
+//       return response;
+//     } catch (e) {
+//       print('❌ Error checking existing plans: $e');
+//       return null;
+//     }
+//   }
+//
+//   Future<dynamic> checkSubscriptionStatus() async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/revenuecat/status/";
+//       print('🔗 Checking subscription status at: $url');
+//
+//       final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
+//
+//       if (response != null) {
+//         print('✅ Subscription status response: $response');
+//       }
+//
+//       return response;
+//     } catch (e) {
+//       print('❌ Error checking subscription status: $e');
+//       rethrow;
+//     }
+//   }
+//
+//
+//   Future<dynamic> reactivateSubscription() async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/reactivate/";
+//       print('🔗 Reactivating subscription: $url');
+//
+//       final response = await NetworkApiServices.postApi(
+//         url,
+//         {}, // Empty body or add required parameters
+//         withAuth: true,
+//         tokenType: 'login',
+//       );
+//
+//       if (response != null) {
+//         print('✅ Reactivate subscription response: $response');
+//         return response;
+//       }
+//
+//       return response;
+//     } catch (e) {
+//       print('❌ Error reactivating subscription: $e');
+//       rethrow; // Re-throw the error so controller can handle it
+//     }
+//   }
+//
+// // Payment methods management
+//   Future<dynamic> getPaymentMethods() async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/payment/methods/";
+//       return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
+//     } catch (e) {
+//       print('❌ Error getting payment methods: $e');
+//       return null;
+//     }
+//   }
+//
+//   Future<dynamic> deletePaymentMethod(String paymentMethodId) async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/subscription/payment/methods/$paymentMethodId/delete/";
+//       return await NetworkApiServices.deleteApi(url, withAuth: true, tokenType: 'login');
+//     } catch (e) {
+//       print('❌ Error deleting payment method: $e');
+//       return null;
+//     }
+//   }
+//
+//
+//   Future<dynamic> fetchUserIsSubcribed() async {
+//     try {
+//       String url = "${ApiConstants.baseUrl}/api/aipersona/available-personas/";
+//       return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
+//     } catch (e) {
+//       print('❌ Error is_subcribed auth method : $e');
+//       return null;
+//     }
+//   }
 
   // ---------- Terms & Conditions ----------
   Future<dynamic> getTermsAndConditions() async {

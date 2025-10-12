@@ -28,7 +28,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
   final bool isNewSession;
   var sessionHistory = <SessionHistory>[].obs;
 
-  static const int MESSAGE_LIMIT = 20;
+  static const int MESSAGE_LIMIT = 50;
 
   // Add this getter to access MESSAGE_LIMIT from instances
   int get messageLimit => MESSAGE_LIMIT;
@@ -122,6 +122,9 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
     });
   }
 
+  // Add this method to your ChatController class
+// Place it after _handleWebSocketMessage method
+
   void _handleWebSocketMessage(dynamic event) {
     try {
       print('🔍 Processing WebSocket event: $event');
@@ -147,12 +150,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
 
         case 'error':
           print('❌ WebSocket error received: ${data['message']}');
-          Get.snackbar(
-            "Connection Error",
-            data['message'] ?? "WebSocket error occurred",
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+          _handleWebSocketError(data['message'] ?? 'Unknown error');
           break;
 
         case 'typing':
@@ -178,6 +176,57 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       print("❌ Error parsing websocket event: $e");
       print("❌ Raw event: $event");
     }
+  }
+
+// NEW METHOD: Handle WebSocket errors with specific 429 handling
+  void _handleWebSocketError(String errorMessage) {
+    String title = "Connection Error";
+    String message = errorMessage;
+    Color backgroundColor = Colors.red;
+    Duration duration = Duration(seconds: 4);
+
+    // Check for 429 or quota exceeded errors
+    if (errorMessage.contains('429') ||
+        errorMessage.contains('quota') ||
+        errorMessage.contains('exceeded') ||
+        errorMessage.contains('insufficient_quota') ||
+        errorMessage.contains('Error code: 429')) {
+
+      title = "🚫 AI Usage Limit Reached";
+      message = "You've exceeded your AI usage quota. Please check your subscription plan or contact support to upgrade.";
+      backgroundColor = Colors.orange.shade700;
+      duration = Duration(seconds: 6);
+
+      // Also disable typing to prevent further messages
+      isTyping.value = false;
+
+    } else if (errorMessage.contains('401') || errorMessage.contains('unauthorized')) {
+      title = "Authentication Error";
+      message = "Your session has expired. Please login again.";
+
+    } else if (errorMessage.contains('500') || errorMessage.contains('server')) {
+      title = "Server Error";
+      message = "Server is experiencing issues. Please try again later.";
+
+    } else if (errorMessage.contains('timeout') || errorMessage.contains('connection')) {
+      title = "Connection Error";
+      message = "Connection lost. Please check your internet and try again.";
+    }
+
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: backgroundColor,
+      colorText: Colors.white,
+      duration: duration,
+      snackPosition: SnackPosition.TOP,
+      margin: EdgeInsets.all(16),
+      borderRadius: 8,
+      icon: Icon(
+        title.contains('Limit') ? Icons.warning_rounded : Icons.error_outline,
+        color: Colors.white,
+      ),
+    );
   }
 
   void _handleIncomingMessage(Map<String, dynamic> data) {

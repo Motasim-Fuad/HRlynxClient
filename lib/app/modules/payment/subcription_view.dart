@@ -152,7 +152,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                         Container(
                           width: double.infinity,
                           height: 150,
+
                           decoration: BoxDecoration(
+                            color: Colors.white,
                             borderRadius: BorderRadius.only(
                               bottomLeft: Radius.circular(20),
                               bottomRight: Radius.circular(20),
@@ -164,8 +166,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                               bottomRight: Radius.circular(20),
                             ),
                             child: Image.asset(
-                              AppImages.splash,
-                              fit: BoxFit.cover,
+                              AppImages.subcription_logo,
+                            fit: BoxFit.fitHeight,
                             ),
                           ),
                         ),

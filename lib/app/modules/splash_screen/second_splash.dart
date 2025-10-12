@@ -35,7 +35,7 @@ class SecondSplash extends StatelessWidget {
 
               // Headings
               Text(
-                'Breaking News with\nAI-powered HR QuickScan™',
+                'Get News with AI-powered HR QuickScan™',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
@@ -50,7 +50,7 @@ class SecondSplash extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: w * 0.08),
                 child: Text(
-                  'Overwhelmed by HR news? HR QuickScan™ gives you the essentials in seconds so you can move from reading to doing.',
+                  'Who has time to read everything these days? HR QuickScan™ cuts through the noise, providing critical and useful HR news insights - stay informed and increase your impact.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
@@ -64,7 +64,7 @@ class SecondSplash extends StatelessWidget {
 
               // Subheading
               Text(
-                'Breaking News on Important HR Topics:',
+                'Catch-up on Important HR Topics',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,

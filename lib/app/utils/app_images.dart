@@ -26,5 +26,6 @@ class AppImages {
   static const String edit_profile = 'assets/images/edit_profile.svg';
   static const String default_news_img = 'assets/images/default_news.png';
   static const String congratulation_right_icon = 'assets/images/congratilitation_icon.svg';
+  static const String subcription_logo = 'assets/images/subcription_view_logo.png';
 
 }
