@@ -60,11 +60,11 @@ class LogInController extends GetxController {
       final userid = user?['id'];
       final useremail = user?['email'];
 
-      userController.setUserEmail(useremail);
-      userController.setUserID(userid);
 
       if (access != null && refresh != null) {
         await TokenStorage.saveLoginTokens(access, refresh);
+        await TokenStorage.saveUserEmail(useremail);
+        await TokenStorage.saveUserId(userid);
 
         await FirebaseMeg().debugIOSNotifications();
         // await FirebaseMeg().sendFCMTokenAfterLogin();

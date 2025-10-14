@@ -90,21 +90,49 @@ class PaymentRepository {
     }
   }
 
-  Future<CustomerInfo> getCustomerInfo() async {
-    try {
-      CustomerInfo info = await Purchases.getCustomerInfo();
-      print('📋 Customer info updated. Active entitlements: ${info.entitlements.active.keys.toList()}');
-      return info;
-    } catch (e) {
-      print('❌ Error getting customer info: $e');
-      rethrow;
-    }
-  }
 
-  Future<void> linkUserToBackend(String revenueCatUserId) async {
+  Future<void> linkUserToBackend(CustomerInfo customerInfo) async {
     try {
       String url = "${ApiConstants.baseUrl}/api/subscription/revenuecat/link-user/";
-      final body = {"revenuecat_user_id": revenueCatUserId};
+
+      // Extract entitlement data
+      String? entitlementId;
+      String? productId;
+      String? expirationDate;
+      bool willRenew = false;
+      String? periodType;
+      String? originalTransactionId;
+
+      if (customerInfo.entitlements.active.isNotEmpty) {
+        final activeEntitlement = customerInfo.entitlements.active.values.first;
+        entitlementId = activeEntitlement.identifier;
+        productId = activeEntitlement.productIdentifier;
+        expirationDate = activeEntitlement.expirationDate?.toString();
+        willRenew = activeEntitlement.willRenew;
+        periodType = activeEntitlement.periodType.name; // 'normal', 'trial', 'intro'
+        originalTransactionId = activeEntitlement.originalPurchaseDate != null
+            ? activeEntitlement.productIdentifier
+            : null;
+      }
+
+      final body = {
+        "revenuecat_user_id": customerInfo.originalAppUserId,
+        "has_active_subscription": customerInfo.entitlements.active.isNotEmpty,
+        "status": customerInfo.entitlements.active.isNotEmpty ? "subscribed" : "free",
+        "active_entitlements": customerInfo.entitlements.active.keys.toList(),
+        "entitlement_id": entitlementId,
+        "product_id": productId,
+        "expiration_date": expirationDate,
+        "will_renew": willRenew,
+        "period_type": periodType,
+        "active_subscriptions": customerInfo.activeSubscriptions.toList(),
+        "first_seen": customerInfo.firstSeen.toString(),
+        "original_app_version": customerInfo.originalApplicationVersion,
+        "original_transaction_id": originalTransactionId,
+      };
+
+      print('📤 Sending data to backend:');
+      print(body);
 
       final response = await NetworkApiServices.postApi(
         url,
@@ -115,6 +143,7 @@ class PaymentRepository {
 
       if (response != null && response['success'] == true) {
         print('✅ User linked to backend successfully');
+        print('@@@@@  revunueCat data send to backend successfully');
       } else {
         throw Exception('Failed to link user to backend');
       }
@@ -215,6 +244,17 @@ class PaymentRepository {
     }
   }
 
+  Future<CustomerInfo> getCustomerInfo() async {
+    try {
+      CustomerInfo info = await Purchases.getCustomerInfo();
+      print('📋 Customer info updated. Active entitlements: ${info.entitlements.active.keys.toList()}');
+      return info;
+    } catch (e) {
+      print('❌ Error getting customer info: $e');
+      rethrow;
+    }
+  }
+
   Future<CustomerInfo> restorePurchases() async {
     try {
       print('🔄 Restoring purchases...');
@@ -232,9 +272,6 @@ class PaymentRepository {
   // ============================================
 
   /// ✅ ONE API TO RULE THEM ALL
-  /// This API returns everything we need:
-  /// - has_subscription, status, active_entitlements
-  /// - can_make_request, usage info, etc.
   Future<Map<String, dynamic>?> checkSubscriptionStatus() async {
     try {
       print('🔍 Checking subscription status from backend...');
@@ -248,9 +285,10 @@ class PaymentRepository {
 
       if (response != null && response['success'] == true) {
         print('✅ Subscription status retrieved');
-        print('📊 Status: ${response['data']['status']}');
-        print('📊 Has Subscription: ${response['data']['has_subscription']}');
-        print('📊 Active Entitlements: ${response['data']['active_entitlements']}');
+        print('@@@@@@@@   we receive revenueCat data from  backend successfully ....');
+        print('backend Status: ${response['data']['status']}');
+        print('backend Has Subscription: ${response['data']['has_subscription']}');
+        print('backend Active Entitlements: ${response['data']['active_entitlements']}');
       }
 
       return response;
@@ -259,6 +297,8 @@ class PaymentRepository {
       return null;
     }
   }
+
+
 
   // ============================================
   // Helpers

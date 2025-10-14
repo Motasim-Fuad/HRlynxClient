@@ -176,6 +176,8 @@ class OtpController extends GetxController {
         if (response.containsKey("access") && response.containsKey("refresh")) {
           await TokenStorage.saveOtpTokens(response["access"], response["refresh"]);
           await TokenStorage.saveLoginTokens(response["access"], response["refresh"]);
+          await TokenStorage.saveUserId(response["id"]);
+          await TokenStorage.saveUserEmail(response["email"]);
         }
 
         Get.snackbar("Success", response['message']);

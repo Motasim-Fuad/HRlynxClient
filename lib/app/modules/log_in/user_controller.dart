@@ -1,14 +1,21 @@
+import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:get/get.dart';
 
 class UserController extends GetxController {
-  var userEmail = ''.obs;
-  var userID = 0.obs;
+  RxInt? userId = RxInt(0);
+  RxString userEmail = ''.obs;
 
-  void setUserEmail(String email) {
-    userEmail.value = email;
+  @override
+  void onInit() {
+    super.onInit();
+    loadUserData();
   }
 
-  void setUserID(int id) {
-    userID.value = id;
+  Future<void> loadUserData() async {
+    final id = await TokenStorage.getUserId();
+    final email = await TokenStorage.getUserEmail();
+
+    if (id != null) userId?.value = id;
+    if (email != null) userEmail.value = email;
   }
 }

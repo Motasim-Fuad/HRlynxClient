@@ -81,7 +81,6 @@ class AppleSignUpController extends GetxController {
       );
       await authRepo.setParsonaType(personaBody);
 
-      userController.setUserEmail(user.email ?? 'No Email Found');
 
       // Step 5: Handle success or failure
 

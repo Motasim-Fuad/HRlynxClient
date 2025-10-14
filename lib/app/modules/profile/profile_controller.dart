@@ -1,3 +1,4 @@
+import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:get/get.dart';
 import '../../api_servies/repository/auth_repo.dart';
 
@@ -16,6 +17,8 @@ class ProfileController extends GetxController {
   var hasError = false.obs;
   var errorMessage = ''.obs;
 
+
+
   @override
   void onInit() {
     super.onInit();
@@ -27,6 +30,8 @@ class ProfileController extends GetxController {
       isLoading.value = true;
       hasError.value = false;
       errorMessage.value = '';
+
+
 
       print("🔄 Fetching user profile...");
 

@@ -9,12 +9,11 @@ class TokenStorage {
   static const _otpAccessTokenKey = 'otp_access_token';
   static const _otpRefreshTokenKey = 'otp_refresh_token';
 
+
   // Reset password tokens
   static const _resetAccessTokenKey = 'reset_access_token';
   static const _resetRefreshTokenKey = 'reset_refresh_token';
 
-  // ✅ Subscription check flag
-  static const _subscriptionCheckDoneKey = 'subscription_check_done';
 
   /// ===== LOGIN TOKENS =====
   static Future<void> saveLoginTokens(String accessToken, String refreshToken) async {
@@ -110,8 +109,46 @@ class TokenStorage {
     }
   }
 
-  /// ===== SUBSCRIPTION CHECK FLAG (NEW) =====
 
+
+  ///==== user id & email ====///
+
+  static const _userIDkey = 'user_id';
+  static const _userEmailkey = 'user_email';
+  static Future<void> saveUserId(int userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_userIDkey, userId);
+  }
+
+  static Future<int?> getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_userIDkey);
+  }
+
+  static Future<void> clearUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userIDkey);
+  }
+
+
+  static Future<void> saveUserEmail(String userEmail) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userEmailkey, userEmail);
+  }
+
+  static Future<String?> getUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userEmailkey);
+  }
+
+  static Future<void> clearUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userEmailkey);
+  }
+
+  /// ===== SUBSCRIPTION CHECK FLAG (NEW) =====
+  // ✅ Subscription check flag
+  static const _subscriptionCheckDoneKey = 'subscription_check_done';
   // Save subscription check done flag
   static Future<void> saveSubscriptionCheckDone(bool value) async {
     try {

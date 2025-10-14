@@ -29,6 +29,7 @@ class PaymentController extends GetxController {
     super.onInit();
     _initializeRevenueCat().then((_) {
       fetchPlans();
+      checkTrialStatus();
     });
   }
 
@@ -50,12 +51,13 @@ class PaymentController extends GetxController {
   // Login user to RevenueCat
   Future<void> _loginRevenueCatUser() async {
     try {
-      String userId = "user_${userController.userID}";
+      String userId = "user${userController.userId}";
       print("passing userId to revenueCat :$userId");
       LogInResult result = await _repository.loginUser(userId);
       customerInfo.value = result.customerInfo;
 
-      await _repository.linkUserToBackend(result.customerInfo.originalAppUserId);
+      // ✅ Pass full CustomerInfo object
+      await _repository.linkUserToBackend(result.customerInfo);
 
     } catch (e) {
       print('❌ Error logging in user: $e');
@@ -67,6 +69,7 @@ class PaymentController extends GetxController {
     try {
       CustomerInfo info = await _repository.getCustomerInfo();
       customerInfo.value = info;
+      print(info);
     } catch (e) {
       print('❌ Error getting customer info: $e');
     }
@@ -175,6 +178,9 @@ class PaymentController extends GetxController {
   }
 
   // Handle successful purchase
+  // payment_controller.dart
+
+// Handle successful purchase
   Future<void> _handlePurchaseSuccess(CustomerInfo customerInfo) async {
     try {
       this.customerInfo.value = customerInfo;
@@ -182,13 +188,22 @@ class PaymentController extends GetxController {
       print('🎉 Purchase successful!');
       print('🎫 Active entitlements: ${customerInfo.entitlements.active.keys.toList()}');
 
-      if (customerInfo.entitlements.active.isNotEmpty) {
-        final response = await _repository.checkSubscriptionStatus();
+      await printFullRevenueCatData(customerInfo);
 
-        if (response != null && response['success'] == true) {
+      if (customerInfo.entitlements.active.isNotEmpty) {
+        // ✅ Sync updated data with backend
+        await _repository.linkUserToBackend(customerInfo);
+
+        // ✅ Verify subscription status from backend
+        print('\n🔍 Verifying subscription status...');
+        final statusResponse = await _repository.checkSubscriptionStatus();
+
+        if (statusResponse != null && statusResponse['success'] == true) {
+          print('✅ Subscription verified on backend');
+          print('📊 Backend Status: ${statusResponse['data']}');
+
           await TokenStorage.saveSubscriptionCheckDone(true);
 
-          // Refresh subscription controller
           try {
             final subController = Get.find<UserIsSubcribedController>();
             await subController.checkAndUpdateSubscriptionStatus();
@@ -207,7 +222,7 @@ class PaymentController extends GetxController {
 
           Get.offAll(() => CongratulationView());
         } else {
-          throw Exception('Failed to sync with backend');
+          throw Exception('Failed to verify subscription on backend');
         }
       } else {
         throw Exception('No active entitlements found after purchase');
@@ -226,6 +241,79 @@ class PaymentController extends GetxController {
     }
   }
 
+// ✅ Print full RevenueCat data
+  Future<void> printFullRevenueCatData(CustomerInfo info) async {
+    print('\n========================================');
+    print('📋 FULL REVENUECAT CUSTOMER INFO');
+    print('========================================');
+
+    print('👤 User ID: ${info.originalAppUserId}');
+    print('📅 First Seen: ${info.firstSeen}');
+    print('📱 Original App Version: ${info.originalApplicationVersion}');
+
+    print('\n🎫 ACTIVE ENTITLEMENTS:');
+    if (info.entitlements.active.isNotEmpty) {
+      info.entitlements.active.forEach((key, value) {
+        print('  ✅ $key:');
+        print('     Product: ${value.productIdentifier}');
+        print('     Expires: ${value.expirationDate}');
+        print('     Is Active: ${value.isActive}');
+        print('     Will Renew: ${value.willRenew}');
+        print('     Period Type: ${value.periodType}');
+        print('     Purchase Date: ${value.originalPurchaseDate}');
+      });
+    } else {
+      print('  ❌ No active entitlements');
+    }
+
+    print('\n📦 ALL ENTITLEMENTS:');
+    info.entitlements.all.forEach((key, value) {
+      print('  - $key: ${value.isActive ? "✅ Active" : "❌ Inactive"}');
+    });
+
+    print('\n💳 ACTIVE SUBSCRIPTIONS:');
+    if (info.activeSubscriptions.isNotEmpty) {
+      print('  ${info.activeSubscriptions}');
+    } else {
+      print('  ❌ No active subscriptions');
+    }
+
+    print('\n📅 EXPIRATION DATES:');
+    if (info.allExpirationDates.isNotEmpty) {
+      info.allExpirationDates.forEach((key, value) {
+        print('  - $key: $value');
+      });
+    } else {
+      print('  ❌ No expiration dates');
+    }
+
+    print('\n📅 PURCHASE DATES:');
+    if (info.allPurchaseDates.isNotEmpty) {
+      info.allPurchaseDates.forEach((key, value) {
+        print('  - $key: $value');
+      });
+    } else {
+      print('  ❌ No purchase dates');
+    }
+
+    print('\n📋 PURCHASED PRODUCTS:');
+    if (info.allPurchasedProductIdentifiers.isNotEmpty) {
+      print('  ${info.allPurchasedProductIdentifiers}');
+    } else {
+      print('  ❌ No purchased products');
+    }
+
+    print('\n🔄 LATEST EXPIRATION: ${info.latestExpirationDate ?? "N/A"}');
+
+    print('\n📊 NON-SUBSCRIPTION TRANSACTIONS:');
+    if (info.nonSubscriptionTransactions.isNotEmpty) {
+      print('  ${info.nonSubscriptionTransactions.length} transactions');
+    } else {
+      print('  ❌ No non-subscription transactions');
+    }
+
+    print('========================================\n');
+  }
   // Handle purchase error
   void _handlePurchaseError(String errorMessage) {
     paymentInProgress.value = false;

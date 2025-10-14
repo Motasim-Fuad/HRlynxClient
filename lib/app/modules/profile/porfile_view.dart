@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/common_widgets/button.dart';
 import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
 import 'package:HRlynx/app/modules/change_password/change_password.dart';
@@ -113,7 +114,6 @@ class ProfileView extends StatelessWidget {
                 ),
 
                 SizedBox(height: 4),
-
                 // Email
                 Center(
                   child: Text(

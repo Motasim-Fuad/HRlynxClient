@@ -76,7 +76,6 @@ class GoogleSignUpController extends GetxController {
       );
       await authRepo.setParsonaType(personaBody);
 
-      userController.setUserEmail(user.email ?? 'No Email Found');
 
       if (success) {
         await initializeNotificationService();
