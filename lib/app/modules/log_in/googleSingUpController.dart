@@ -1,8 +1,9 @@
+// lib/app/modules/sign_up/google_signup_controller.dart
 
 import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
-import 'package:HRlynx/app/modules/payment/subcription_view.dart';
+import 'package:HRlynx/app/subscription_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,7 +16,6 @@ class GoogleSignUpController extends GetxController {
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
 
-  // ✅ Terms & Conditions checkbox
   final isChecked = false.obs;
   late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -24,7 +24,6 @@ class GoogleSignUpController extends GetxController {
   }
 
   Future<void> handleGoogleSignUp() async {
-    // ✅ Check terms acceptance
     if (!isChecked.value) {
       Get.snackbar(
         "Terms Not Accepted",
@@ -57,7 +56,6 @@ class GoogleSignUpController extends GetxController {
       final email = user.email!;
       final name = user.displayName ?? 'Google User';
 
-      // ✅ Get persona ID from onboarding
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
       if (storedPersonaId == null) {
         Get.snackbar(
@@ -67,7 +65,6 @@ class GoogleSignUpController extends GetxController {
         return;
       }
 
-      // ✅ Send to backend
       final personaBody = {"persona": storedPersonaId};
       final success = await authRepo.SocialSignUpAndSetPersona(
         email: email,
@@ -76,22 +73,20 @@ class GoogleSignUpController extends GetxController {
       );
       await authRepo.setParsonaType(personaBody);
 
-
       if (success) {
         await initializeNotificationService();
         await sendFCMTokenToBackend();
 
-        // ✅ Reset subscription check flag for first time user
-        await TokenStorage.clearSubscriptionCheckFlag();
-
         Get.snackbar("Success", "Google sign-in complete and persona set.");
-        Get.to(SubscriptionScreen());
+
+        // ✅ USE SUBSCRIPTION MANAGER
+        await SubscriptionManager.instance.handlePostLoginNavigation();
+
       } else {
         Get.snackbar("Error", "Failed to set persona after Google login.");
       }
     } catch (e) {
-      if (e.toString().contains(
-          "[firebase_auth/network-request-failed]")) {
+      if (e.toString().contains("[firebase_auth/network-request-failed]")) {
         Get.snackbar(
           "Error",
           "I think your network has a problem or timeout. Please try again.",

@@ -78,7 +78,7 @@ flutter_launcher_icons:
 
 flutter_native_splash:
   color: "#ffffff"                          # Splash background color
-  image: assets/images/hrlynx_splashopeninglogo.png      # তোমার লোগো (512x512 PNG transparent)
+  image: assets/images/hrlynx_splashopeninglogo.png     # তোমার লোগো (512x512 PNG transparent)
   android: true
   ios: true
 

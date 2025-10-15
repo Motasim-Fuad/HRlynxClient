@@ -23,25 +23,31 @@ class SubscriptionPlan {
   });
 
   factory SubscriptionPlan.fromJson(Map<String, dynamic> json) {
-    String? productId;
-    if (Platform.isAndroid) {
-      productId = json['revenuecat_product_id_android'];
-    } else if (Platform.isIOS) {
-      productId = json['revenuecat_product_id_ios'];
-    }
+    try {
+      String? productId;
+      if (Platform.isAndroid) {
+        productId = json['revenuecat_product_id_android'];
+      } else if (Platform.isIOS) {
+        productId = json['revenuecat_product_id_ios'];
+      }
 
-    return SubscriptionPlan(
-      id: json['id'],
-      name: json['name'],
-      planType: json['plan_type'],
-      price: json['price'],
-      interval: json['interval'],
-      revenuecatProductId: productId,
-      isActive: json['is_active'] ?? true,
-    );
+      // Add null safety checks and provide defaults
+      return SubscriptionPlan(
+        id: json['id'] ?? 0,
+        name: json['name'] ?? 'Unknown Plan',
+        planType: json['plan_type'] ?? 'unknown',
+        price: json['price']?.toString() ?? '0', // Convert to string if not already
+        interval: json['interval'] ?? 'month',
+        revenuecatProductId: productId,
+        isActive: json['is_active'] ?? true,
+      );
+    } catch (e) {
+      print('❌ Error parsing SubscriptionPlan: $e');
+      print('📋 Raw JSON: $json');
+      rethrow;
+    }
   }
 }
-
 class PaymentRepository {
   // ============================================
   // RevenueCat Configuration
@@ -168,23 +174,50 @@ class PaymentRepository {
         tokenType: 'login',
       );
 
+      print('📥 API Response: $response'); // Debug: Print full response
+
       if (response != null && response['success'] == true) {
-        final List<dynamic> plansData = response['data']['plans'] ?? response['data'];
+        // Handle different response structures
+        final plansData = response['data']['plans'] ?? response['data'];
 
-        final plans = plansData.map((plan) => SubscriptionPlan.fromJson(plan)).toList();
-        print('✅ Plans fetched: ${plans.length} plans');
-
-        for (var plan in plans) {
-          print('📋 Plan: ${plan.planType} - Product ID: ${plan.revenuecatProductId}');
+        if (plansData == null) {
+          print('❌ No plans data found in response');
+          throw Exception('No plans data in response');
         }
 
+        print('📋 Raw plans data: $plansData'); // Debug: Print raw plans data
+
+        // Ensure it's a List
+        final List<dynamic> plansList = plansData is List ? plansData : [plansData];
+
+        final plans = <SubscriptionPlan>[];
+
+        for (var i = 0; i < plansList.length; i++) {
+          try {
+            final plan = SubscriptionPlan.fromJson(plansList[i]);
+            plans.add(plan);
+            print('✅ Plan ${i + 1}: ${plan.planType} - Product ID: ${plan.revenuecatProductId}');
+          } catch (e) {
+            print('❌ Error parsing plan at index $i: $e');
+            print('📋 Problem plan data: ${plansList[i]}');
+            // Continue to next plan instead of failing completely
+          }
+        }
+
+        if (plans.isEmpty) {
+          throw Exception('No valid plans could be parsed');
+        }
+
+        print('✅ Successfully fetched ${plans.length} plans');
         return plans;
       } else {
         print('❌ Failed to fetch plans: Invalid response');
+        print('Response success: ${response?['success']}');
         throw Exception('Failed to load subscription plans');
       }
     } catch (e) {
       print('❌ Error fetching plans: $e');
+      print('Stack trace: ${StackTrace.current}');
       rethrow;
     }
   }

@@ -1,7 +1,7 @@
 import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
-import 'package:HRlynx/app/modules/payment/subcription_view.dart';
+import 'package:HRlynx/app/subscription_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -26,8 +26,9 @@ class AppleSignUpController extends GetxController {
   }
 
   /// Apple Sign-In with terms check
+// Only showing the changed part - rest remains same
+
   Future<void> handleAppleSignUp() async {
-    // ✅ Check terms acceptance
     if (!isChecked.value) {
       Get.snackbar(
         "Terms Not Accepted",
@@ -39,7 +40,6 @@ class AppleSignUpController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Step 1: Check Apple Sign-In availability
       final isAvailable = await SignInWithApple.isAvailable();
       if (!isAvailable) {
         Get.snackbar("Error", "Apple Sign-In is not available on this device");
@@ -47,7 +47,6 @@ class AppleSignUpController extends GetxController {
         return;
       }
 
-      // Step 2: Apple Sign-In via Firebase
       final userCredential = await signInWithApple();
       if (userCredential == null) {
         isLoading.value = false;
@@ -63,16 +62,12 @@ class AppleSignUpController extends GetxController {
       final email = user.email!;
       final name = user.displayName ?? 'Apple User';
 
-      // Step 3: Get stored persona ID from onboarding
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
       if (storedPersonaId == null) {
         Get.snackbar("Error", "No persona selected. Please complete onboarding first.");
         return;
       }
 
-      print("✅ Using stored persona ID: $storedPersonaId");
-
-      // Step 4: Send to backend social login API
       final personaBody = {"persona": storedPersonaId};
       final success = await authRepo.SocialSignUpAndSetPersona(
         email: email,
@@ -81,24 +76,19 @@ class AppleSignUpController extends GetxController {
       );
       await authRepo.setParsonaType(personaBody);
 
-
-      // Step 5: Handle success or failure
-
       if (success) {
         await initializeNotificationService();
         await sendFCMTokenToBackend();
 
-        // ✅ Reset subscription check flag for first time user
-        await TokenStorage.clearSubscriptionCheckFlag();
-
         Get.snackbar("Success", "Apple sign-in complete and persona set.");
-        print("Apple signin successful with persona ID: $storedPersonaId");
-        Get.to(SubscriptionScreen());
+
+        // ✅ USE SUBSCRIPTION MANAGER
+        await SubscriptionManager.instance.handlePostLoginNavigation();
+
       } else {
         Get.snackbar("Error", "Failed to set persona after Apple login.");
       }
     } catch (e) {
-      // Handle Apple Sign-In specific errors
       if (e.toString().contains('canceled')) {
         Get.snackbar("Cancelled", "Apple Sign-In was cancelled by user");
       } else if (e.toString().contains('network')) {

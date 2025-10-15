@@ -1,12 +1,15 @@
+// lib/app/modules/log_in/log_in_controller.dart
+
 import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
+import 'package:HRlynx/app/modules/payment/payment_controller.dart';
+import 'package:HRlynx/app/subscription_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
-import '../main_screen/main_screen_view.dart';
 
 class LogInController extends GetxController {
   final userController = Get.put(UserController());
@@ -18,13 +21,11 @@ class LogInController extends GetxController {
   final isChecked = false.obs;
   final isLoading = false.obs;
 
-  // Generate a unique key each time
   late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
   void onInit() {
     super.onInit();
-    // Clear form when controller is initialized
     emailController.clear();
     passwordController.clear();
     isChecked.value = false;
@@ -42,7 +43,12 @@ class LogInController extends GetxController {
     if (!formKey.currentState!.validate()) return;
 
     if (!isChecked.value) {
-      Get.snackbar("Terms Not Accepted", "Please agree to the Terms and Privacy Policy");
+      Get.snackbar(
+        "Terms Not Accepted",
+        "Please agree to the Terms and Privacy Policy",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -60,35 +66,86 @@ class LogInController extends GetxController {
       final userid = user?['id'];
       final useremail = user?['email'];
 
-
       if (access != null && refresh != null) {
+        // ✅ Save tokens first
         await TokenStorage.saveLoginTokens(access, refresh);
         await TokenStorage.saveUserEmail(useremail);
         await TokenStorage.saveUserId(userid);
 
-        await FirebaseMeg().debugIOSNotifications();
-        // await FirebaseMeg().sendFCMTokenAfterLogin();
-        // ✅ Login successful হওয়ার পর notification service এবং FCM token setup করুন
-        await initializeNotificationService();
-        await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
+        print('✅ Login tokens saved successfully');
 
-        //tessting ios permison setup is okey or not
+        // ✅ Initialize Firebase services (non-blocking)
+        _initializeFirebaseServices();
 
-        await FirebaseMeg().fullNotificationDiagnostic();
+        // ✅ Try to restore purchases automatically
+        await _tryRestorePurchases();
 
+        Get.snackbar(
+          "Success",
+          response['message'] ?? "Login successful",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 2),
+        );
 
-        Get.snackbar("Success", response['message'] ?? "Login successful");
-        Get.to(() => MainScreen());
+        // ✅ USE SUBSCRIPTION MANAGER for navigation
+        await SubscriptionManager.instance.handlePostLoginNavigation();
+
       } else {
-        Get.snackbar("Failed", "Login token missing.");
+        Get.snackbar(
+          "Failed",
+          "Login token missing.",
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", e.toString());
-
-      print(e);
+      Get.snackbar(
+        "Error",
+        e.toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      print('❌ Login error: $e');
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// ✅ NEW: Try to restore purchases automatically
+  Future<void> _tryRestorePurchases() async {
+    try {
+      print('🔄 Attempting automatic purchase restore...');
+
+      // Initialize PaymentController if not already
+      if (!Get.isRegistered<PaymentController>()) {
+        Get.put(PaymentController());
+      }
+
+      final paymentController = Get.find<PaymentController>();
+      await paymentController.restorePurchases();
+
+      print('✅ Purchases restored automatically');
+    } catch (e) {
+      print('⚠️ Could not restore purchases automatically: $e');
+      // Don't fail login if restore fails
+    }
+  }
+
+  /// ✅ IMPROVED: Initialize Firebase services without blocking login
+  Future<void> _initializeFirebaseServices() async {
+    // Run in background - don't await
+    Future.microtask(() async {
+      try {
+        await FirebaseMeg().debugIOSNotifications();
+        await initializeNotificationService();
+        await sendFCMTokenToBackend();
+        await FirebaseMeg().fullNotificationDiagnostic();
+        print('✅ Firebase services initialized');
+      } catch (e) {
+        print('⚠️ Firebase initialization error (non-critical): $e');
+      }
+    });
   }
 
   Future<void> initializeNotificationService() async {
@@ -104,17 +161,21 @@ class LogInController extends GetxController {
     }
   }
 
-  // ✅ নতুন function: Login এর পর FCM token backend এ পাঠানোর জন্য
   Future<void> sendFCMTokenToBackend() async {
     try {
-
       final fcmToken = await FirebaseMessaging.instance.getToken();
-      // Firebase message service এর instance নিন
       final firebaseMsg = FirebaseMeg();
       await firebaseMsg.sendFCMTokenAfterLogin();
-      print('🔥✅@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ FCM token sent to backend after login . token==$fcmToken');
+      print('🔥✅ FCM token sent to backend after login. token==$fcmToken');
     } catch (e) {
       print('❌ Error sending FCM token after login: $e');
     }
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.onClose();
   }
 }

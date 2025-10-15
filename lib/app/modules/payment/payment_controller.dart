@@ -51,7 +51,7 @@ class PaymentController extends GetxController {
   // Login user to RevenueCat
   Future<void> _loginRevenueCatUser() async {
     try {
-      String userId = "user${userController.userId}";
+      String userId = "revenuecatuser${userController.userId}";
       print("passing userId to revenueCat :$userId");
       LogInResult result = await _repository.loginUser(userId);
       customerInfo.value = result.customerInfo;

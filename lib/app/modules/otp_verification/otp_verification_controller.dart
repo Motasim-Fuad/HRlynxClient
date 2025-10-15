@@ -154,6 +154,8 @@ class OtpController extends GetxController {
     }
   }
 
+// Only showing the changed verifyOtp method
+
   Future<void> verifyOtp() async {
     final otp = otpDigits.join();
     if (otp.length != 4) {
@@ -182,25 +184,25 @@ class OtpController extends GetxController {
 
         Get.snackbar("Success", response['message']);
 
-        // sellected persona for chat
+        // Set persona
         await submitSelectedPersona();
 
-
-
-
-
-        //degug push notifiation
+        // Initialize services
         await FirebaseMeg().debugIOSNotifications();
-        //FCM token For notification
         await initializeNotificationService();
-        await sendFCMTokenToBackend(); // ✅ এখানে FCM token পাঠান
+        await sendFCMTokenToBackend();
+
+        // ✅ USE SUBSCRIPTION MANAGER
+        // Note: submitSelectedPersona() already navigates, so we don't call manager here
+        // If you want to use manager, remove navigation from submitSelectedPersona()
+
       } else {
         Get.snackbar("Failed", response['message'] ?? "OTP verification failed");
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
     } finally {
-      isLoading.value = false; // ✅ Ensure this always runs
+      isLoading.value = false;
     }
   }
 

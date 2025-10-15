@@ -1,3 +1,5 @@
+// lib/app/modules/home/user_isSubcriptionController.dart
+
 import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
 import 'package:HRlynx/app/api_servies/repository/payment_repository.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
@@ -72,6 +74,9 @@ class UserIsSubcribedController extends GetxController {
       // Step 3: Fetch personas based on subscription
       await fetchIsSubcriptionData();
 
+      // ✅ Step 4: Ensure selected persona is loaded
+      await _ensureSelectedPersonaLoaded();
+
       print('✅ Subscription status updated successfully');
       print('📊 Final State:');
       print('   isActive: ${isActive.value}');
@@ -83,6 +88,31 @@ class UserIsSubcribedController extends GetxController {
       print('❌ Error in checkAndUpdateSubscriptionStatus: $e');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// ✅ NEW: Ensure selected persona is loaded
+  Future<void> _ensureSelectedPersonaLoaded() async {
+    try {
+      final storedPersonaId = await TokenStorage.getSelectedPersonaId();
+
+      if (storedPersonaId != null && selectedPersona.value == null) {
+        print('🔍 Loading selected persona from storage: $storedPersonaId');
+
+        // Try to find persona in local data first
+        final persona = subcriptionData.firstWhereOrNull(
+                (p) => p.id == storedPersonaId
+        );
+
+        if (persona != null) {
+          selectedPersona.value = persona;
+          print('✅ Restored selected persona: ${persona.title}');
+        } else {
+          print('⚠️ Persona $storedPersonaId not found in local data');
+        }
+      }
+    } catch (e) {
+      print('❌ Error ensuring selected persona loaded: $e');
     }
   }
 
@@ -169,7 +199,7 @@ class UserIsSubcribedController extends GetxController {
   /// ============================================
   Future<void> _syncWithBackend() async {
     try {
-      print('🔄 Syncing with backend (single API call)...');
+      print('🔄 Syncing with backend...');
 
       final response = await paymentRepo.checkSubscriptionStatus();
 
@@ -181,7 +211,7 @@ class UserIsSubcribedController extends GetxController {
         final status = data['status'] ?? 'free'; // active, free, canceled
         final activeEntitlements = List<String>.from(data['active_entitlements'] ?? []);
 
-        print('📋 Backend status (single API):');
+        print('📋 Backend status:');
         print('   has_subscription: $hasSubscription');
         print('   status: $status');
         print('   active_entitlements: $activeEntitlements');
@@ -199,22 +229,18 @@ class UserIsSubcribedController extends GetxController {
   }
 
   /// ============================================
-  /// Fetch Personas Data (from backend status API)
+  /// Fetch Personas Data
   /// ============================================
   Future<void> fetchIsSubcriptionData() async {
     try {
-      print('🔄 Fetching personas data from authRepo...');
+      print('🔄 Fetching personas data...');
 
-      // Use existing authRepo method to get personas
       final response = await authRepo.getAllAiPersona();
 
       if (response != null && response['data'] != null) {
-        // Parse personas from response
         final List<dynamic> personasData = response['data'] ?? [];
 
-        // You might need to adjust this based on your actual API response structure
-        // If you have a specific persona API, use that instead
-
+        // Parse personas (adjust based on your actual API structure)
         print('✅ Personas data fetched');
         print('   personas count: ${personasData.length}');
       }
@@ -429,7 +455,7 @@ class UserIsSubcribedController extends GetxController {
     return showReactivateButton.value;
   }
 
-  /// Check if can reactivate subscription (alias for canShowReactivate)
+  /// ✅ FIXED: Check if can reactivate subscription (alias for canShowReactivate)
   bool get canReactivateSubscription {
     return showReactivateButton.value;
   }
