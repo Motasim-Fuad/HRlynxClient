@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 
 class UploadDataView extends StatelessWidget {
   final controller = Get.put(UploadDataController());
-  final dobController = TextEditingController();
 
   UploadDataView({super.key});
 
@@ -19,13 +18,20 @@ class UploadDataView extends StatelessWidget {
       ),
       body: Center(
         child: Obx(() {
+          // Show loading spinner while fetching existing data
+          if (controller.isFetchingData.value) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
           return Stack(
             children: [
               SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // SIMPLE Profile Image Picker
+                    // Profile Image Picker with Network Image Support
                     GestureDetector(
                       onTap: controller.isLoading.value ? null : controller.pickImage,
                       child: Container(
@@ -34,18 +40,9 @@ class UploadDataView extends StatelessWidget {
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.grey),
                           borderRadius: BorderRadius.circular(20),
-                          image: controller.selectedImage.value != null
-                              ? DecorationImage(
-                            image: FileImage(controller.selectedImage.value!),
-                            fit: BoxFit.cover,
-                          )
-                              : null,
+                          image: _getImageDecoration(),
                         ),
-                        child: controller.selectedImage.value == null
-                            ? const Center(
-                            child: Icon(Icons.camera_alt_outlined, size: 50)
-                        )
-                            : null,
+                        child: _getImageChild(),
                       ),
                     ),
 
@@ -70,12 +67,7 @@ class UploadDataView extends StatelessWidget {
                     // Save Button
                     Button(
                       title: controller.isLoading.value ? "Saving..." : "Save",
-                      onTap: controller.isLoading.value
-                          ? null
-                          : () {
-                        controller.saveData();
-                        dobController.clear();
-                      },
+                      onTap: controller.isLoading.value ? null : controller.saveData,
                     ),
                   ],
                 ),
@@ -112,5 +104,33 @@ class UploadDataView extends StatelessWidget {
         }),
       ),
     );
+  }
+
+  // Helper method to determine which image to show
+  DecorationImage? _getImageDecoration() {
+    // Priority: Local file > Network image > null
+    if (controller.selectedImage.value != null) {
+      return DecorationImage(
+        image: FileImage(controller.selectedImage.value!),
+        fit: BoxFit.cover,
+      );
+    } else if (controller.networkImageUrl.value != null) {
+      return DecorationImage(
+        image: NetworkImage(controller.networkImageUrl.value!),
+        fit: BoxFit.cover,
+      );
+    }
+    return null;
+  }
+
+  // Helper method to show camera icon when no image
+  Widget? _getImageChild() {
+    if (controller.selectedImage.value == null &&
+        controller.networkImageUrl.value == null) {
+      return const Center(
+        child: Icon(Icons.camera_alt_outlined, size: 50),
+      );
+    }
+    return null;
   }
 }
