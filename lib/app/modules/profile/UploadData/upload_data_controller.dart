@@ -119,13 +119,6 @@ class UploadDataController extends GetxController {
       );
 
       if (response != null && response['success'] == true) {
-        Get.snackbar(
-          "Success",
-          "Profile updated successfully!",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-
         // Refresh ProfileController
         try {
           final ProfileController profileController = Get.find<ProfileController>();
@@ -134,8 +127,8 @@ class UploadDataController extends GetxController {
           final ProfileController profileController = Get.put(ProfileController());
           await profileController.refreshProfile();
         }
-
         Get.back();
+
       } else {
         Get.snackbar(
           "Error",

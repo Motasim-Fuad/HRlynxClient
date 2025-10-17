@@ -60,7 +60,7 @@ class HomeView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Breaking HR News Card ---
+                // ---  HR News Card ---
                 Container(
                   height: size.height * 0.20,
                   width: double.infinity,
@@ -85,16 +85,16 @@ class HomeView extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'HR QuickScan™ News',
+                                'Your HR Guidance, Reimagined',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
-                                  fontSize: 24,
+                                  fontSize: 20,
                                   color: Colors.white,
                                 ),
                               ),
                               const SizedBox(height: 20),
                               const Text(
-                                'Stay updated with the latest HR insights, trends and policy changes.',
+                                'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w400,
                                   fontSize: 16,

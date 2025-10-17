@@ -14,6 +14,7 @@ class NewsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final NewsController controller = Get.put(NewsController());
 
+    final size = MediaQuery.of(context).size;
 
     // Add this helper function to your NewsView class (or put it in the controller)
     String _extractDontMissContent(String summary) {
@@ -32,28 +33,103 @@ class NewsView extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        // leading: GestureDetector(
-        //   onTap: () {
-        //     Get.put<BottomNavController>(BottomNavController()).changeTab(0);
-        //     Get.back();
-        //   },
-        //   child: Icon(Icons.arrow_back),
-        // ),
-        title: Text(
-          'Breaking HR News',
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 24,
-            color: Color(0xFF1B1E28),
-          ),
-        ),
-        centerTitle: true,
-      ),
+      // appBar: AppBar(
+      //   // leading: GestureDetector(
+      //   //   onTap: () {
+      //   //     Get.put<BottomNavController>(BottomNavController()).changeTab(0);
+      //   //     Get.back();
+      //   //   },
+      //   //   child: Icon(Icons.arrow_back),
+      //   // ),
+      //   title: Text(
+      //     'Breaking HR News',
+      //     style: TextStyle(
+      //       fontWeight: FontWeight.w500,
+      //       fontSize: 24,
+      //       color: Color(0xFF1B1E28),
+      //     ),
+      //   ),
+      //   centerTitle: true,
+      // ),
       body: RefreshIndicator(
         onRefresh: controller.refreshData,
         child: Column(
           children: [
+
+            SizedBox(height: 30,),
+           /// card ///
+            Padding(
+              padding: const EdgeInsets.only(left: 20,right: 20,top: 20),
+              child: Container(
+                height: size.height * 0.20,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: Image.asset(
+                          AppImages.home_container,
+                          fit: BoxFit.cover,
+                          color: Colors.black.withOpacity(0.6),
+                          colorBlendMode: BlendMode.darken,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'HR QuickScan™ News',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            const Text(
+                              'Stay updated with the latest HR insights, trends and policy changes.',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                            // const SizedBox(height: 20),
+                            // GestureDetector(
+                            //   onTap: () => Get.to(() => const NewsView()),
+                            //   child: Container(
+                            //     width: 120,
+                            //     height: 40,
+                            //     decoration: BoxDecoration(
+                            //       color: const Color(0xFF013D3B),
+                            //       borderRadius: BorderRadius.circular(6),
+                            //     ),
+                            //     child: const Center(
+                            //       child: Text(
+                            //         'View Feed',
+                            //         style: TextStyle(
+                            //           fontWeight: FontWeight.w500,
+                            //           fontSize: 16,
+                            //           color: Colors.white,
+                            //         ),
+                            //       ),
+                            //     ),
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             // Search Bar
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
