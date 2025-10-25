@@ -101,28 +101,6 @@ class HomeView extends StatelessWidget {
                                   color: Colors.white,
                                 ),
                               ),
-                              // const SizedBox(height: 20),
-                              // GestureDetector(
-                              //   onTap: () => Get.to(() => const NewsView()),
-                              //   child: Container(
-                              //     width: 120,
-                              //     height: 40,
-                              //     decoration: BoxDecoration(
-                              //       color: const Color(0xFF013D3B),
-                              //       borderRadius: BorderRadius.circular(6),
-                              //     ),
-                              //     child: const Center(
-                              //       child: Text(
-                              //         'View Feed',
-                              //         style: TextStyle(
-                              //           fontWeight: FontWeight.w500,
-                              //           fontSize: 16,
-                              //           color: Colors.white,
-                              //         ),
-                              //       ),
-                              //     ),
-                              //   ),
-                              // ),
                             ],
                           ),
                         ),
@@ -150,7 +128,10 @@ class HomeView extends StatelessWidget {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.all(40),
-                        child: CircularProgressIndicator(),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+                        ),
                       ),
                     );
                   }
@@ -183,7 +164,10 @@ class HomeView extends StatelessWidget {
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.all(40),
-                            child: CircularProgressIndicator(),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+                            ),
                           ),
                         );
                       }
@@ -317,7 +301,10 @@ class HomeView extends StatelessWidget {
                           fit: BoxFit.cover,
                           width: double.infinity,
                           placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+                            ),
                           ),
                           errorWidget: (context, url, error) => const Icon(
                             Icons.broken_image,
@@ -433,7 +420,7 @@ class HomeView extends StatelessWidget {
             height: 16,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
             ),
           ),
         ),

@@ -234,10 +234,9 @@ class VoiceService extends GetxController {
       }
 
       print('🎵 Playing from: $localPath');
-      print('🎵 solution');
       await _player.play(DeviceFileSource(localPath));
       // here is my error
-      print('@@@@@@@@@ my voice local Playing from: $localPath');
+      print(' my voice local Playing from: $localPath');
     } catch (e) {
       print('❌ Play from local file error: $e');
       throw e;
@@ -248,17 +247,6 @@ class VoiceService extends GetxController {
     print('🎵 Handling playback error');
     _resetPlaybackState();
 
-    Get.snackbar(
-      "Playback Error",
-      "Unable to play voice message",
-      backgroundColor: Colors.red.shade600,
-      colorText: Colors.white,
-      duration: Duration(seconds: 2),
-      margin: EdgeInsets.all(16),
-      borderRadius: 8,
-      icon: Icon(Icons.error_outline, color: Colors.white),
-      snackPosition: SnackPosition.BOTTOM,
-    );
   }
 
   bool isPlayingUrl(String url) {
@@ -393,15 +381,6 @@ class VoiceService extends GetxController {
 
       print("✅ Recording started successfully");
 
-      Get.snackbar(
-        "Recording Started",
-        "Recording voice message...",
-        backgroundColor: Colors.green.shade600,
-        colorText: Colors.white,
-        duration: Duration(seconds: 2),
-        icon: Icon(Icons.mic, color: Colors.white),
-      );
-
       return true;
 
     } catch (e) {
@@ -485,12 +464,11 @@ class VoiceService extends GetxController {
         }
       }
 
-      Get.snackbar("Error", "Failed to send voice message");
+       print("Failed to send voice message");
       return null;
 
     } catch (e) {
       print('❌ Error sending voice to backend: $e');
-      Get.snackbar("Error", "Failed to process voice");
       return null;
     }
   }

@@ -1,9 +1,8 @@
-import 'dart:ui';
+
 import 'package:HRlynx/app/api_servies/api_Constant.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/modules/notification/notification_view.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -14,7 +13,7 @@ class FirebaseMeg {
   final msgService = FirebaseMessaging.instance;
 
   static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   initFCM() async {
     try {
@@ -34,11 +33,12 @@ class FirebaseMeg {
 
         // iOS specific setup - শুধু একবার করুন
         if (Platform.isIOS) {
-          await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
+          await FirebaseMessaging.instance
+              .setForegroundNotificationPresentationOptions(
+                alert: true,
+                badge: true,
+                sound: true,
+              );
 
           // APNs token এর জন্য wait করুন
           await waitForAPNsToken();
@@ -82,11 +82,11 @@ class FirebaseMeg {
     String? apnsToken;
     int attempts = 0;
 
-    while (apnsToken == null && attempts < 15) { // আরো বেশি সময় দিন
+    while (apnsToken == null && attempts < 15) {
       apnsToken = await FirebaseMessaging.instance.getAPNSToken();
       if (apnsToken == null) {
         print("⏳ APNs token এর জন্য wait করছি... ($attempts/15)");
-        await Future.delayed(Duration(seconds: 3)); // একটু বেশি সময় দিন
+        await Future.delayed(Duration(seconds: 3));
         attempts++;
       }
     }
@@ -126,20 +126,21 @@ class FirebaseMeg {
   // Initialize Local Notifications
   Future<void> initializeLocalNotifications() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings initializationSettingsIOS =
-    DarwinInitializationSettings(
-      requestAlertPermission: false, // আমরা manually request করবো
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+        DarwinInitializationSettings(
+          requestAlertPermission: false, // আমরা manually request করবো
+          requestBadgePermission:
+              true, // false silo ami testing ar jonno true korlam
+          requestSoundPermission: false,
+        );
 
     const InitializationSettings initializationSettings =
-    InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
+        InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsIOS,
+        );
 
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
@@ -162,7 +163,8 @@ class FirebaseMeg {
 
     await flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.createNotificationChannel(channel);
   }
 
@@ -206,7 +208,9 @@ class FirebaseMeg {
         Map<String, dynamic> errorData = jsonDecode(response.body);
         if (errorData['errors'] != null &&
             errorData['errors']['token'] != null &&
-            errorData['errors']['token'].toString().contains('already exists')) {
+            errorData['errors']['token'].toString().contains(
+              'already exists',
+            )) {
           print("⚠️ Token already exists in backend");
         } else {
           print("❌ Validation Error: ${errorData['message']}");
@@ -233,27 +237,28 @@ class FirebaseMeg {
     }
 
     // Snackbar show করুন
-    _showSnackbarSafely(
-      title: message.notification?.title ?? "Notification",
-      message: message.notification?.body ?? "New message received",
-      backgroundColor: Colors.blue,
-      onTap: () => handleNotificationTap(message),
-    );
+    // _showSnackbarSafely(
+    //   title: message.notification?.title ?? "Notification",
+    //   message: message.notification?.body ?? "New message received",
+    //   backgroundColor: Colors.blue,
+    //   onTap: () => handleNotificationTap(message),
+    // );
   }
 
   // Show Local Notification (শুধু Android এর জন্য)
   Future<void> showLocalNotification(RemoteMessage message) async {
     const AndroidNotificationDetails androidNotificationDetails =
-    AndroidNotificationDetails(
-      'high_importance_channel',
-      'High Importance Notifications',
-      channelDescription: 'This channel is used for important notifications.',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
-      playSound: true,
-    );
+        AndroidNotificationDetails(
+          'high_importance_channel',
+          'High Importance Notifications',
+          channelDescription:
+              'This channel is used for important notifications.',
+          importance: Importance.high,
+          priority: Priority.high,
+          showWhen: true,
+          enableVibration: true,
+          playSound: true,
+        );
 
     const NotificationDetails notificationDetails = NotificationDetails(
       android: androidNotificationDetails,
@@ -322,30 +327,30 @@ class FirebaseMeg {
   }
 
   // Safe snackbar function
-  void _showSnackbarSafely({
-    required String title,
-    required String message,
-    required Color backgroundColor,
-    VoidCallback? onTap,
-  }) {
-    try {
-      if (Get.context != null) {
-        Get.showSnackbar(
-          GetSnackBar(
-            title: title,
-            message: message,
-            backgroundColor: backgroundColor,
-            duration: Duration(seconds: 3),
-            onTap: onTap != null ? (snack) => onTap() : null,
-            snackPosition: SnackPosition.TOP,
-          ),
-        );
-      }
-    } catch (e) {
-      print("Snackbar Error: $e");
-      print("Snackbar: $title - $message");
-    }
-  }
+  // void _showSnackbarSafely({
+  //   required String title,
+  //   required String message,
+  //   required Color backgroundColor,
+  //   VoidCallback? onTap,
+  // }) {
+  //   try {
+  //     if (Get.context != null) {
+  //       Get.showSnackbar(
+  //         GetSnackBar(
+  //           title: title,
+  //           message: message,
+  //           backgroundColor: backgroundColor,
+  //           duration: Duration(seconds: 3),
+  //           onTap: onTap != null ? (snack) => onTap() : null,
+  //           snackPosition: SnackPosition.TOP,
+  //         ),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print("Snackbar Error: $e");
+  //     print("Snackbar: $title - $message");
+  //   }
+  // }
 
   // iOS Notification Debug
   Future<void> debugIOSNotifications() async {
@@ -372,57 +377,57 @@ class FirebaseMeg {
   }
 
   // Test করার জন্য local notification
-  Future<void> testLocalNotification() async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'test_channel',
-      'Test Channel',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    const NotificationDetails notificationDetails = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await flutterLocalNotificationsPlugin.show(
-      999,
-      '🔥 DIAGNOSTIC TEST',
-      'যদি এটা দেখতে পান, iOS notifications কাজ করছে!',
-      notificationDetails,
-    );
-
-    print("🔥 Local test notification sent - check করুন দেখা যাচ্ছে কিনা");
-  }
+  // Future<void> testLocalNotification() async {
+  //   const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+  //     'test_channel',
+  //     'Test Channel',
+  //     importance: Importance.high,
+  //     priority: Priority.high,
+  //   );
+  //
+  //   const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+  //     presentAlert: true,
+  //     presentBadge: true,
+  //     presentSound: true,
+  //   );
+  //
+  //   const NotificationDetails notificationDetails = NotificationDetails(
+  //     android: androidDetails,
+  //     iOS: iosDetails,
+  //   );
+  //
+  //   await flutterLocalNotificationsPlugin.show(
+  //     999,
+  //     '🔥 DIAGNOSTIC TEST',
+  //     'যদি এটা দেখতে পান, iOS notifications কাজ করছে!',
+  //     notificationDetails,
+  //   );
+  //
+  //   print("🔥 Local test notification sent - check করুন দেখা যাচ্ছে কিনা");
+  // }
 
   // Full diagnostic test
-  Future<void> fullNotificationDiagnostic() async {
-    print("🔥 === FULL NOTIFICATION DIAGNOSTIC ===");
-
-    // Test 1: Local notification
-    print("📱 Testing local notification...");
-    await testLocalNotification();
-
-    // Test 2: Check all settings
-    await debugIOSNotifications();
-
-    // Test 3: Check handlers
-    print("🔥 Foreground message handler ready: ${FirebaseMessaging.onMessage != null}");
-
-    // Test 4: Check backend token format
-    print("🔥 Backend expects this token format for iOS:");
-    print("🔥 Token: ${await FirebaseMessaging.instance.getToken()}");
-    print("🔥 Device type: ios");
-
-    print("🔥 যদি local notification কাজ করে কিন্তু push না করে, backend এর সমস্যা");
-    print("🔥 যদি local notification fail করে, iOS setup এর সমস্যা");
-  }
+  // Future<void> fullNotificationDiagnostic() async {
+  //   print("🔥 === FULL NOTIFICATION DIAGNOSTIC ===");
+  //
+  //   // Test 1: Local notification
+  //   print("📱 Testing local notification...");
+  //   await testLocalNotification();
+  //
+  //   // Test 2: Check all settings
+  //   await debugIOSNotifications();
+  //
+  //   // Test 3: Check handlers
+  //   print("🔥 Foreground message handler ready: ${FirebaseMessaging.onMessage != null}");
+  //
+  //   // Test 4: Check backend token format
+  //   print("🔥 Backend expects this token format for iOS:");
+  //   print("🔥 Token: ${await FirebaseMessaging.instance.getToken()}");
+  //   print("🔥 Device type: ios");
+  //
+  //   print("🔥 যদি local notification কাজ করে কিন্তু push না করে, backend এর সমস্যা");
+  //   print("🔥 যদি local notification fail করে, iOS setup এর সমস্যা");
+  // }
 }
 
 // Background message handler

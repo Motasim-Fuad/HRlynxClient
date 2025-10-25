@@ -119,7 +119,6 @@ class LogInController extends GetxController {
         await FirebaseMeg().debugIOSNotifications();
         await initializeNotificationService();
         await sendFCMTokenToBackend();
-        await FirebaseMeg().fullNotificationDiagnostic();
         print('✅ Firebase services initialized');
       } catch (e) {
         print('⚠️ Firebase initialization error (non-critical): $e');

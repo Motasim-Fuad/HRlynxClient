@@ -1,6 +1,7 @@
 import 'package:HRlynx/app/common_widgets/button.dart';
 import 'package:HRlynx/app/common_widgets/text_field.dart';
 import 'package:HRlynx/app/modules/profile/UploadData/upload_data_controller.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -21,7 +22,10 @@ class UploadDataView extends StatelessWidget {
           // Show loading spinner while fetching existing data
           if (controller.isFetchingData.value) {
             return Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+              ),
             );
           }
 
@@ -72,33 +76,6 @@ class UploadDataView extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Loading Overlay
-              if (controller.isLoading.value)
-                Container(
-                  color: Colors.black.withOpacity(0.3),
-                  child: Center(
-                    child: Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(color: Colors.blue),
-                            SizedBox(height: 16),
-                            Text(
-                              "Uploading profile data...",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
             ],
           );
         }),

@@ -29,17 +29,6 @@ import AVFoundation
         // ✅ CRITICAL: Set up Firebase Messaging delegate
         Messaging.messaging().delegate = self
 
-//         // Notifications
-//         let center = UNUserNotificationCenter.current()
-//         center.delegate = self
-//         center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
-//             if let error = error {
-//                 print("❌ Notification permission error: \(error.localizedDescription)")
-//             } else {
-//                 print("✅ Notification permission granted: \(granted)")
-//             }
-//         }
-
         // ✅ CRITICAL: Register for remote notifications
         application.registerForRemoteNotifications()
 
@@ -115,8 +104,5 @@ import AVFoundation
 extension AppDelegate: MessagingDelegate {
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         print("✅ FCM registration token: \(String(describing: fcmToken))")
-
-        // ✅ appdelegate  : Send token to your server here if needed
-        // You can call your Flutter method to handle this
     }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../api_servies/repository/auth_repo.dart';
 import '../profile_controller.dart';
@@ -104,6 +105,10 @@ class UploadDataController extends GetxController {
       Get.snackbar("Error", "Please enter your phone number");
       return;
     }
+    if (phoneController.text.trim().length > 15) {
+      Get.snackbar("Error", "Phone number cannot be more than 15 characters");
+      return;
+    }
 
     try {
       isLoading.value = true;
@@ -127,6 +132,7 @@ class UploadDataController extends GetxController {
           final ProfileController profileController = Get.put(ProfileController());
           await profileController.refreshProfile();
         }
+
         Get.back();
 
       } else {

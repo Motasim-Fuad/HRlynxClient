@@ -9,6 +9,7 @@ import 'package:HRlynx/app/modules/notification/notification_view.dart';
 import 'package:HRlynx/app/modules/payment/subcription_view.dart';
 import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:HRlynx/app/modules/terms_of_use/terms_of_use.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -49,7 +50,10 @@ class ProfileView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(),
+                CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+                ),
                 SizedBox(height: 16),
                 Text('Loading profile...'),
               ],
@@ -312,7 +316,7 @@ class ProfileView extends StatelessWidget {
             children: [
               CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
               ),
               SizedBox(height: 8),
               Text(
@@ -490,7 +494,10 @@ class ProfileView extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          CircularProgressIndicator(),
+                          CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+                          ),
                           SizedBox(height: 16),
                           Text('Logging out...'),
                         ],

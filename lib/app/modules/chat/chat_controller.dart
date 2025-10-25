@@ -74,10 +74,9 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
         // You can process the response here if needed
         print('History reloaded successfully');
       } else {
-        Get.snackbar('Error', 'Failed to reload history');
+        print('Failed to reload history');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Error reloading history: $e');
       print('Error reloading history: $e');
     }
   }
