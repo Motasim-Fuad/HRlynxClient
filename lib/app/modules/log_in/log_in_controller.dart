@@ -77,8 +77,6 @@ class LogInController extends GetxController {
         // ✅ Initialize Firebase services (non-blocking)
         _initializeFirebaseServices();
 
-        // ✅ Try to restore purchases automatically
-        await _tryRestorePurchases();
 
         Get.snackbar(
           "Success",
@@ -112,25 +110,6 @@ class LogInController extends GetxController {
     }
   }
 
-  /// ✅ NEW: Try to restore purchases automatically
-  Future<void> _tryRestorePurchases() async {
-    try {
-      print('🔄 Attempting automatic purchase restore...');
-
-      // Initialize PaymentController if not already
-      if (!Get.isRegistered<PaymentController>()) {
-        Get.put(PaymentController());
-      }
-
-      final paymentController = Get.find<PaymentController>();
-      await paymentController.restorePurchases();
-
-      print('✅ Purchases restored automatically');
-    } catch (e) {
-      print('⚠️ Could not restore purchases automatically: $e');
-      // Don't fail login if restore fails
-    }
-  }
 
   /// ✅ IMPROVED: Initialize Firebase services without blocking login
   Future<void> _initializeFirebaseServices() async {

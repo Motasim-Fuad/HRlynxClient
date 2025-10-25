@@ -266,6 +266,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
 
                         // Policy links
                         _buildPolicyLinks(),
+
+                        const SizedBox(height: 16),
+                        _buildRestorePurchasesButton(),
+
+                        const SizedBox(height: 8),
+                        _buildSubscriptionDisclosure(),
                         const SizedBox(height: 30),
                       ],
                     ),
@@ -593,7 +599,49 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       ),
     );
   }
+// Add BEFORE _buildPolicyLinks()
+  Widget _buildRestorePurchasesButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: TextButton(
+        onPressed: () async {
+          await controller.restorePurchases();
+        },
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 12),
+        ),
+        child: Text(
+          'Restore Purchases',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            decoration: TextDecoration.underline,
+            decorationColor: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
 
+  // Add AFTER _buildPolicyLinks()
+  Widget _buildSubscriptionDisclosure() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+      child: Text(
+        'Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. '
+            'Subscription automatically renews unless canceled at least 24 hours before the end of the current period. '
+            'Your account will be charged for renewal within 24 hours prior to the end of the current period. '
+            'You can manage and cancel your subscription by going to your account settings in the App Store or Google Play after purchase.',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 10,
+          color: Colors.white.withOpacity(0.6),
+          height: 1.4,
+        ),
+      ),
+    );
+  }
   Widget _buildPolicyLinks() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20),

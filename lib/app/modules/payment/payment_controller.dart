@@ -10,7 +10,11 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 class PaymentController extends GetxController {
   final PaymentRepository _repository = PaymentRepository();
   final UserController userController = Get.put(UserController());
+  // ✅ Add userId field
+  final int? userId;
 
+  // ✅ Add constructor
+  PaymentController({this.userId});
   // Observable variables
   var selectedPlan = 'yearly'.obs;
   var isLoading = false.obs;
@@ -51,19 +55,30 @@ class PaymentController extends GetxController {
   // Login user to RevenueCat
   Future<void> _loginRevenueCatUser() async {
     try {
-      String userId = "revenuecatuser${userController.userId}";
-      print("passing userId to revenueCat :$userId");
-      LogInResult result = await _repository.loginUser(userId);
+      // ✅ Use passed userId, fallback to storage
+      int? effectiveUserId = userId;
+
+      if (effectiveUserId == null) {
+        effectiveUserId = await TokenStorage.getUserId();
+      }
+
+      if (effectiveUserId == null) {
+        print('⚠️ No user ID available');
+        return;
+      }
+
+      String revenueCatUserId = "revenuecatuser$effectiveUserId";
+      print("✅ Logging in to RevenueCat: $revenueCatUserId");
+
+      LogInResult result = await _repository.loginUser(revenueCatUserId);
       customerInfo.value = result.customerInfo;
 
-      // ✅ Pass full CustomerInfo object
       await _repository.linkUserToBackend(result.customerInfo);
 
     } catch (e) {
       print('❌ Error logging in user: $e');
     }
   }
-
   // Get customer info
   Future<void> getCustomerInfo() async {
     try {
@@ -354,36 +369,80 @@ class PaymentController extends GetxController {
   }
 
   // Restore purchases
+  // Future<void> restorePurchases() async {
+  //   try {
+  //     isLoading.value = true;
+  //
+  //     CustomerInfo info = await _repository.restorePurchases();
+  //     customerInfo.value = info;
+  //
+  //     if (info.entitlements.active.isNotEmpty) {
+  //       Get.snackbar(
+  //         'Success',
+  //         'Purchases restored successfully!',
+  //         backgroundColor: Colors.green,
+  //         colorText: Colors.white,
+  //       );
+  //     } else {
+  //       Get.snackbar(
+  //         'No Purchases',
+  //         'No active purchases found to restore.',
+  //         backgroundColor: Colors.orange,
+  //         colorText: Colors.white,
+  //       );
+  //     }
+  //   } catch (e) {
+  //     print('❌ Error restoring purchases: $e');
+  //     Get.snackbar(
+  //       'Error',
+  //       'Failed to restore purchases',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
+// Restore purchases
   Future<void> restorePurchases() async {
     try {
       isLoading.value = true;
 
+      // ✅ Don't show snackbar during login flow
+      final isCalledFromLogin = Get.currentRoute.contains('login') ||
+          Get.currentRoute.contains('splash');
+
       CustomerInfo info = await _repository.restorePurchases();
       customerInfo.value = info;
 
-      if (info.entitlements.active.isNotEmpty) {
-        Get.snackbar(
-          'Success',
-          'Purchases restored successfully!',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-      } else {
-        Get.snackbar(
-          'No Purchases',
-          'No active purchases found to restore.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
+      if (!isCalledFromLogin) {  // ✅ Only show snackbar if manual restore
+        if (info.entitlements.active.isNotEmpty) {
+          Get.snackbar(
+            'Success',
+            'Purchases restored successfully!',
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'No Purchases',
+            'No active purchases found to restore.',
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+          );
+        }
       }
     } catch (e) {
       print('❌ Error restoring purchases: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to restore purchases',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if (!Get.currentRoute.contains('login')) {
+        Get.snackbar(
+          'Error',
+          'Failed to restore purchases',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
     } finally {
       isLoading.value = false;
     }
