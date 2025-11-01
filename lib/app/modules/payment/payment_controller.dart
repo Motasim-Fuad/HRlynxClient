@@ -192,9 +192,6 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Handle successful purchase
-  // payment_controller.dart
-
 // Handle successful purchase
   Future<void> _handlePurchaseSuccess(CustomerInfo customerInfo) async {
     try {
