@@ -1,5 +1,4 @@
 import 'package:HRlynx/app/common_widgets/button.dart';
-import 'package:HRlynx/app/common_widgets/splash_text.dart';
 import 'package:HRlynx/app/modules/splash_screen/third_splash.dart';
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:HRlynx/app/utils/app_images.dart';
@@ -73,14 +72,35 @@ class SecondSplash extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * 0.015),
 
+            Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 400), // Controls width, keeps center
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start, // Left align each bullet line
+                  children: [
+                    buildSplashText('HR Strategy & Leadership'),
+                    buildSplashText('Workforce Compliance & Regulation'),
+                    buildSplashText('Talent Acquisition & Labor Trends'),
+                    buildSplashText('Compensation, Benefits & Rewards'),
+                    buildSplashText('People Development & Culture'),
+                  ],
+                ),
+              ),
+            ),
+
+
+
+
+
+            // SplashText(text: 'HR Strategy & Leadership'),
+              // SplashText(text: 'Workforce Compliance & Regulation'),
+              // SplashText(text: 'Talent Acquisition & Labor Trends'),
+              // SplashText(text: 'Compensation, Benefits & Rewards'),
+              // SplashText(text: 'People Development & Culture'),
+              SizedBox(height: h * 0.015),
               // Splash Text Items
-              SplashText(text: 'HR Strategy & Leadership'),
-              SplashText(text: 'Workforce Compliance & Regulation'),
-              SplashText(text: 'Talent Acquisition & Labor Trends'),
-              SplashText(text: 'Compensation, Benefits & Rewards'),
-              SplashText(text: 'People Development & Culture'),
+
 
               Spacer(),
 
@@ -121,4 +141,39 @@ class SecondSplash extends StatelessWidget {
       ),
     );
   }
+
+
+  Widget buildSplashText(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 8,
+            width: 8,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primarycolor,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 16,
+                color: Color(0xFF050505),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+
 }

@@ -1,22 +1,41 @@
 {
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
   "identifier" : "B8E2D84D",
-  "nonRenewingSubscriptions" : [],
-  "products" : [],
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
   "settings" : {
     "_failTransactionsEnabled" : false,
     "_locale" : "en_US",
-    "_storefront" : "USA",
-    "_storeKitErrors" : []
+    "_storefront" : "USA"
   },
   "subscriptionGroups" : [
     {
       "id" : "21441285",
-      "localizations" : [],
+      "localizations" : [
+
+      ],
       "name" : "Explorer Pro Subscriptions",
       "subscriptions" : [
         {
-          "adHocOffers" : [],
-          "codeOffers" : [],
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
           "displayPrice" : "14.99",
           "familyShareable" : false,
           "groupNumber" : 1,
@@ -38,11 +57,18 @@
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Explorer Pro Monthly",
           "subscriptionGroupID" : "21441285",
-          "type" : "RecurringSubscription"
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
         },
         {
-          "adHocOffers" : [],
-          "codeOffers" : [],
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
           "displayPrice" : "149.99",
           "familyShareable" : false,
           "groupNumber" : 2,
@@ -64,13 +90,16 @@
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Explorer Pro Yearly",
           "subscriptionGroupID" : "21441285",
-          "type" : "RecurringSubscription"
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
         }
       ]
     }
   ],
   "version" : {
-    "major" : 3,
+    "major" : 4,
     "minor" : 0
   }
 }

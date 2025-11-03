@@ -1,5 +1,4 @@
 import 'package:HRlynx/app/common_widgets/button.dart';
-import 'package:HRlynx/app/common_widgets/splash_text.dart';
 import 'package:HRlynx/app/modules/onboarding/onboarding_view.dart';
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:HRlynx/app/utils/app_images.dart';
@@ -62,27 +61,39 @@ class ThirdSplash extends StatelessWidget {
 
               SizedBox(height: h * 0.03),
 
-              // Example Prompts Label
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: w * 0.05),
-                  child: Text(
-                    'Example Prompts',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      fontSize: h * 0.023,
-                      color: const Color(0xFF050505),
-                    ),
+
+
+
+
+
+              Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 300), // Controls width, keeps center
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start, // Left align each bullet line
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Example Prompts',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: h * 0.023,
+                            color: const Color(0xFF050505),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: h * 0.015),
+                      buildSplashText('Prepare for a difficult conversation'),
+                      buildSplashText("What's new in California labor law?"),
+
+
+                    ],
                   ),
                 ),
               ),
-
-              SizedBox(height: h * 0.015),
-
               // Prompt Examples
-              SplashText(text: 'Prepare for a difficult conversation'),
-              SplashText(text: "What's new in California labor law?"),
+
 
               Spacer(),
 
@@ -123,4 +134,36 @@ class ThirdSplash extends StatelessWidget {
       ),
     );
   }
+
+
+  Widget buildSplashText(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 8,
+            width: 8,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primarycolor,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 16,
+                color: Color(0xFF050505),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
