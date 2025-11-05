@@ -430,11 +430,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.3"
-  flutter_localizations:
-    dependency: transitive
-    description: flutter
-    source: sdk
-    version: "0.0.0"
   flutter_native_splash:
     dependency: "direct dev"
     description:
@@ -621,38 +616,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
-  in_app_purchase:
-    dependency: "direct main"
-    description:
-      name: in_app_purchase
-      sha256: "5cddd7f463f3bddb1d37a72b95066e840d5822d66291331d7f8f05ce32c24b6c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.3"
-  in_app_purchase_android:
-    dependency: transitive
-    description:
-      name: in_app_purchase_android
-      sha256: "5a02da1399a8faafb36d9b4acca85001b7eefa629f0eeeebf5ad0b04b9df302a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.0+4"
-  in_app_purchase_platform_interface:
-    dependency: transitive
-    description:
-      name: in_app_purchase_platform_interface
-      sha256: "1d353d38251da5b9fea6635c0ebfc6bb17a2d28d0e86ea5e083bf64244f1fb4c"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.4.0"
-  in_app_purchase_storekit:
-    dependency: transitive
-    description:
-      name: in_app_purchase_storekit
-      sha256: dab4feef532af88ddec22200e4b3809c02c9bd0da3d0864f3e8e0f7b02f95867
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.4.6"
   intl:
     dependency: "direct main"
     description:
@@ -805,38 +768,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.0"
-  pay:
-    dependency: "direct main"
-    description:
-      name: pay
-      sha256: ad904db0e06848cade6990a3ce1e10e921ae48f7ee06447873e07b9688ac1fc5
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
-  pay_android:
-    dependency: transitive
-    description:
-      name: pay_android
-      sha256: aa46cd0ece1807d3fa293113fdb84afb5fc4b6ed60cf09a4886b753acb300859
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
-  pay_ios:
-    dependency: transitive
-    description:
-      name: pay_ios
-      sha256: "75ccb285d03f22b136c58ab8e8e0c4b614ee52a8b67e6ccfb680d4d8c04a70f6"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.11"
-  pay_platform_interface:
-    dependency: transitive
-    description:
-      name: pay_platform_interface
-      sha256: "26a379e33c46508987c7afee8cde6f4aca5b5ab0afc697c27efbd33a9c2ea82a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.4"
   permission_handler:
     dependency: "direct main"
     description:
@@ -921,10 +852,10 @@ packages:
     dependency: "direct main"
     description:
       name: purchases_flutter
-      sha256: "8d142ced6086fac9608eaf467e48fdeee289c45a988b819decf1c3b88e3b54b3"
+      sha256: "244a35c2a42feced1f43c09faaa6639bd440979a67bc11cba18c9e27b6a07a7d"
       url: "https://pub.dev"
     source: hosted
-    version: "9.7.0"
+    version: "9.9.3"
   record:
     dependency: "direct main"
     description:
