@@ -2,12 +2,14 @@ import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
 import 'package:HRlynx/app/modules/congratulaion_screen/congratulation_view.dart';
 import 'package:HRlynx/app/modules/congratulaion_screen/limited_user_congratulationScreen.dart';
+import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
 import 'package:HRlynx/app/modules/payment/payment_controller.dart';
 import 'package:HRlynx/app/modules/terms_of_use/terms_of_use.dart';
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:HRlynx/app/utils/app_images.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 class SubscriptionScreen extends StatefulWidget {
@@ -581,7 +583,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
         // ✅ User skipped subscription, mark flag as done
         await TokenStorage.saveSubscriptionCheckDone(true);
 
-        Get.offAll(() => LimitedUserCongratulationScreen());
+        Get.offAll(() => MainScreen());
       },
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -649,7 +651,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
         alignment: WrapAlignment.center,
         children: [
           GestureDetector(
-            onTap: () => Get.to(() => TermsOfUse()),
+            onTap: () {
+              _launchUrl('https://www.hrlynx.ai/terms-of-use');
+            },
             child: Text(
               'Terms of Use',
               style: TextStyle(
@@ -670,7 +674,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             ),
           ),
           GestureDetector(
-            onTap: () => Get.to(() => PrivacyPolicy()),
+            onTap: () {
+              _launchUrl('https://www.hrlynx.ai/privacy-policy/');
+            },
             child: Text(
               'Privacy Policy.',
               style: TextStyle(
@@ -685,5 +691,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
         ],
       ),
     );
+  }
+
+// URL লঞ্চ করার মেথড
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+
+    if (!await launchUrl(uri)) {
+      throw Exception('Could not launch $url');
+    }
   }
 }

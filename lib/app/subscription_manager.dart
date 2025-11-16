@@ -58,10 +58,6 @@ class SubscriptionManager {
         _navigateToSubscriptionScreen();
       }
 
-      print('\n🔐 ========================================');
-      print('🔐 POST-LOGIN CHECK COMPLETED');
-      print('🔐 ========================================\n');
-
     } catch (e) {
       print('❌ Critical error in handlePostLoginNavigation: $e');
       // ✅ Safe fallback: Go to subscription screen on any error
@@ -276,7 +272,7 @@ class SubscriptionManager {
 
       // ✅ Call with timeout
       await subController.checkAndUpdateSubscriptionStatus()
-          .timeout(Duration(seconds: 10));
+          .timeout(Duration(seconds: 5));
 
       final hasActive = subController.isActive.value && !subController.isCanceled.value;
 
