@@ -652,7 +652,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
         children: [
           GestureDetector(
             onTap: () {
-              _launchUrl('https://www.hrlynx.ai/terms-of-use');
+              _launchUrl('https://www.hrlynx.ai/terms-conditions/');
             },
             child: Text(
               'Terms of Use',
