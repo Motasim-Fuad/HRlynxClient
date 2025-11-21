@@ -1,36 +1,44 @@
-// Updated LogoutController
+// DeleteAccountController.dart
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:get/get.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 
-class LogoutController extends GetxController {
+class DeleteAccountController extends GetxController {
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
 
-  Future<void> logout() async {
+  Future<void> deleteAccount() async {
     try {
       isLoading.value = true;
 
       // Disconnect notification service FIRST
       await cleanupNotificationService();
 
-      // Call logout API
-      await authRepo.LogOut();
+      // Call delete account API
+      await authRepo.deleteAccount();
 
-      // Clear all tokens
+      // Clear all tokens and data
       await TokenStorage.clearAllTokens();
       await TokenStorage.clearAllPersonaSessions();
 
-      Get.snackbar("Success", "Logged out successfully");
+      Get.snackbar(
+        "Success",
+        "Account deleted successfully",
+        snackPosition: SnackPosition.TOP,
+      );
 
       // Navigate to login screen
       Get.offAll(() => LogInView());
 
     } catch (e) {
-      Get.snackbar("Error", "Logout failed: ${e.toString()}");
-      print('❌ Logout error: $e');
+      Get.snackbar(
+        "Error",
+        "Account deletion failed: ${e.toString()}",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      print('❌ Delete account error: $e');
     } finally {
       isLoading.value = false;
     }

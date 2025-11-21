@@ -7,6 +7,7 @@ import 'package:HRlynx/app/modules/home/user_isSubcriptionController.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:HRlynx/app/modules/notification/notification_view.dart';
 import 'package:HRlynx/app/modules/payment/subcription_view.dart';
+import 'package:HRlynx/app/modules/profile/deleteAccountHepler.dart';
 import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:HRlynx/app/modules/terms_of_use/terms_of_use.dart';
 import 'package:HRlynx/app/utils/app_colors.dart';
@@ -24,6 +25,7 @@ class ProfileView extends StatelessWidget {
   final UserController userController = Get.put(UserController());
   final ProfileController profileController = Get.put(ProfileController());
   final LogoutController logoutController = Get.put(LogoutController());
+  final DeleteAccountController deleteAccountController = Get.put(DeleteAccountController()); // 👈 Add this
   final UserIsSubcribedController subController = Get.put(UserIsSubcribedController());
 
   @override
@@ -262,6 +264,15 @@ class ProfileView extends StatelessWidget {
                   onTap: () => Get.to(ChangePassword()),
                 ),
 
+                // Delete Account - 👈 Updated this
+                _buildMenuItem(
+                  icon: Icons.delete_forever_outlined,
+                  title: 'Delete Account',
+                  titleColor: Color(0xffD40606),
+                  iconColor: Color(0xffD40606),
+                  onTap: () => _showDeleteAccountDialog(context), // 👈 Changed function
+                ),
+
                 // Logout Item
                 _buildMenuItem(
                   icon: Icons.logout_outlined,
@@ -426,6 +437,125 @@ class ProfileView extends StatelessWidget {
         ),
         onTap: onTap,
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      ),
+    );
+  }
+
+  // 👇 NEW: Delete Account Dialog
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        title: Column(
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.red,
+              size: 48,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Delete Account',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: Colors.red,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Are you sure you want to delete your account?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'This action cannot be undone. All your data will be permanently deleted.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.red.shade700,
+              ),
+            ),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              backgroundColor: Colors.grey.shade200,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              "Cancel",
+              style: TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              // Show loading dialog
+              Get.dialog(
+                Center(
+                  child: Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                          ),
+                          SizedBox(height: 16),
+                          Text('Deleting account...'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                barrierDismissible: false,
+              );
+
+              // Call delete account function
+              await deleteAccountController.deleteAccount();
+            },
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              "Delete",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

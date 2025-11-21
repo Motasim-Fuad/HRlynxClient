@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../api_Constant.dart';
@@ -169,8 +168,19 @@ class AuthRepository {
   }
 
   Future<dynamic> deleteAccount() async {
-    String url = "${ApiConstants.baseUrl}/api/auth/delete/";
-    return await NetworkApiServices.deleteApi(url, tokenType: 'login');
+    String url = "${ApiConstants.baseUrl}/api/auth/account/parmanent/delete/";
+
+    final body = {
+      "confirm": "True"
+    };
+
+    // Try POST request instead of DELETE
+    return await NetworkApiServices.postApi(
+      url,
+      body,
+      withAuth: true,
+      tokenType: 'login',
+    );
   }
 
   Future<dynamic> changePassword(Map<String, dynamic> body) async {

@@ -96,6 +96,11 @@ class NetworkApiServices {
         String tokenType = 'login',
       }) async {
     final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
+
+    print('🔍 DELETE URL: $url');
+    print('📦 DELETE Body: ${body != null ? jsonEncode(body) : "null"}');
+    print('🔑 DELETE Headers: $headers');
+
     final response = await http.delete(
       Uri.parse(url),
       headers: headers,
@@ -103,7 +108,6 @@ class NetworkApiServices {
     );
     return _handleResponse(response);
   }
-
   // NEW METHOD: For multipart data with file upload
   static Future<dynamic> postMultipartApi(
       String url,
