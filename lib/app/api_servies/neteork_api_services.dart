@@ -250,7 +250,9 @@ class NetworkApiServices {
         }
         return jsonDecode(response.body);
       }
-
+      if (response.statusCode == 400) {
+        throw Exception('Validation Error or you give common password when you create account');
+      }
       // Handle 401 Unauthorized
       if (response.statusCode == 401) {
         throw Exception('Invalid email or password.');

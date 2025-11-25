@@ -167,7 +167,7 @@ class _SignUpState extends State<SignUp> {
                           )),
 
                           const SizedBox(height: 10),
-                          const Text('Password must be 8 characters'),
+                          const Text("Password must be 8 characters & Don't use common password like 12345678 or 11111111"),
 
                           const SizedBox(height: 20),
 

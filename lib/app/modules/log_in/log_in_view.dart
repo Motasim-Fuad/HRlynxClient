@@ -81,7 +81,7 @@ class _LogInViewState extends State<LogInView> {
                       _buildLabel('Your Email'),
                       CustomTextFormField(
                         controller: controller.emailController,
-                        hintText: 'example@email.com',
+                        hintText: 'example@gmail.com',
                         keyboardType: TextInputType.emailAddress,
                         obscureText: false,
                         validator: (value) {

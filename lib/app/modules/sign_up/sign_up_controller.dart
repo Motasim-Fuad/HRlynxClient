@@ -54,7 +54,7 @@ class SignUpController extends GetxController {
 
       final response = await authRepo.signup(body);
 
-      if (response['success'] == true) {
+      if (response['success'] == true && response['message'] != 'User with this email already exists and is verified.') {
         Get.snackbar("Success", response['message']);
         final otpController = Get.put(OtpController());
         otpController.email.value = email.value;
@@ -64,6 +64,7 @@ class SignUpController extends GetxController {
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
+
     } finally {
       isLoading.value = false;
     }

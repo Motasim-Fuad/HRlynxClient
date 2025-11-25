@@ -149,11 +149,4 @@ class LogInController extends GetxController {
       print('❌ Error sending FCM token after login: $e');
     }
   }
-
-  @override
-  void onClose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.onClose();
-  }
 }

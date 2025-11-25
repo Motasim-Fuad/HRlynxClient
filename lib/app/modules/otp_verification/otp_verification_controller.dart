@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
-import 'package:HRlynx/app/modules/payment/subcription_view.dart';
+import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../api_servies/repository/auth_repo.dart';
@@ -115,7 +115,7 @@ class OtpController extends GetxController {
 
       if (response['status'] == true || response['success'] == true) {
         print("✅ Persona selection success: ${response['message']}");
-        Get.offAll(() => SubscriptionScreen());
+        Get.offAll(() => LogInView());
       } else {
         print("❌ Persona API error: ${response['message']}");
         Get.snackbar("Error", response['message'] ?? "Failed to select persona");
@@ -178,8 +178,8 @@ class OtpController extends GetxController {
         if (response.containsKey("access") && response.containsKey("refresh")) {
           await TokenStorage.saveOtpTokens(response["access"], response["refresh"]);
           await TokenStorage.saveLoginTokens(response["access"], response["refresh"]);
-          await TokenStorage.saveUserId(response["id"]);
-          await TokenStorage.saveUserEmail(response["email"]);
+          // await TokenStorage.saveUserId(response["id"]);
+          // await TokenStorage.saveUserEmail(response["email"]);
         }
 
         Get.snackbar("Success", response['message']);
