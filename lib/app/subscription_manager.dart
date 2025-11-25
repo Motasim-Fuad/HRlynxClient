@@ -7,7 +7,6 @@ import 'package:HRlynx/app/modules/payment/payment_controller.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
 import 'package:HRlynx/app/modules/payment/subcription_view.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
 
 class SubscriptionManager {
   static final SubscriptionManager _instance = SubscriptionManager._internal();

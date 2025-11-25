@@ -13,6 +13,9 @@ class UserIsSubcribedController extends GetxController {
   final authRepo = AuthRepository();
   final paymentRepo = PaymentRepository();
 
+  // 🔑 ADMIN EMAIL CONSTANT
+  static const String ADMIN_EMAIL = 'admin@example.com';
+
   // Optional PaymentController - won't break if not found
   PaymentController? get paymentController {
     try {
@@ -40,6 +43,9 @@ class UserIsSubcribedController extends GetxController {
   // RevenueCat customer info
   final customerInfo = Rxn<CustomerInfo>();
 
+  // 🆕 ADMIN FLAG
+  final isAdminUser = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -65,6 +71,18 @@ class UserIsSubcribedController extends GetxController {
       isLoading.value = true;
       print('🔄 Checking subscription status...');
 
+      // 🆕 Step 0: Check if user is admin
+      await _checkAdminStatus();
+
+      if (isAdminUser.value) {
+        print('👑 ADMIN USER DETECTED - Granting full access');
+        _grantAdminAccess();
+        await fetchIsSubcriptionData();
+        await _ensureSelectedPersonaLoaded();
+        print('✅ Admin access granted successfully');
+        return;
+      }
+
       // Step 1: Sync with RevenueCat (source of truth)
       await _syncWithRevenueCat();
 
@@ -74,11 +92,12 @@ class UserIsSubcribedController extends GetxController {
       // Step 3: Fetch personas based on subscription
       await fetchIsSubcriptionData();
 
-      // ✅ Step 4: Ensure selected persona is loaded
+      // Step 4: Ensure selected persona is loaded
       await _ensureSelectedPersonaLoaded();
 
       print('✅ Subscription status updated successfully');
       print('📊 Final State:');
+      print('   isAdmin: ${isAdminUser.value}');
       print('   isActive: ${isActive.value}');
       print('   isCanceled: ${isCanceled.value}');
       print('   isSubscribed: ${isSubscribed.value}');
@@ -91,7 +110,47 @@ class UserIsSubcribedController extends GetxController {
     }
   }
 
-  /// ✅ NEW: Ensure selected persona is loaded
+  /// ============================================
+  /// 🆕 CHECK ADMIN STATUS
+  /// ============================================
+  Future<void> _checkAdminStatus() async {
+    try {
+      final userEmail = await TokenStorage.getUserEmail();
+
+      if (userEmail != null && userEmail.toLowerCase() == ADMIN_EMAIL.toLowerCase()) {
+        isAdminUser.value = true;
+        print('👑 Admin user identified: $userEmail');
+      } else {
+        isAdminUser.value = false;
+        print('👤 Regular user: ${userEmail ?? "unknown"}');
+      }
+    } catch (e) {
+      print('❌ Error checking admin status: $e');
+      isAdminUser.value = false;
+    }
+  }
+
+  /// ============================================
+  /// 🆕 GRANT ADMIN ACCESS
+  /// ============================================
+  void _grantAdminAccess() {
+    isActive.value = true;
+    isSubscribed.value = true;
+    hasPremiumAccess.value = true;
+    isCanceled.value = false;
+    showReactivateButton.value = false;
+    subscriptionStatus.value = 'admin_access';
+    canSwitch.value = true; // Admin can switch personas
+
+    print('👑 Admin privileges granted:');
+    print('   - Full access to all personas');
+    print('   - Can switch personas freely');
+    print('   - No subscription restrictions');
+  }
+
+  /// ============================================
+  /// Ensure Selected Persona is Loaded
+  /// ============================================
   Future<void> _ensureSelectedPersonaLoaded() async {
     try {
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
@@ -99,7 +158,6 @@ class UserIsSubcribedController extends GetxController {
       if (storedPersonaId != null && selectedPersona.value == null) {
         print('🔍 Loading selected persona from storage: $storedPersonaId');
 
-        // Try to find persona in local data first
         final persona = subcriptionData.firstWhereOrNull(
                 (p) => p.id == storedPersonaId
         );
@@ -171,10 +229,9 @@ class UserIsSubcribedController extends GetxController {
       }
 
       // Final isSubscribed calculation
-      // User is subscribed if active AND not canceled
       isSubscribed.value = isActive.value && !isCanceled.value;
 
-      // Show reactivate option if canceled but still active (grace period)
+      // Show reactivate option if canceled but still active
       showReactivateButton.value = isCanceled.value && isActive.value;
 
       // Set subscription status message
@@ -195,7 +252,7 @@ class UserIsSubcribedController extends GetxController {
   }
 
   /// ============================================
-  /// Sync with Backend (ONE API)
+  /// Sync with Backend
   /// ============================================
   Future<void> _syncWithBackend() async {
     try {
@@ -206,9 +263,8 @@ class UserIsSubcribedController extends GetxController {
       if (response != null && response['success'] == true) {
         final data = response['data'];
 
-        // Get all info from single API
         final hasSubscription = data['has_subscription'] ?? false;
-        final status = data['status'] ?? 'free'; // active, free, canceled
+        final status = data['status'] ?? 'free';
         final activeEntitlements = List<String>.from(data['active_entitlements'] ?? []);
 
         print('📋 Backend status:');
@@ -216,7 +272,6 @@ class UserIsSubcribedController extends GetxController {
         print('   status: $status');
         print('   active_entitlements: $activeEntitlements');
 
-        // Cross-verify with RevenueCat
         if (hasSubscription != isActive.value) {
           print('⚠️ Mismatch: RevenueCat=${isActive.value}, Backend=$hasSubscription');
           print('   Using RevenueCat as source of truth');
@@ -224,7 +279,6 @@ class UserIsSubcribedController extends GetxController {
       }
     } catch (e) {
       print('⚠️ Backend sync failed (non-critical): $e');
-      // Don't fail the flow - RevenueCat is source of truth
     }
   }
 
@@ -239,8 +293,6 @@ class UserIsSubcribedController extends GetxController {
 
       if (response != null && response['data'] != null) {
         final List<dynamic> personasData = response['data'] ?? [];
-
-        // Parse personas (adjust based on your actual API structure)
         print('✅ Personas data fetched');
         print('   personas count: ${personasData.length}');
       }
@@ -263,10 +315,17 @@ class UserIsSubcribedController extends GetxController {
   }
 
   /// ============================================
-  /// Check Persona Access (Core Logic)
+  /// 🆕 CHECK PERSONA ACCESS (WITH ADMIN LOGIC)
   /// ============================================
   Future<bool> isPersonaAccessible(int personaId) async {
     print('🔍 Checking access for persona ID: $personaId');
+
+    // 👑 PRIORITY 1: Admin has full access to everything
+    if (isAdminUser.value) {
+      print('👑 ADMIN ACCESS: Full access granted');
+      return true;
+    }
+
     print('   State: isActive=${isActive.value}, isCanceled=${isCanceled.value}');
 
     // CASE 1: Full Access (Active subscription + Not canceled)
@@ -275,7 +334,7 @@ class UserIsSubcribedController extends GetxController {
       return true;
     }
 
-    // CASE 2 & 3: Limited Access
+    // CASE 2 & 3: Limited Access (Free or Canceled)
     print('🟡 LIMITED ACCESS: Checking selected persona only');
 
     // Check from local storage first (onboarding selection)
@@ -301,9 +360,15 @@ class UserIsSubcribedController extends GetxController {
   }
 
   /// ============================================
-  /// Get List of Accessible Personas
+  /// 🆕 GET ACCESSIBLE PERSONAS (WITH ADMIN LOGIC)
   /// ============================================
   Future<List<Personas>> getAccessiblePersonas() async {
+    // 👑 Admin gets all personas
+    if (isAdminUser.value) {
+      print('📋 Returning ALL personas (admin access)');
+      return subcriptionData.toList();
+    }
+
     // Full access: All personas
     if (isActive.value && !isCanceled.value) {
       print('📋 Returning ALL personas (full access)');
@@ -325,7 +390,6 @@ class UserIsSubcribedController extends GetxController {
       }
     }
 
-    // Fallback to API selected persona
     if (selectedPersona.value != null) {
       return [selectedPersona.value!];
     }
@@ -335,9 +399,25 @@ class UserIsSubcribedController extends GetxController {
   }
 
   /// ============================================
-  /// Switch Persona (if allowed)
+  /// Switch Persona
   /// ============================================
   Future<bool> switchPersona(Personas persona) async {
+    // 👑 Admin can always switch
+    if (isAdminUser.value) {
+      print('👑 Admin switching persona: ${persona.title}');
+      selectedPersona.value = persona;
+      await TokenStorage.saveSelectedPersonaId(persona.id ?? 0);
+
+      Get.snackbar(
+        'Success',
+        'Switched to ${persona.title}',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      return true;
+    }
+
+    // Regular users need permission
     if (!canSwitch.value) {
       print('❌ Cannot switch persona - not allowed');
       Get.snackbar(
@@ -380,7 +460,6 @@ class UserIsSubcribedController extends GetxController {
       CustomerInfo restoredInfo = await Purchases.restorePurchases();
       customerInfo.value = restoredInfo;
 
-      // Refresh subscription status after restore
       await checkAndUpdateSubscriptionStatus();
 
       if (restoredInfo.entitlements.active.isNotEmpty) {
@@ -419,7 +498,9 @@ class UserIsSubcribedController extends GetxController {
 
   /// Get subscription display message for UI
   String get subscriptionDisplayMessage {
-    if (isActive.value && !isCanceled.value) {
+    if (isAdminUser.value) {
+      return '👑 Admin Access - Full Access to All Features';
+    } else if (isActive.value && !isCanceled.value) {
       return 'Active Subscription - Full Access to All Personas';
     } else if (isActive.value && isCanceled.value) {
       return 'Subscription Canceled - Limited Access Until Expiry';
@@ -430,7 +511,9 @@ class UserIsSubcribedController extends GetxController {
 
   /// Get subscription status icon
   IconData get subscriptionIcon {
-    if (isActive.value && !isCanceled.value) {
+    if (isAdminUser.value) {
+      return Icons.admin_panel_settings;
+    } else if (isActive.value && !isCanceled.value) {
       return Icons.check_circle;
     } else if (isActive.value && isCanceled.value) {
       return Icons.schedule;
@@ -441,7 +524,9 @@ class UserIsSubcribedController extends GetxController {
 
   /// Get subscription status color
   Color get subscriptionColor {
-    if (isActive.value && !isCanceled.value) {
+    if (isAdminUser.value) {
+      return Colors.purple;
+    } else if (isActive.value && !isCanceled.value) {
       return Colors.green;
     } else if (isActive.value && isCanceled.value) {
       return Colors.orange;
@@ -455,13 +540,13 @@ class UserIsSubcribedController extends GetxController {
     return showReactivateButton.value;
   }
 
-  /// ✅ FIXED: Check if can reactivate subscription (alias for canShowReactivate)
+  /// Check if can reactivate subscription
   bool get canReactivateSubscription {
     return showReactivateButton.value;
   }
 
   /// Check if has premium features
   bool get hasPremium {
-    return hasPremiumAccess.value;
+    return hasPremiumAccess.value || isAdminUser.value;
   }
 }
