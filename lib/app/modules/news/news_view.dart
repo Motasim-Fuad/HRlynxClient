@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/modules/main_screen/main_screen_controller.dart';
 import 'package:HRlynx/app/modules/news/news_controller.dart';
 import 'package:HRlynx/app/utils/app_colors.dart';
@@ -13,16 +12,12 @@ class NewsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final NewsController controller = Get.put(NewsController());
-
     final size = MediaQuery.of(context).size;
 
-    // Add this helper function to your NewsView class (or put it in the controller)
     String _extractDontMissContent(String summary) {
-      // Find "Don't Miss This:" and get the text after it until the next ** section
       int startIndex = summary.indexOf('Don\'t Miss This:');
-      if (startIndex == -1) return summary; // If not found, return original
+      if (startIndex == -1) return summary;
 
-      // Find the end of this section (next ** or end of string)
       int contentStart = summary.indexOf('\n', startIndex);
       if (contentStart == -1) contentStart = startIndex + 'Don\'t Miss This:'.length;
 
@@ -33,33 +28,15 @@ class NewsView extends StatelessWidget {
     }
 
     return Scaffold(
-      // appBar: AppBar(
-      //   // leading: GestureDetector(
-      //   //   onTap: () {
-      //   //     Get.put<BottomNavController>(BottomNavController()).changeTab(0);
-      //   //     Get.back();
-      //   //   },
-      //   //   child: Icon(Icons.arrow_back),
-      //   // ),
-      //   title: Text(
-      //     'Breaking HR News',
-      //     style: TextStyle(
-      //       fontWeight: FontWeight.w500,
-      //       fontSize: 24,
-      //       color: Color(0xFF1B1E28),
-      //     ),
-      //   ),
-      //   centerTitle: true,
-      // ),
       body: RefreshIndicator(
         onRefresh: controller.refreshData,
         child: Column(
           children: [
+            SizedBox(height: 30),
 
-            SizedBox(height: 30,),
-           /// card ///
+            /// Header Card ///
             Padding(
-              padding: const EdgeInsets.only(left: 20,right: 20,top: 20),
+              padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
               child: Container(
                 height: size.height * 0.20,
                 width: double.infinity,
@@ -100,28 +77,6 @@ class NewsView extends StatelessWidget {
                                 color: Colors.white,
                               ),
                             ),
-                            // const SizedBox(height: 20),
-                            // GestureDetector(
-                            //   onTap: () => Get.to(() => const NewsView()),
-                            //   child: Container(
-                            //     width: 120,
-                            //     height: 40,
-                            //     decoration: BoxDecoration(
-                            //       color: const Color(0xFF013D3B),
-                            //       borderRadius: BorderRadius.circular(6),
-                            //     ),
-                            //     child: const Center(
-                            //       child: Text(
-                            //         'View Feed',
-                            //         style: TextStyle(
-                            //           fontWeight: FontWeight.w500,
-                            //           fontSize: 16,
-                            //           color: Colors.white,
-                            //         ),
-                            //       ),
-                            //     ),
-                            //   ),
-                            // ),
                           ],
                         ),
                       ),
@@ -130,6 +85,7 @@ class NewsView extends StatelessWidget {
                 ),
               ),
             ),
+
             // Search Bar
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
@@ -172,7 +128,7 @@ class NewsView extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // Category Dropdown
+            // Category Dropdown with Subscription Lock
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Obx(() => Container(
@@ -183,39 +139,89 @@ class NewsView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: DropdownButtonHideUnderline(
-                  child: DropdownButton<Map<String, dynamic>?>(
+                  child: DropdownButton<int?>(
                     isExpanded: true,
-                    value: controller.selectedCategory.value,
+                    value: controller.selectedCategoryId.value,
                     hint: Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Text('Select a category'),
                     ),
                     items: [
-                      DropdownMenuItem<Map<String, dynamic>?>(
+                      DropdownMenuItem<int?>(
                         value: null,
                         child: Padding(
                           padding: const EdgeInsets.only(left: 8.0),
                           child: Text('All Categories'),
                         ),
                       ),
-                      ...controller.categories.map<DropdownMenuItem<Map<String, dynamic>?>>(
-                            (category) => DropdownMenuItem<Map<String, dynamic>?>(
-                          value: category,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8.0),
-                            child: Text(
-                              category['name'] ?? '',
-                              overflow: TextOverflow.ellipsis,
+                      ...controller.categories.map<DropdownMenuItem<int?>>(
+                            (category) {
+                          final isLocked = category['is_subscription_required'] == true;
+                          final categoryId = category['id'] as int;
+
+                          return DropdownMenuItem<int?>(
+                            value: categoryId,
+                            child: GestureDetector(
+                              onTap: isLocked ? () {
+                                // Close dropdown first
+                                Navigator.of(context).pop();
+                                // Show snackbar
+                                Future.delayed(Duration(milliseconds: 100), () {
+                                  Get.snackbar(
+                                    'Subscription Required',
+                                    'Please subscribe to access this category',
+                                    snackPosition: SnackPosition.TOP,
+                                    backgroundColor: AppColors.primarycolor,
+                                    colorText: Colors.white,
+                                    duration: Duration(seconds: 3),
+                                    margin: EdgeInsets.all(16),
+                                  );
+                                });
+                              } : null,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        category['name'] ?? '',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: isLocked ? Colors.grey : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isLocked)
+                                      Icon(
+                                        Icons.lock,
+                                        size: 16,
+                                        color: Colors.grey,
+                                      ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ).toList(),
                     ],
                     onChanged: (value) {
                       if (value == null) {
                         controller.clearCategoryFilter();
                       } else {
-                        controller.filterByCategory(value);
+                        // Find category to check if locked
+                        final category = controller.categories.firstWhere(
+                              (cat) => cat['id'] == value,
+                          orElse: () => null,
+                        );
+
+                        if (category != null) {
+                          final isLocked = category['is_subscription_required'] == true;
+
+                          if (!isLocked) {
+                            controller.filterByCategory(value);
+                          }
+                        }
                       }
                     },
                   ),
@@ -223,8 +229,9 @@ class NewsView extends StatelessWidget {
               )),
             ),
 
+            SizedBox(height: 20),
 
-            SizedBox(height: 20,),
+            // Articles List
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value && controller.articles.isEmpty) {
@@ -289,7 +296,6 @@ class NewsView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Tags
-                          // Replace your existing tags code with this:
                           if (tags.isNotEmpty)
                             Container(
                               width: double.infinity,
@@ -306,9 +312,9 @@ class NewsView extends StatelessWidget {
                                   return GestureDetector(
                                     onTap: () => controller.filterByTag(tag),
                                     child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4), // Reduced padding
+                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16), // More rounded corners
+                                        borderRadius: BorderRadius.circular(16),
                                         color: isSelected ? AppColors.primarycolor : Colors.white,
                                         border: Border.all(
                                           color: isSelected ? AppColors.primarycolor : Color(0xFFE6ECEB),
@@ -339,12 +345,6 @@ class NewsView extends StatelessWidget {
                                   NewsDetailsView(articleId: article['id']),
                                 );
                               } else {
-                                // Fallback if ID is missing (shouldn't happen with your API)
-                                Get.to(
-                                  NewsDetailsView(
-                                    articleId: 0, // Provide default
-                                  ),
-                                );
                                 Get.snackbar('Error', 'Article ID missing');
                               }
                             },
@@ -369,7 +369,10 @@ class NewsView extends StatelessWidget {
                                             color: Colors.grey[300],
                                             borderRadius: BorderRadius.circular(8),
                                           ),
-                                          child: Image(image: AssetImage(AppImages.default_news_img),fit: BoxFit.cover,)
+                                          child: Image(
+                                            image: AssetImage(AppImages.default_news_img),
+                                            fit: BoxFit.cover,
+                                          ),
                                         );
                                       },
                                     )
@@ -427,7 +430,7 @@ class NewsView extends StatelessWidget {
                           Divider(height: 1, color: Color(0xffE6ECEB)),
                           SizedBox(height: 8),
 
-                          // Time and Reading Duration
+                          // Time
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [

@@ -248,7 +248,7 @@ class HomeView extends StatelessWidget {
               } else if (!is_SubcribedController.isActive.value) {
                 title = 'Subscription Required';
                 message = 'Subscription to access all AI personas';
-                backgroundColor = Colors.purple;
+                backgroundColor = AppColors.primarycolor;
                 icon = Icons.star;
               } else if (is_SubcribedController.isCanceled.value) {
                 title = 'Limited Access';

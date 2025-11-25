@@ -10,9 +10,9 @@ class NewsController extends GetxController {
   var isLoading = false.obs;
   var articles = <dynamic>[].obs;
   var categories = <dynamic>[].obs;
-  var allTags = <dynamic>[].obs; // For all available tags
-  var selectedCategory = Rxn<Map<String, dynamic>>();
-  var selectedTag = Rxn<Map<String, dynamic>>(); // For currently selected tag
+  var allTags = <dynamic>[].obs;
+  var selectedCategoryId = Rxn<int>(); // Changed to ID instead of object
+  var selectedTag = Rxn<Map<String, dynamic>>();
   var searchController = TextEditingController();
   var searchText = ''.obs;
   var currentPage = 1.obs;
@@ -85,9 +85,9 @@ class NewsController extends GetxController {
     try {
       dynamic response;
 
-      if (selectedCategory.value != null) {
+      if (selectedCategoryId.value != null) {
         response = await _newsRepository.getArticlesByCategory(
-          categoryId: selectedCategory.value!['id'],
+          categoryId: selectedCategoryId.value!,
           page: currentPage.value,
           pageSize: 10,
         );
@@ -127,7 +127,7 @@ class NewsController extends GetxController {
   Future<void> filterByTag(Map<String, dynamic> tag) async {
     isLoading.value = true;
     selectedTag.value = tag;
-    selectedCategory.value = null;
+    selectedCategoryId.value = null;
     searchController.clear();
     await loadArticles(refresh: true);
     isLoading.value = false;
@@ -149,7 +149,7 @@ class NewsController extends GetxController {
 
   Future<void> searchArticles(String query) async {
     if (query.trim().isEmpty) {
-      selectedCategory.value = null;
+      selectedCategoryId.value = null;
       selectedTag.value = null;
       await loadArticles(refresh: true);
       return;
@@ -167,7 +167,7 @@ class NewsController extends GetxController {
         articles.value = response['data']['results'] ?? [];
         currentPage.value = 1;
         hasNextPage.value = response['data']['pagination']['has_next'] ?? false;
-        selectedCategory.value = null;
+        selectedCategoryId.value = null;
         selectedTag.value = null;
       }
     } catch (e) {
@@ -182,15 +182,15 @@ class NewsController extends GetxController {
     }
   }
 
-  void filterByCategory(Map<String, dynamic> category) {
-    selectedCategory.value = category;
+  void filterByCategory(int categoryId) {
+    selectedCategoryId.value = categoryId;
     selectedTag.value = null;
     searchController.clear();
     loadArticles(refresh: true);
   }
 
   void clearCategoryFilter() {
-    selectedCategory.value = null;
+    selectedCategoryId.value = null;
     loadArticles(refresh: true);
   }
 
@@ -215,6 +215,19 @@ class NewsController extends GetxController {
       else return '${(difference.inDays / 7).floor()}w ago';
     } catch (e) {
       return '';
+    }
+  }
+
+  // Helper method to get selected category object
+  Map<String, dynamic>? get selectedCategory {
+    if (selectedCategoryId.value == null) return null;
+    try {
+      return categories.firstWhere(
+            (cat) => cat['id'] == selectedCategoryId.value,
+        orElse: () => null,
+      );
+    } catch (e) {
+      return null;
     }
   }
 }

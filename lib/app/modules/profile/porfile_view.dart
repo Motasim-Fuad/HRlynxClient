@@ -270,7 +270,13 @@ class ProfileView extends StatelessWidget {
                   title: 'Delete Account',
                   titleColor: Color(0xffD40606),
                   iconColor: Color(0xffD40606),
-                  onTap: () => _showDeleteAccountDialog(context), // 👈 Changed function
+                  onTap: () {
+                    if(subController.isSubscribed.value == true){
+                      Get.snackbar('Delete Account', 'You can not delete your account because you are subscribed to our service. Please unsubscribe first.');
+                    }else{
+                      _showDeleteAccountDialog(context);
+                    }
+                  }  // 👈 Changed function
                 ),
 
                 // Logout Item
