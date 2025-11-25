@@ -337,34 +337,110 @@ class PaymentRepository {
   // Helpers
   // ============================================
 
-  Package? findPackage(List<Package> packages, String productId, String selectedPlanType) {
-    // Method 1: Direct product ID match
+  // Package? findPackage(List<Package> packages, String productId, String selectedPlanType) {
+  //   // Method 1: Direct product ID match
+  //   Package? package = packages.firstWhereOrNull(
+  //         (p) => p.storeProduct.identifier == productId,
+  //   );
+  //
+  //   if (package != null) return package;
+  //
+  //   // Method 2: By package type
+  //   if (productId.contains('monthly') || selectedPlanType == 'monthly') {
+  //     package = packages.firstWhereOrNull(
+  //           (p) => p.packageType == PackageType.monthly,
+  //     );
+  //   } else if (productId.contains('yearly') || selectedPlanType == 'yearly') {
+  //     package = packages.firstWhereOrNull(
+  //           (p) => p.packageType == PackageType.annual,
+  //     );
+  //   }
+  //
+  //   if (package != null) return package;
+  //
+  //   // Method 3: By identifier match
+  //   package = packages.firstWhereOrNull(
+  //         (p) => p.identifier == productId,
+  //   );
+  //
+  //   return package;
+  // }
+
+
+  Package? findPackage(
+      List<Package> packages,
+      String productId,
+      String selectedPlanType // This will be 'explorer_yearly' or 'explorer_monthly'
+      ) {
+    print('\n🔍 ===== FINDING PACKAGE =====');
+    print('Looking for Product ID: $productId');
+    print('Plan Type: $selectedPlanType');
+    print('Available packages: ${packages.length}');
+
+    // ✅ Method 1: Direct product ID match (BEST)
     Package? package = packages.firstWhereOrNull(
           (p) => p.storeProduct.identifier == productId,
     );
 
-    if (package != null) return package;
+    if (package != null) {
+      print('✅ FOUND by Product ID match!');
+      print('   Package: ${package.identifier}');
+      print('   Product: ${package.storeProduct.identifier}');
+      return package;
+    }
 
-    // Method 2: By package type
-    if (productId.contains('monthly') || selectedPlanType == 'monthly') {
-      package = packages.firstWhereOrNull(
-            (p) => p.packageType == PackageType.monthly,
-      );
-    } else if (productId.contains('yearly') || selectedPlanType == 'yearly') {
+    print('⚠️ No direct match, trying package type...');
+
+    // ✅ Method 2: By package type
+    if (selectedPlanType.contains('yearly') || productId.contains('yearly')) {
       package = packages.firstWhereOrNull(
             (p) => p.packageType == PackageType.annual,
       );
+      if (package != null) {
+        print('✅ FOUND by PackageType.annual!');
+        return package;
+      }
     }
 
-    if (package != null) return package;
+    if (selectedPlanType.contains('monthly') || productId.contains('monthly')) {
+      package = packages.firstWhereOrNull(
+            (p) => p.packageType == PackageType.monthly,
+      );
+      if (package != null) {
+        print('✅ FOUND by PackageType.monthly!');
+        return package;
+      }
+    }
 
-    // Method 3: By identifier match
+    print('⚠️ No package type match, trying identifier...');
+
+    // ✅ Method 3: By identifier match
     package = packages.firstWhereOrNull(
           (p) => p.identifier == productId,
     );
 
-    return package;
+    if (package != null) {
+      print('✅ FOUND by identifier match!');
+      return package;
+    }
+
+    // ✅ Method 4: Flexible matching
+    package = packages.firstWhereOrNull(
+          (p) => p.storeProduct.identifier.toLowerCase().contains(productId.toLowerCase()) ||
+          p.identifier.toLowerCase().contains(productId.toLowerCase()),
+    );
+
+    if (package != null) {
+      print('✅ FOUND by flexible match!');
+      return package;
+    }
+
+    print('❌ NO MATCH FOUND!');
+    print('==============================\n');
+    return null;
   }
+
+
 
   Future<void> testRevenueCatConnection() async {
     try {

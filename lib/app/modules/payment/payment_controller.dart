@@ -16,7 +16,7 @@ class PaymentController extends GetxController {
   // ✅ Add constructor
   PaymentController({this.userId});
   // Observable variables
-  var selectedPlan = 'yearly'.obs;
+  var selectedPlan = 'explorer_yearly'.obs;
   var isLoading = false.obs;
   var plans = <SubscriptionPlan>[].obs;
   var hasPlans = false.obs;
@@ -114,11 +114,24 @@ class PaymentController extends GetxController {
       plans.assignAll(fetchedPlans);
       hasPlans.value = plans.isNotEmpty;
 
-      // Set default selection
+      // ✅ Debug logs
+      print('\n📋 ===== PLANS LOADED =====');
+      for (var plan in plans) {
+        print('Plan Type: ${plan.planType}');
+        print('Name: ${plan.name}');
+        print('Price: \$${plan.price}');
+        print('RevenueCat Product ID: ${plan.revenuecatProductId}');
+        print('---');
+      }
+      print('==========================\n');
+
+
       if (plans.any((plan) => plan.planType == 'explorer_yearly')) {
-        selectedPlan.value = 'yearly';
-      } else if (plans.isNotEmpty) {
-        selectedPlan.value = plans.first.planType.contains('monthly') ? 'monthly' : 'yearly';
+        selectedPlan.value = 'explorer_yearly';
+        print('✅ Default selected: explorer_yearly');
+      } else if (plans.any((plan) => plan.planType == 'explorer_monthly')) {
+        selectedPlan.value = 'explorer_monthly';
+        print('✅ Default selected: explorer_monthly');
       }
 
       // Load RevenueCat packages after plans are loaded
@@ -131,13 +144,21 @@ class PaymentController extends GetxController {
     }
   }
 
-  // Get currently selected plan
+
   SubscriptionPlan? get selectedPlanData {
-    if (selectedPlan.value == 'yearly') {
-      return plans.firstWhereOrNull((plan) => plan.planType == 'explorer_yearly');
+    final plan = plans.firstWhereOrNull((p) => p.planType == selectedPlan.value);
+
+    if (plan != null) {
+      print('✅ Selected Plan:');
+      print('   Type: ${plan.planType}');
+      print('   Name: ${plan.name}');
+      print('   Price: \$${plan.price}');
+      print('   Product ID: ${plan.revenuecatProductId}');
     } else {
-      return plans.firstWhereOrNull((plan) => plan.planType == 'explorer_monthly');
+      print('❌ No plan found for: ${selectedPlan.value}');
     }
+
+    return plan;
   }
 
   // Start purchase process
@@ -157,18 +178,34 @@ class PaymentController extends GetxController {
       paymentInProgress.value = true;
 
       final planData = selectedPlanData!;
-      print('🚀 Starting purchase for plan: ${planData.planType}');
-      print('🆔 Looking for product ID: ${planData.revenuecatProductId}');
+      print('\n🚀 ===== STARTING PURCHASE =====');
+      print('Plan Type: ${planData.planType}');
+      print('Plan Name: ${planData.name}');
+      print('Price: \$${planData.price}');
+      print('Product ID: ${planData.revenuecatProductId}');
+      print('=================================\n');
 
       if (planData.revenuecatProductId == null) {
         throw Exception('RevenueCat product ID not found for plan: ${planData.planType}');
       }
 
+      print('\n📦 ===== AVAILABLE PACKAGES =====');
+      for (var p in revenueCatPackages) {
+        print('Package ID: ${p.identifier}');
+        print('Product ID: ${p.storeProduct.identifier}');
+        print('Type: ${p.packageType}');
+        print('Price: ${p.storeProduct.priceString}');
+        print('---');
+      }
+      print('==================================\n');
+
       // Find package
       Package? package = _repository.findPackage(
         revenueCatPackages,
         planData.revenuecatProductId!,
-        selectedPlan.value,
+        //selectedPlan.value,
+        planData.planType,
+
       );
 
       if (package == null) {
