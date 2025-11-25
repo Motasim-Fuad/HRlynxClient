@@ -28,6 +28,81 @@ class AppleSignUpController extends GetxController {
   /// Apple Sign-In with terms check
 // Only showing the changed part - rest remains same
 
+  // Future<void> handleAppleSignUp() async {
+  //   if (!isChecked.value) {
+  //     Get.snackbar(
+  //       "Terms Not Accepted",
+  //       "Please agree to the Terms and Privacy Policy",
+  //     );
+  //     return;
+  //   }
+  //
+  //   try {
+  //     isLoading.value = true;
+  //
+  //     final isAvailable = await SignInWithApple.isAvailable();
+  //     if (!isAvailable) {
+  //       Get.snackbar("Error", "Apple Sign-In is not available on this device");
+  //       isLoading.value = false;
+  //       return;
+  //     }
+  //
+  //     final userCredential = await signInWithApple();
+  //     if (userCredential == null) {
+  //       isLoading.value = false;
+  //       return;
+  //     }
+  //
+  //     final user = userCredential.user;
+  //     if (user == null || user.email == null) {
+  //       Get.snackbar("Error", "Apple sign-in failed: No user data.");
+  //       return;
+  //     }
+  //
+  //     final email = user.email!;
+  //     final name = user.displayName ?? 'Apple User';
+  //
+  //     final storedPersonaId = await TokenStorage.getSelectedPersonaId();
+  //     if (storedPersonaId == null) {
+  //       Get.snackbar("Error", "No persona selected. Please complete onboarding first.");
+  //       return;
+  //     }
+  //
+  //     final personaBody = {"persona": storedPersonaId};
+  //     final success = await authRepo.SocialSignUpAndSetPersona(
+  //       email: email,
+  //       name: name,
+  //       provider: 'apple',
+  //     );
+  //     await authRepo.setParsonaType(personaBody);
+  //
+  //     if (success) {
+  //       await initializeNotificationService();
+  //       await sendFCMTokenToBackend();
+  //
+  //       Get.snackbar("Success", "Apple sign-in complete and persona set.");
+  //
+  //       // ✅ USE SUBSCRIPTION MANAGER
+  //       await SubscriptionManager.instance.handlePostLoginNavigation();
+  //
+  //     } else {
+  //       Get.snackbar("Error", "Failed to set persona after Apple login.");
+  //     }
+  //   } catch (e) {
+  //     if (e.toString().contains('canceled')) {
+  //       Get.snackbar("Cancelled", "Apple Sign-In was cancelled by user");
+  //     } else if (e.toString().contains('network')) {
+  //       Get.snackbar("Error", "Network problem. Please check your internet connection.");
+  //     } else {
+  //       Get.snackbar("Error", "Apple Sign-In failed. Please try again.");
+  //     }
+  //     print("AppleSignUp Error: $e");
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
+
   Future<void> handleAppleSignUp() async {
     if (!isChecked.value) {
       Get.snackbar(
@@ -56,6 +131,7 @@ class AppleSignUpController extends GetxController {
       final user = userCredential.user;
       if (user == null || user.email == null) {
         Get.snackbar("Error", "Apple sign-in failed: No user data.");
+        isLoading.value = false; // ✅ ADD THIS
         return;
       }
 
@@ -65,6 +141,7 @@ class AppleSignUpController extends GetxController {
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
       if (storedPersonaId == null) {
         Get.snackbar("Error", "No persona selected. Please complete onboarding first.");
+        isLoading.value = false; // ✅ ADD THIS
         return;
       }
 
@@ -77,26 +154,37 @@ class AppleSignUpController extends GetxController {
       await authRepo.setParsonaType(personaBody);
 
       if (success) {
-        await initializeNotificationService();
-        await sendFCMTokenToBackend();
+        // ✅ MOVE THESE INSIDE TRY-CATCH
+        try {
+          await initializeNotificationService();
+          await sendFCMTokenToBackend();
+        } catch (e) {
+          print('⚠️ Non-critical error (notifications): $e');
+          // Don't block user from continuing
+        }
 
-        Get.snackbar("Success", "Apple sign-in complete and persona set.");
-
-        // ✅ USE SUBSCRIPTION MANAGER
+        Get.snackbar("Success", "Apple sign-in complete!");
         await SubscriptionManager.instance.handlePostLoginNavigation();
 
       } else {
         Get.snackbar("Error", "Failed to set persona after Apple login.");
       }
-    } catch (e) {
-      if (e.toString().contains('canceled')) {
-        Get.snackbar("Cancelled", "Apple Sign-In was cancelled by user");
-      } else if (e.toString().contains('network')) {
-        Get.snackbar("Error", "Network problem. Please check your internet connection.");
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // ✅ SPECIFIC ERROR HANDLING
+      if (e.code == AuthorizationErrorCode.canceled) {
+        Get.snackbar("Cancelled", "Apple Sign-In was cancelled");
       } else {
-        Get.snackbar("Error", "Apple Sign-In failed. Please try again.");
+        Get.snackbar("Error", "Apple Sign-In error: ${e.message}");
+        print("Apple Auth Error: ${e.code} - ${e.message}");
       }
-      print("AppleSignUp Error: $e");
+    } catch (e) {
+      // ✅ BETTER ERROR MESSAGES
+      if (e.toString().contains('network')) {
+        Get.snackbar("Error", "Network problem. Please check your connection.");
+      } else {
+        Get.snackbar("Error", "Something went wrong. Please try again.");
+        print("❌ AppleSignUp Error: $e");
+      }
     } finally {
       isLoading.value = false;
     }
