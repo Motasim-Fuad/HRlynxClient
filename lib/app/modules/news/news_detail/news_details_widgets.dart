@@ -187,6 +187,9 @@ class NewsDetailsWidgets {
         String title = parts[i];
 
         if (i + 1 < parts.length && parts[i + 1].isNotEmpty) {
+          // Clean and format content properly
+          String content = _cleanBulletPoints(parts[i + 1]);
+
           sections.add(
             Container(
               margin: EdgeInsets.only(bottom: 16),
@@ -219,7 +222,7 @@ class NewsDetailsWidgets {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    parts[i + 1].trim(),
+                    content,
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
                       color: AppColors.primarycolor,
@@ -242,6 +245,37 @@ class NewsDetailsWidgets {
     );
   }
 
+  // Clean bullet points and remove extra spaces
+  static String _cleanBulletPoints(String text) {
+    // Remove leading/trailing whitespace
+    String cleaned = text.trim();
+
+    // Split by newlines to handle each line
+    List<String> lines = cleaned.split('\n');
+
+    // Process each line
+    List<String> processedLines = [];
+    for (String line in lines) {
+      String trimmedLine = line.trim();
+
+      // Skip empty lines
+      if (trimmedLine.isEmpty) continue;
+
+      // Check if line starts with bullet point
+      if (trimmedLine.startsWith('•') ||
+          trimmedLine.startsWith('-') ||
+          trimmedLine.startsWith('*')) {
+        // Remove the bullet and any spaces after it, then add consistent formatting
+        String withoutBullet = trimmedLine.substring(1).trim();
+        processedLines.add('• $withoutBullet');
+      } else {
+        processedLines.add(trimmedLine);
+      }
+    }
+
+    // Join with single newline
+    return processedLines.join('\n');
+  }
   // Loading widget
   static Widget buildLoadingWidget() {
     return Center(
