@@ -18,7 +18,6 @@ class HomeView extends StatelessWidget {
     final UserIsSubcribedController is_SubcribedController = Get.put(UserIsSubcribedController());
     final controller = Get.put(ChatAllAiPersona());
 
-    // ✅ FIXED: শুধু একবার call করুন, এটাই সব handle করবে
     WidgetsBinding.instance.addPostFrameCallback((_) {
       is_SubcribedController.checkAndUpdateSubscriptionStatus();
     });
@@ -390,7 +389,7 @@ class HomeView extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue.shade200, Colors.blue.shade400],
+            colors: [Colors.teal.shade900, Colors.teal.shade600],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

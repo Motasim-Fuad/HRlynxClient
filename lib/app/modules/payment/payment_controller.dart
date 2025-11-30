@@ -452,30 +452,15 @@ class PaymentController extends GetxController {
 
       if (!isCalledFromLogin) {  // ✅ Only show snackbar if manual restore
         if (info.entitlements.active.isNotEmpty) {
-          Get.snackbar(
-            'Success',
-            'Purchases restored successfully!',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
+          print("Success : Purchases restored successfully!");
         } else {
-          Get.snackbar(
-            'No Purchases',
-            'No active purchases found to restore.',
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-          );
+          print("No Purchases : No active purchases found to restore.");
         }
       }
     } catch (e) {
       print('❌ Error restoring purchases: $e');
       if (!Get.currentRoute.contains('login')) {
-        Get.snackbar(
-          'Error',
-          'Failed to restore purchases',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        print("Error :Failed to restore purchases");
       }
     } finally {
       isLoading.value = false;
