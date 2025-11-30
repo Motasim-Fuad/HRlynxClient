@@ -35,9 +35,27 @@ class NewsDetailsView extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.share),
-            onPressed: () => viewModel.shareArticle(),
+          // ✅ ONLY CHANGE HERE - Builder wrap korlam iPad fix ar jonno
+          Builder(
+            builder: (BuildContext context) {
+              return IconButton(
+                icon: Icon(Icons.share),
+                onPressed: () async {
+                  // iPad ar jonno button position calculate kora
+                  final RenderBox? box = context.findRenderObject() as RenderBox?;
+
+                  if (box != null) {
+                    // Position pass kortesi - iPad a share sheet properly show hobe
+                    await viewModel.shareArticle(
+                      sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
+                    );
+                  } else {
+                    // iPhone ar jonno - normally call hobe
+                    await viewModel.shareArticle();
+                  }
+                },
+              );
+            },
           ),
         ],
       ),

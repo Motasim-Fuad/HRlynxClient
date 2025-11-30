@@ -7,7 +7,7 @@ import 'package:HRlynx/app/modules/news/news_detail/affilate_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:share_plus/share_plus.dart'; // Add this import
+import 'package:share_plus/share_plus.dart';
 
 class NewsDetailsViewModel extends GetxController {
   final NewsRepository _newsRepository = NewsRepository();
@@ -150,8 +150,8 @@ class NewsDetailsViewModel extends GetxController {
     }
   }
 
-  // UPDATED SHARE METHOD - Simple and clean
-  Future<void> shareArticle() async {
+  // ✅ ONLY CHANGE HERE - sharePositionOrigin parameter add korlam iPad ar jonno
+  Future<void> shareArticle({Rect? sharePositionOrigin}) async {
     final currentArticle = article.value;
     if (currentArticle == null) return;
 
@@ -177,10 +177,11 @@ class NewsDetailsViewModel extends GetxController {
 
       shareText += 'Shared via HRlynx App';
 
-      // Simple share - opens native share sheet on both iOS and Android
+      // Simple share - iPad + iPhone both a perfect kaj korbe
       await Share.share(
         shareText,
         subject: title, // iOS e use hobe
+        sharePositionOrigin: sharePositionOrigin, // ✅ iPad ar jonno must!
       );
 
     } catch (e) {
