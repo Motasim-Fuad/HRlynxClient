@@ -1,12 +1,9 @@
 import 'package:HRlynx/app/modules/home/user_isSubcriptionController.dart';
-import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart' show CachedNetworkImage;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../utils/app_colors.dart';
 import '../../utils/app_images.dart';
-import '../../modules/news/news_view.dart';
 import 'chat_al_ai_persona_controller.dart';
 
 class HomeView extends StatelessWidget {
@@ -14,7 +11,6 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ProfileController profileController = Get.put(ProfileController());
     final UserIsSubcribedController is_SubcribedController = Get.put(UserIsSubcribedController());
     final controller = Get.put(ChatAllAiPersona());
 
@@ -25,355 +21,298 @@ class HomeView extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: Obx(() => Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey.shade300, width: 2),
-            ),
-            clipBehavior: Clip.antiAlias,
-            alignment: Alignment.center,
-            child: _buildProfilePicture(profileController),
-          )),
-        ),
-        title: const Text(
-          'HRlynx',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: Color(0xFF1B1E28),
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
+          // Responsive breakpoints
           final isTablet = constraints.maxWidth > 600;
+          final isDesktop = constraints.maxWidth > 1024;
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ---  HR News Card ---
-                Container(
-                  height: size.height * 0.20,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Image.asset(
-                            AppImages.home_container,
-                            fit: BoxFit.cover,
-                            color: Colors.black.withOpacity(0.6),
-                            colorBlendMode: BlendMode.darken,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Your HR Guidance, Reimagined',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 20,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              const Text(
-                                'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+          // Responsive values
+          final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
+          final topPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
+          final cardHeight = isDesktop
+              ? size.height * 0.25
+              : (isTablet ? size.height * 0.22 : size.height * 0.20);
+
+          return Column(
+            children: [
+              SizedBox(height: isDesktop ? 39 : (isTablet ? 34 : 29)),
+              // ========== Fixed Header Card ==========
+              _buildFixedHeaderCard(
+                horizontalPadding: horizontalPadding,
+                topPadding: topPadding,
+                cardHeight: cardHeight,
+                isDesktop: isDesktop,
+                isTablet: isTablet,
+              ),
+              SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+
+              // Title
+              _buildSectionTitle(isDesktop: isDesktop, isTablet: isTablet),
+              SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+
+              // ========== Scrollable Content ==========
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+
+                      SizedBox(height: isDesktop ? 16 : (isTablet ? 12 : 10)),
+
+                      // Persona Grid
+                      _buildPersonaGridSection(
+                        controller: controller,
+                        is_SubcribedController: is_SubcribedController,
+                        isTablet: isTablet,
+                        isDesktop: isDesktop,
+                      ),
+
+                      SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+                    ],
                   ),
                 ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  'Chat with your AI HR Assistants:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: isTablet ? 24 : 20,
-                    color: AppColors.primarycolor,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                // ✅ Persona Grid with subscription check
-                Obx(() {
-                  // Show loading for both persona and subscription
-                  if (controller.isLoading.value || is_SubcribedController.isLoading.value) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (controller.personaList.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(40),
-                        child: Text('No personas available'),
-                      ),
-                    );
-                  }
-
-                  // Debug logs
-                  print("📊 Subscription status in HomeView:");
-                  print("   isActive: ${is_SubcribedController.isActive.value}");
-                  print("   isSubscribed: ${is_SubcribedController.isSubscribed.value}");
-                  print("   isCanceled: ${is_SubcribedController.isCanceled.value}");
-                  print("   hasPremiumAccess: ${is_SubcribedController.hasPremiumAccess.value}");
-                  print("   selectedPersona: ${is_SubcribedController.selectedPersona.value?.id}");
-
-                  return FutureBuilder<List<Widget>>(
-                    future: _buildPersonaGrid(
-                      controller,
-                      is_SubcribedController,
-                      isTablet,
-                    ),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(40),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
-                            ),
-                          ),
-                        );
-                      }
-
-                      if (snapshot.hasError) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(40),
-                            child: Column(
-                              children: [
-                                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                                const SizedBox(height: 10),
-                                Text('Error loading personas: ${snapshot.error}'),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      return GridView.count(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisCount: isTablet ? 3 : 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.7,
-                        children: snapshot.data ?? [],
-                      );
-                    },
-                  );
-                }),
-                const SizedBox(height: 20),
-              ],
-            ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
-  // Build persona grid with subscription check
-  Future<List<Widget>> _buildPersonaGrid(
-      ChatAllAiPersona controller,
-      UserIsSubcribedController is_SubcribedController,
-      bool isTablet,
-      ) async {
+  // ========== Fixed Header Card Widget ==========
+  Widget _buildFixedHeaderCard({
+    required double horizontalPadding,
+    required double topPadding,
+    required double cardHeight,
+    required bool isDesktop,
+    required bool isTablet,
+  }) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(horizontalPadding, topPadding, horizontalPadding, 0),
+      child: Container(
+        height: cardHeight,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              // Background Image
+              Positioned.fill(
+                child: Image.asset(
+                  AppImages.home_container,
+                  fit: BoxFit.cover,
+                  color: Colors.black.withOpacity(0.6),
+                  colorBlendMode: BlendMode.darken,
+                ),
+              ),
+
+              // Text Content
+              Padding(
+                padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 20)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Your HR Guidance, Reimagined',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: isDesktop ? 26 : (isTablet ? 22 : 20),
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(height: isDesktop ? 24 : 20),
+                    Text(
+                      'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter.',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: isDesktop ? 18 : (isTablet ? 17 : 16),
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ========== Section Title Widget ==========
+  Widget _buildSectionTitle({required bool isDesktop, required bool isTablet}) {
+    return Text(
+      'Chat with your AI HR Assistants:',
+      style: TextStyle(
+        fontWeight: FontWeight.w500,
+        fontSize: isDesktop ? 26 : (isTablet ? 24 : 20),
+        color: AppColors.primarycolor,
+      ),
+    );
+  }
+
+  // ========== Persona Grid Section Widget ==========
+  Widget _buildPersonaGridSection({
+    required ChatAllAiPersona controller,
+    required UserIsSubcribedController is_SubcribedController,
+    required bool isTablet,
+    required bool isDesktop,
+  }) {
+    // Grid configuration
+    int crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
+    double spacing = isDesktop ? 16.0 : (isTablet ? 14.0 : 12.0);
+    double aspectRatio = isDesktop ? 0.75 : (isTablet ? 0.72 : 0.7);
+
+    return Obx(() {
+      // Loading state
+      if (controller.isLoading.value || is_SubcribedController.isLoading.value) {
+        return _buildLoadingIndicator(isDesktop: isDesktop, isTablet: isTablet);
+      }
+
+      // Empty state
+      if (controller.personaList.isEmpty) {
+        return _buildEmptyState(isDesktop: isDesktop, isTablet: isTablet);
+      }
+
+      // Debug logs
+      _printDebugInfo(is_SubcribedController);
+
+      // Persona Grid
+      return FutureBuilder<List<Widget>>(
+        future: _buildPersonaCards(
+          controller: controller,
+          is_SubcribedController: is_SubcribedController,
+          isTablet: isTablet,
+          isDesktop: isDesktop,
+        ),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildLoadingIndicator(isDesktop: isDesktop, isTablet: isTablet);
+          }
+
+          if (snapshot.hasError) {
+            return _buildErrorState(
+              error: snapshot.error.toString(),
+              isDesktop: isDesktop,
+              isTablet: isTablet,
+            );
+          }
+
+          return GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: spacing,
+            mainAxisSpacing: spacing,
+            childAspectRatio: aspectRatio,
+            children: snapshot.data ?? [],
+          );
+        },
+      );
+    });
+  }
+
+  // ========== Loading Indicator Widget ==========
+  Widget _buildLoadingIndicator({required bool isDesktop, required bool isTablet}) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
+        child: const CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+        ),
+      ),
+    );
+  }
+
+  // ========== Empty State Widget ==========
+  Widget _buildEmptyState({required bool isDesktop, required bool isTablet}) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
+        child: const Text('No personas available'),
+      ),
+    );
+  }
+
+  // ========== Error State Widget ==========
+  Widget _buildErrorState({
+    required String error,
+    required bool isDesktop,
+    required bool isTablet,
+  }) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
+        child: Column(
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: isDesktop ? 56 : (isTablet ? 52 : 48),
+              color: Colors.red,
+            ),
+            const SizedBox(height: 10),
+            Text('Error loading personas: $error'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ========== Debug Info ==========
+  void _printDebugInfo(UserIsSubcribedController controller) {
+    print("📊 Subscription status in HomeView:");
+    print("   isActive: ${controller.isActive.value}");
+    print("   isSubscribed: ${controller.isSubscribed.value}");
+    print("   isCanceled: ${controller.isCanceled.value}");
+    print("   hasPremiumAccess: ${controller.hasPremiumAccess.value}");
+    print("   selectedPersona: ${controller.selectedPersona.value?.id}");
+  }
+
+  // ========== Build Persona Cards ==========
+  Future<List<Widget>> _buildPersonaCards({
+    required ChatAllAiPersona controller,
+    required UserIsSubcribedController is_SubcribedController,
+    required bool isTablet,
+    required bool isDesktop,
+  }) async {
     List<Widget> personaCards = [];
+
+    // Responsive sizes
+    final titleFontSize = isDesktop ? 16.0 : (isTablet ? 15.0 : 14.0);
+    final iconSize = isDesktop ? 32.0 : (isTablet ? 30.0 : 28.0);
+    final lockTextSize = isDesktop ? 12.0 : (isTablet ? 11.0 : 10.0);
+    final cardPadding = isDesktop ? 12.0 : (isTablet ? 10.0 : 8.0);
+    final verticalPadding = isDesktop ? 12.0 : (isTablet ? 11.0 : 10.0);
 
     for (int index = 0; index < controller.personaList.length; index++) {
       final persona = controller.personaList[index];
       final personaId = persona.id ?? 0;
 
-      // ✅ Check if this persona is accessible
+      // Check accessibility
       bool isPersonaActive = await is_SubcribedController.isPersonaAccessible(personaId);
 
       print("🎭 Persona ${persona.title} (ID: $personaId) - Active: $isPersonaActive");
 
       personaCards.add(
-        GestureDetector(
-          onTap: () async {
-            if (isPersonaActive) {
-              print("✅ Starting chat for accessible persona: ${persona.title}");
-              await controller.startChatSession(persona);
-            } else {
-              print("❌ Persona not accessible: ${persona.title}");
-
-              // Show appropriate message based on subscription status
-              String title = 'Access Restricted';
-              String message = 'This persona is not available';
-              Color backgroundColor = Colors.orange;
-              IconData icon = Icons.lock_outline;
-
-              if (is_SubcribedController.canReactivateSubscription) {
-                title = 'Reactivate Subscription';
-                message = 'Reactivate your subscription to access all personas';
-                backgroundColor = Colors.blue;
-                icon = Icons.refresh;
-              } else if (!is_SubcribedController.isActive.value) {
-                title = 'Subscription Required';
-                message = 'Subscription to access all AI personas';
-                backgroundColor = AppColors.primarycolor;
-                icon = Icons.star;
-              } else if (is_SubcribedController.isCanceled.value) {
-                title = 'Limited Access';
-                message = 'Only your selected persona is available after cancellation';
-                backgroundColor = Colors.orange;
-                icon = Icons.person_outline;
-              }
-
-              Get.snackbar(
-                title,
-                message,
-                snackPosition: SnackPosition.TOP,
-                backgroundColor: backgroundColor,
-                colorText: Colors.white,
-                duration: const Duration(seconds: 3),
-                icon: Icon(icon, color: Colors.white),
-              );
-            }
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: isPersonaActive ? Colors.white : Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isPersonaActive ? Colors.grey.shade300 : Colors.grey.shade400,
-                width: isPersonaActive ? 1 : 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isPersonaActive ? Colors.black12 : Colors.black.withOpacity(0.05),
-                  blurRadius: isPersonaActive ? 4 : 2,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    topRight: Radius.circular(10),
-                  ),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Stack(
-                      children: [
-                        CachedNetworkImage(
-                          imageUrl: "${persona.avatar}",
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => const Icon(
-                            Icons.broken_image,
-                            size: 40,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        // Lock overlay for inaccessible personas
-                        if (!isPersonaActive)
-                          Positioned.fill(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  topRight: Radius.circular(10),
-                                ),
-                              ),
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      is_SubcribedController.canReactivateSubscription
-                                          ? Icons.refresh
-                                          : is_SubcribedController.isCanceled.value
-                                          ? Icons.person_outline
-                                          : Icons.lock,
-                                      color: Colors.white,
-                                      size: 28,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      is_SubcribedController.canReactivateSubscription
-                                          ? 'Reactivate'
-                                          : is_SubcribedController.isCanceled.value
-                                          ? 'Limited'
-                                          : 'Subscribe',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10),
-                  child: Text(
-                    persona.title ?? 'No Title',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isPersonaActive ? Colors.black : Colors.grey.shade600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        _buildPersonaCard(
+          persona: persona,
+          isPersonaActive: isPersonaActive,
+          controller: controller,
+          is_SubcribedController: is_SubcribedController,
+          titleFontSize: titleFontSize,
+          iconSize: iconSize,
+          lockTextSize: lockTextSize,
+          cardPadding: cardPadding,
+          verticalPadding: verticalPadding,
+          isDesktop: isDesktop,
+          isTablet: isTablet,
         ),
       );
     }
@@ -381,66 +320,246 @@ class HomeView extends StatelessWidget {
     return personaCards;
   }
 
-  // Build Profile Picture Widget
-  Widget _buildProfilePicture(ProfileController profileController) {
-    if (profileController.userProfilePicture.value.isEmpty) {
-      return Container(
-        width: 40,
-        height: 40,
+  // ========== Single Persona Card Widget ==========
+  Widget _buildPersonaCard({
+    required dynamic persona,
+    required bool isPersonaActive,
+    required ChatAllAiPersona controller,
+    required UserIsSubcribedController is_SubcribedController,
+    required double titleFontSize,
+    required double iconSize,
+    required double lockTextSize,
+    required double cardPadding,
+    required double verticalPadding,
+    required bool isDesktop,
+    required bool isTablet,
+  }) {
+    return GestureDetector(
+      onTap: () => _handlePersonaTap(
+        persona: persona,
+        isPersonaActive: isPersonaActive,
+        controller: controller,
+        is_SubcribedController: is_SubcribedController,
+      ),
+      child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.teal.shade900, Colors.teal.shade600],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+          color: isPersonaActive ? Colors.white : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isPersonaActive ? Colors.grey.shade300 : Colors.grey.shade400,
+            width: isPersonaActive ? 1 : 2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isPersonaActive ? Colors.black12 : Colors.black.withOpacity(0.05),
+              blurRadius: isPersonaActive ? 4 : 2,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: const Icon(
-          Icons.person,
-          size: 24,
-          color: Colors.white,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Persona Image
+            _buildPersonaImage(
+              persona: persona,
+              isPersonaActive: isPersonaActive,
+              is_SubcribedController: is_SubcribedController,
+              iconSize: iconSize,
+              lockTextSize: lockTextSize,
+              isDesktop: isDesktop,
+              isTablet: isTablet,
+            ),
+
+            // Persona Title
+            _buildPersonaTitle(
+              title: persona.title ?? 'No Title',
+              isPersonaActive: isPersonaActive,
+              titleFontSize: titleFontSize,
+              cardPadding: cardPadding,
+              verticalPadding: verticalPadding,
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
+
+  // ========== Persona Image Widget ==========
+  Widget _buildPersonaImage({
+    required dynamic persona,
+    required bool isPersonaActive,
+    required UserIsSubcribedController is_SubcribedController,
+    required double iconSize,
+    required double lockTextSize,
+    required bool isDesktop,
+    required bool isTablet,
+  }) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(10),
+        topRight: Radius.circular(10),
+      ),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Stack(
+          children: [
+            // Image
+            CachedNetworkImage(
+              imageUrl: "${persona.avatar}",
+              fit: BoxFit.cover,
+              width: double.infinity,
+              placeholder: (context, url) => const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
+                ),
+              ),
+              errorWidget: (context, url, error) => Icon(
+                Icons.broken_image,
+                size: isDesktop ? 48 : (isTablet ? 44 : 40),
+                color: Colors.grey,
+              ),
+            ),
+
+            // Lock Overlay
+            if (!isPersonaActive)
+              _buildLockOverlay(
+                is_SubcribedController: is_SubcribedController,
+                iconSize: iconSize,
+                lockTextSize: lockTextSize,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ========== Lock Overlay Widget ==========
+  Widget _buildLockOverlay({
+    required UserIsSubcribedController is_SubcribedController,
+    required double iconSize,
+    required double lockTextSize,
+  }) {
+    IconData lockIcon;
+    String lockText;
+
+    if (is_SubcribedController.canReactivateSubscription) {
+      lockIcon = Icons.refresh;
+      lockText = 'Reactivate';
+    } else if (is_SubcribedController.isCanceled.value) {
+      lockIcon = Icons.person_outline;
+      lockText = 'Limited';
+    } else {
+      lockIcon = Icons.lock;
+      lockText = 'Subscribe';
     }
 
-    return CachedNetworkImage(
-      imageUrl: profileController.userProfilePicture.value,
-      width: 40,
-      height: 40,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => Container(
-        width: 40,
-        height: 40,
+    return Positioned.fill(
+      child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade200,
+          color: Colors.black.withOpacity(0.7),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
         ),
-        child: const Center(
-          child: SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
-            ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(lockIcon, color: Colors.white, size: iconSize),
+              const SizedBox(height: 4),
+              Text(
+                lockText,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: lockTextSize,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
       ),
-      errorWidget: (context, url, error) {
-        print('❌ Failed to load profile image: $error');
-        return Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.red.shade100,
-          ),
-          child: Icon(
-            Icons.person,
-            size: 24,
-            color: Colors.red.shade400,
-          ),
-        );
-      },
-      fadeInDuration: const Duration(milliseconds: 300),
-      fadeOutDuration: const Duration(milliseconds: 100),
+    );
+  }
+
+  // ========== Persona Title Widget ==========
+  Widget _buildPersonaTitle({
+    required String title,
+    required bool isPersonaActive,
+    required double titleFontSize,
+    required double cardPadding,
+    required double verticalPadding,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: cardPadding,
+        vertical: verticalPadding,
+      ),
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: titleFontSize,
+          fontWeight: FontWeight.w600,
+          color: isPersonaActive ? Colors.black : Colors.grey.shade600,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  // ========== Handle Persona Tap ==========
+  Future<void> _handlePersonaTap({
+    required dynamic persona,
+    required bool isPersonaActive,
+    required ChatAllAiPersona controller,
+    required UserIsSubcribedController is_SubcribedController,
+  }) async {
+    if (isPersonaActive) {
+      print("✅ Starting chat for accessible persona: ${persona.title}");
+      await controller.startChatSession(persona);
+    } else {
+      print("❌ Persona not accessible: ${persona.title}");
+      _showAccessRestrictedMessage(is_SubcribedController);
+    }
+  }
+
+  // ========== Show Access Restricted Message ==========
+  void _showAccessRestrictedMessage(UserIsSubcribedController controller) {
+    String title = 'Access Restricted';
+    String message = 'This persona is not available';
+    Color backgroundColor = Colors.orange;
+    IconData icon = Icons.lock_outline;
+
+    if (controller.canReactivateSubscription) {
+      title = 'Reactivate Subscription';
+      message = 'Reactivate your subscription to access all personas';
+      backgroundColor = Colors.blue;
+      icon = Icons.refresh;
+    } else if (!controller.isActive.value) {
+      title = 'Subscription Required';
+      message = 'Subscription to access all AI personas';
+      backgroundColor = AppColors.primarycolor;
+      icon = Icons.star;
+    } else if (controller.isCanceled.value) {
+      title = 'Limited Access';
+      message = 'Only your selected persona is available after cancellation';
+      backgroundColor = Colors.orange;
+      icon = Icons.person_outline;
+    }
+
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: backgroundColor,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+      icon: Icon(icon, color: Colors.white),
     );
   }
 }
