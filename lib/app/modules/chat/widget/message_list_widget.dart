@@ -1,10 +1,10 @@
 import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
 import 'package:HRlynx/app/modules/chat/widget/voice_message_widget.dart';
-import 'package:HRlynx/app/utils/chat_utils.dart';
+import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart'; // ADD THIS
+import 'package:intl/intl.dart';
 import '../../../api_servies/api_Constant.dart';
 import '../chat_controller.dart';
 
@@ -12,12 +12,14 @@ class MessageListWidget extends StatelessWidget {
   final ChatController chatController;
   final dynamic session;
   final VoiceService voiceService;
+  final ProfileController profileController;
 
   const MessageListWidget({
     super.key,
     required this.chatController,
     required this.session,
     required this.voiceService,
+    required this.profileController,
   });
 
   @override
@@ -68,6 +70,14 @@ class MessageListWidget extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (isMe) const SizedBox(width: 8),
+                    if (isMe)
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundImage: profileController.userProfilePicture.value != null
+                            ? CachedNetworkImageProvider("${profileController.userProfilePicture.value}")
+                            : null,
+                      ),
                   ],
                 ),
               ),

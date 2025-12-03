@@ -10,6 +10,7 @@ import 'package:HRlynx/app/modules/chat/widget/chat_input_widget.dart';
 import 'package:HRlynx/app/modules/chat/widget/message_list_widget.dart';
 import 'package:HRlynx/app/modules/chat/widget/suggestions_widget.dart';
 import 'package:HRlynx/app/modules/chat/widget/typing_indicator.dart';
+import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -51,6 +52,7 @@ class ChatView extends StatelessWidget {
 
     final chatController = Get.find<ChatController>(tag: controllerTag);
     final tooltipCtrl = Get.put(ChatTooltipController());
+    final profileController = Get.find<ProfileController>();
 
     // FIXED: Use global VoiceService instance instead of creating new one
     VoiceService voiceService;
@@ -68,7 +70,7 @@ class ChatView extends StatelessWidget {
       return Scaffold(
         body: Column(
           children: [
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
 
             // Chat Header
             ChatHeader(
@@ -91,6 +93,7 @@ class ChatView extends StatelessWidget {
               chatController: chatController,
               session: session,
               voiceService: voiceService,
+              profileController:profileController,
             ),
 
             // Typing Indicator
