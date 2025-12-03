@@ -27,7 +27,7 @@ class NewsDetailsView extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Breaking HR News',
+          'News Details',
           style: TextStyle(
             fontWeight: FontWeight.w500,
             fontSize: 24,

@@ -402,43 +402,6 @@ class PaymentController extends GetxController {
     return customerInfo.value!.entitlements.active.keys.toList();
   }
 
-  // Restore purchases
-  // Future<void> restorePurchases() async {
-  //   try {
-  //     isLoading.value = true;
-  //
-  //     CustomerInfo info = await _repository.restorePurchases();
-  //     customerInfo.value = info;
-  //
-  //     if (info.entitlements.active.isNotEmpty) {
-  //       Get.snackbar(
-  //         'Success',
-  //         'Purchases restored successfully!',
-  //         backgroundColor: Colors.green,
-  //         colorText: Colors.white,
-  //       );
-  //     } else {
-  //       Get.snackbar(
-  //         'No Purchases',
-  //         'No active purchases found to restore.',
-  //         backgroundColor: Colors.orange,
-  //         colorText: Colors.white,
-  //       );
-  //     }
-  //   } catch (e) {
-  //     print('❌ Error restoring purchases: $e');
-  //     Get.snackbar(
-  //       'Error',
-  //       'Failed to restore purchases',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
-// Restore purchases
   Future<void> restorePurchases() async {
     try {
       isLoading.value = true;

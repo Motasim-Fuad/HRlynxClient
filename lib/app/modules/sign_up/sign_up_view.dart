@@ -1,7 +1,9 @@
 import 'package:HRlynx/app/common_widgets/button.dart';
+import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
 import 'package:HRlynx/app/common_widgets/text_field.dart';
 import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:HRlynx/app/modules/sign_up/sign_up_controller.dart';
+import 'package:HRlynx/app/modules/terms_of_use/terms_of_use.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -178,24 +180,30 @@ class _SignUpState extends State<SignUp> {
                                 value: signUpController.isChecked.value,
                                 onChanged: signUpController.toggleCheckbox,
                               )),
-                              const Flexible(
+                               Flexible(
                                 child: Wrap(
                                   children: [
                                     Text('I agree to the '),
-                                    Text(
-                                      'Terms of Use',
-                                      style: TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          color: AppColors.primarycolor,
-                                          fontWeight: FontWeight.bold),
+                                    GestureDetector(
+                                      onTap: () => Get.to(() => TermsOfUse()),
+                                      child: Text(
+                                        'Terms of Use',
+                                        style: TextStyle(
+                                            decoration: TextDecoration.underline,
+                                            color: AppColors.primarycolor,
+                                            fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                     Text(' and '),
-                                    Text(
-                                      'Privacy Policy.',
-                                      style: TextStyle(
-                                          decoration: TextDecoration.underline,
-                                          color: AppColors.primarycolor,
-                                          fontWeight: FontWeight.bold),
+                                    GestureDetector(
+                                      onTap: () => Get.to(() => PrivacyPolicy()),
+                                      child: Text(
+                                        'Privacy Policy.',
+                                        style: TextStyle(
+                                            decoration: TextDecoration.underline,
+                                            color: AppColors.primarycolor,
+                                            fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                   ],
                                 ),
