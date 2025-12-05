@@ -232,7 +232,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                             yearlyPlan.name,
                             '\$${yearlyPlan.price}/',
                             yearlyPlan.interval,
-                            'Save 25% - Get 3 months free',
+                            'Save 2+ months – Invest in your HR edge',
                             true,
                           ),
 

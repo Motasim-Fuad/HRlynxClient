@@ -542,7 +542,7 @@ class HomeView extends StatelessWidget {
       icon = Icons.refresh;
     } else if (!controller.isActive.value) {
       title = 'Subscription Required';
-      message = 'Subscription to access all AI personas';
+      message = 'Subscribe to access all AI personas';
       backgroundColor = AppColors.primarycolor;
       icon = Icons.star;
     } else if (controller.isCanceled.value) {
