@@ -28,20 +28,23 @@ class _LogInViewState extends State<LogInView> {
   void initState() {
     super.initState();
 
-    // Clean up existing controllers if they exist
+    // Clean up existing controllers
     if (Get.isRegistered<LogInController>()) {
       Get.delete<LogInController>();
     }
     if (Get.isRegistered<GoogleSignUpController>()) {
       Get.delete<GoogleSignUpController>();
     }
-   if (Get.isRegistered<AppleSignUpController>()) {
+    if (Get.isRegistered<AppleSignUpController>()) {
       Get.delete<AppleSignUpController>();
     }
 
     // Create fresh controllers
     controller = Get.put(LogInController(), permanent: false);
-    googleSignUpController = Get.put(GoogleSignUpController(), permanent: false);
+    googleSignUpController = Get.put(
+      GoogleSignUpController(),
+      permanent: false,
+    );
     appleSignUpController = Get.put(AppleSignUpController(), permanent: false);
   }
 
@@ -65,15 +68,22 @@ class _LogInViewState extends State<LogInView> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(height: height * 0.1),
+
                       const Text(
                         'Log In',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 26),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 26,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 10),
                       const Text(
                         'Please log in to continue',
-                        style: TextStyle(fontSize: 16, color: Color(0xFF7D848D)),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF7D848D),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 30),
@@ -96,26 +106,31 @@ class _LogInViewState extends State<LogInView> {
                       const SizedBox(height: 20),
 
                       _buildLabel('Password'),
-                      Obx(() => CustomTextFormField(
-                        controller: controller.passwordController,
-                        hintText: 'Password',
-                        obscureText: controller.isObscured.value,
-                        keyboardType: TextInputType.text,
-                        suffixIcon: IconButton(
-                          icon: Icon(controller.isObscured.value
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined),
-                          onPressed: controller.toggleObscureText,
+                      Obx(
+                        () => CustomTextFormField(
+                          controller: controller.passwordController,
+                          hintText: 'Password',
+                          obscureText: controller.isObscured.value,
+                          keyboardType: TextInputType.text,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              controller.isObscured.value
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                            ),
+                            onPressed: controller.toggleObscureText,
+                          ),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Password is required';
+                            } else if (value.length < 6) {
+                              return 'Minimum 6 characters required';
+                            }
+                            return null;
+                          },
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Password is required';
-                          } else if (value.length < 6) {
-                            return 'Minimum 6 characters required';
-                          }
-                          return null;
-                        },
-                      )),
+                      ),
+
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -133,15 +148,17 @@ class _LogInViewState extends State<LogInView> {
 
                       const SizedBox(height: 10),
 
-                      // Terms
+                      // Terms checkbox
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Obx(() => Checkbox(
-                            value: controller.isChecked.value,
-                            onChanged: controller.toggleCheckbox,
-                            activeColor: AppColors.primarycolor,
-                          )),
+                          Obx(
+                            () => Checkbox(
+                              value: controller.isChecked.value,
+                              onChanged: controller.toggleCheckbox,
+                              activeColor: AppColors.primarycolor,
+                            ),
+                          ),
                           Expanded(
                             child: Wrap(
                               crossAxisAlignment: WrapCrossAlignment.center,
@@ -179,11 +196,13 @@ class _LogInViewState extends State<LogInView> {
                       const SizedBox(height: 20),
 
                       // Login Button
-                      Obx(() => Button(
-                        title: 'Log In',
-                        isLoading: controller.isLoading.value,
-                        onTap: controller.loginUser,
-                      )),
+                      Obx(
+                        () => Button(
+                          title: 'Log In',
+                          isLoading: controller.isLoading.value,
+                          onTap: controller.loginUser,
+                        ),
+                      ),
 
                       const SizedBox(height: 20),
 
@@ -193,7 +212,6 @@ class _LogInViewState extends State<LogInView> {
                           const Text("Don't have an account?"),
                           TextButton(
                             onPressed: () {
-                              // Clean up current controllers before navigating
                               Get.delete<LogInController>();
                               Get.delete<GoogleSignUpController>();
                               Get.to(() => SignUp());
@@ -209,18 +227,20 @@ class _LogInViewState extends State<LogInView> {
                       const SizedBox(height: 10),
                       const Text(
                         'Or connect',
-                        style: TextStyle(fontSize: 14, color: Color(0xFF707B81)),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF707B81),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 30),
-
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           GestureDetector(
                             onTap: () {
-                              // ✅ Sync checkbox state
-                              appleSignUpController.isChecked.value = controller.isChecked.value;
+                              appleSignUpController.isChecked.value =
+                                  controller.isChecked.value;
                               appleSignUpController.handleAppleSignUp();
                             },
                             child: Image.asset(AppImages.apple, height: 40),
@@ -228,8 +248,8 @@ class _LogInViewState extends State<LogInView> {
                           const SizedBox(width: 20),
                           GestureDetector(
                             onTap: () {
-                              // ✅ Sync checkbox state
-                              googleSignUpController.isChecked.value = controller.isChecked.value;
+                              googleSignUpController.isChecked.value =
+                                  controller.isChecked.value;
                               googleSignUpController.handleGoogleSignUp();
                             },
                             child: Image.asset(AppImages.google, height: 40),

@@ -52,8 +52,16 @@ class MessageListWidget extends StatelessWidget {
                     if (!isMe)
                       CircleAvatar(
                         radius: 18,
-                        backgroundImage: session != null && session.persona?.avatar != null
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage: session != null &&
+                            session.persona?.avatar != null &&
+                            session.persona!.avatar!.isNotEmpty
                             ? CachedNetworkImageProvider("${ApiConstants.baseUrl}${session.persona!.avatar}")
+                            : null,
+                        child: session == null ||
+                            session.persona?.avatar == null ||
+                            session.persona!.avatar!.isEmpty
+                            ? Icon(Icons.smart_toy, size: 20, color: Colors.grey[600]) // AI icon
                             : null,
                       ),
                     if (!isMe) const SizedBox(width: 8),
@@ -74,8 +82,14 @@ class MessageListWidget extends StatelessWidget {
                     if (isMe)
                       CircleAvatar(
                         radius: 18,
-                        backgroundImage: profileController.userProfilePicture.value != null
-                            ? CachedNetworkImageProvider("${profileController.userProfilePicture.value}")
+                        backgroundColor: Colors.grey[300],
+                        backgroundImage: profileController.userProfilePicture.value != null &&
+                            profileController.userProfilePicture.value!.isNotEmpty
+                            ? CachedNetworkImageProvider(profileController.userProfilePicture.value!)
+                            : null,
+                        child: profileController.userProfilePicture.value == null ||
+                            profileController.userProfilePicture.value!.isEmpty
+                            ? Icon(Icons.person, size: 20, color: Colors.grey[600])
                             : null,
                       ),
                   ],

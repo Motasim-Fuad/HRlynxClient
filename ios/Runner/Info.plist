@@ -60,6 +60,8 @@
 	<string>This app wants to update the app badge count.</string>
 	<key>NSUserNotificationSoundUsageDescription</key>
 	<string>This app wants to play notification sounds.</string>
+	<key>NSFaceIDUsageDescription</key>
+    <string>We need Face ID to securely log you in</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>This app wants to send you important notifications about your HR activities and updates.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

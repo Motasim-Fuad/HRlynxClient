@@ -52,7 +52,7 @@ class ChatView extends StatelessWidget {
 
     final chatController = Get.find<ChatController>(tag: controllerTag);
     final tooltipCtrl = Get.put(ChatTooltipController());
-    final profileController = Get.find<ProfileController>();
+    final profileController = Get.put(ProfileController());
 
     // FIXED: Use global VoiceService instance instead of creating new one
     VoiceService voiceService;

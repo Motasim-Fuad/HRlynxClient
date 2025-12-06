@@ -30,7 +30,6 @@ class SecondSplash extends StatelessWidget {
                 fit: BoxFit.contain,
               ),
 
-              SizedBox(height: h * 0.01),
 
               // Headings
               Text(
@@ -43,7 +42,6 @@ class SecondSplash extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * 0.02),
 
               // Description
               Padding(
@@ -59,7 +57,7 @@ class SecondSplash extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: h * 0.02),
+              SizedBox(height: h * 0.01),
 
               // Subheading
               Text(
@@ -89,15 +87,6 @@ class SecondSplash extends StatelessWidget {
               ),
             ),
 
-
-
-
-
-            // SplashText(text: 'HR Strategy & Leadership'),
-              // SplashText(text: 'Workforce Compliance & Regulation'),
-              // SplashText(text: 'Talent Acquisition & Labor Trends'),
-              // SplashText(text: 'Compensation, Benefits & Rewards'),
-              // SplashText(text: 'People Development & Culture'),
               SizedBox(height: h * 0.015),
               // Splash Text Items
 

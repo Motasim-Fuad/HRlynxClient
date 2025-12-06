@@ -59,9 +59,6 @@ class HomeView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
 
-
-                      SizedBox(height: isDesktop ? 16 : (isTablet ? 12 : 10)),
-
                       // Persona Grid
                       _buildPersonaGridSection(
                         controller: controller,

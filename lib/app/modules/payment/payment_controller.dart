@@ -6,15 +6,19 @@ import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import '../../api_servies/biometric_service.dart';
 
 class PaymentController extends GetxController {
   final PaymentRepository _repository = PaymentRepository();
   final UserController userController = Get.put(UserController());
+  final BiometricService biometricService = BiometricService();
+
   // ✅ Add userId field
   final int? userId;
 
   // ✅ Add constructor
   PaymentController({this.userId});
+
   // Observable variables
   var selectedPlan = 'explorer_yearly'.obs;
   var isLoading = false.obs;
@@ -79,6 +83,7 @@ class PaymentController extends GetxController {
       print('❌ Error logging in user: $e');
     }
   }
+
   // Get customer info
   Future<void> getCustomerInfo() async {
     try {
@@ -125,7 +130,6 @@ class PaymentController extends GetxController {
       }
       print('==========================\n');
 
-
       if (plans.any((plan) => plan.planType == 'explorer_yearly')) {
         selectedPlan.value = 'explorer_yearly';
         print('✅ Default selected: explorer_yearly');
@@ -143,7 +147,6 @@ class PaymentController extends GetxController {
       isLoading.value = false;
     }
   }
-
 
   SubscriptionPlan? get selectedPlanData {
     final plan = plans.firstWhereOrNull((p) => p.planType == selectedPlan.value);
@@ -203,9 +206,7 @@ class PaymentController extends GetxController {
       Package? package = _repository.findPackage(
         revenueCatPackages,
         planData.revenuecatProductId!,
-        //selectedPlan.value,
         planData.planType,
-
       );
 
       if (package == null) {
@@ -229,7 +230,7 @@ class PaymentController extends GetxController {
     }
   }
 
-// Handle successful purchase
+  // ✅ UPDATED: Handle successful purchase with biometric prompt
   Future<void> _handlePurchaseSuccess(CustomerInfo customerInfo) async {
     try {
       this.customerInfo.value = customerInfo;
@@ -261,6 +262,9 @@ class PaymentController extends GetxController {
             print('⚠️ Could not refresh subscription controller: $e');
           }
 
+          // ✅ Ask to enable biometric after successful subscription
+          await _askToEnableBiometricAfterSubscription();
+
           Get.snackbar(
             'Success!',
             'Subscription activated successfully!',
@@ -290,7 +294,123 @@ class PaymentController extends GetxController {
     }
   }
 
-// ✅ Print full RevenueCat data
+  /// ✅ NEW: Ask to enable biometric after subscription
+  Future<void> _askToEnableBiometricAfterSubscription() async {
+    try {
+      print('\n💬 ========================================');
+      print('💬 ASKING TO ENABLE BIOMETRIC AFTER SUBSCRIPTION');
+      print('💬 ========================================\n');
+
+      final isAvailable = await biometricService.isBiometricAvailable();
+      print('📱 Biometric Available: $isAvailable');
+
+      if (!isAvailable) {
+        print('⚠️ Biometric not available - skipping prompt');
+        return;
+      }
+
+      final isEnabled = await biometricService.isBiometricEnabled();
+      print('✅ Already Enabled: $isEnabled');
+
+      if (isEnabled) {
+        print('ℹ️ Biometric already enabled');
+        return;
+      }
+
+      final email = await TokenStorage.getUserEmail();
+      if (email == null) {
+        print('⚠️ No email found - cannot enable biometric');
+        return;
+      }
+
+      final biometrics = await biometricService.getAvailableBiometrics();
+      final biometricName = biometricService.getBiometricTypeName(biometrics);
+      print('🔐 Biometric Type: $biometricName');
+
+      // ✅ Delay to allow congratulation screen to settle
+      await Future.delayed(Duration(milliseconds: 500));
+
+      print('💬 Showing enable dialog...');
+
+      final result = await Get.dialog<bool>(
+        AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.fingerprint, color: Colors.blue, size: 28),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Enable $biometricName?',
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Would you like to enable $biometricName for faster login next time?',
+            style: TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                print('❌ User declined');
+                Get.back(result: false);
+              },
+              child: Text('Not Now'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                print('✅ User accepted');
+                Get.back(result: true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+              ),
+              child: Text('Enable', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+        barrierDismissible: false,
+      );
+
+      if (result == true) {
+        print('🔐 User accepted - requesting authentication...');
+
+        final authenticated = await biometricService.authenticate(
+          reason: 'Verify your identity to enable $biometricName',
+        );
+
+        if (authenticated) {
+          print('✅ Authentication successful - enabling biometric...');
+
+          final success = await biometricService.enableBiometricLogin(email);
+
+          if (success) {
+            print('✅ Biometric enabled after subscription');
+
+            Get.snackbar(
+              "Success",
+              "$biometricName enabled successfully",
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+              duration: Duration(seconds: 2),
+            );
+          } else {
+            print('❌ Failed to enable biometric');
+          }
+        } else {
+          print('❌ Authentication failed');
+        }
+      }
+
+      print('💬 ========================================\n');
+
+    } catch (e) {
+      print('❌ Error in _askToEnableBiometricAfterSubscription: $e');
+    }
+  }
+
+  // ✅ Print full RevenueCat data
   Future<void> printFullRevenueCatData(CustomerInfo info) async {
     print('\n========================================');
     print('📋 FULL REVENUECAT CUSTOMER INFO');
@@ -363,6 +483,7 @@ class PaymentController extends GetxController {
 
     print('========================================\n');
   }
+
   // Handle purchase error
   void _handlePurchaseError(String errorMessage) {
     paymentInProgress.value = false;
@@ -430,7 +551,6 @@ class PaymentController extends GetxController {
     }
   }
 
-
   Future<void> checkTrialStatus() async {
     try {
       final customerInfo = await Purchases.getCustomerInfo();
@@ -447,7 +567,6 @@ class PaymentController extends GetxController {
       print('Error checking trial status: $e');
     }
   }
-
 
   // Test RevenueCat connection
   Future<void> testRevenueCatConnection() async {
