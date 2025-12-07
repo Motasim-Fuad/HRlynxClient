@@ -76,8 +76,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             );
           }
 
-          // No plans available state
-          if (controller.plans.isEmpty && !controller.isLoading.value) {
+          // ✅ Filter out free plans - only show paid plans
+          final paidPlans = controller.plans.where((plan) =>
+          plan.planType != 'free' &&
+              plan.price != '0.00' &&
+              plan.price != '0'
+          ).toList();
+
+          // No paid plans available state
+          if (paidPlans.isEmpty && !controller.isLoading.value) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -129,10 +136,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             );
           }
 
-          final yearlyPlan = controller.plans.firstWhereOrNull(
+          // ✅ Find yearly and monthly plans from filtered paid plans
+          final yearlyPlan = paidPlans.firstWhereOrNull(
                   (plan) => plan.interval == 'year'
           );
-          final monthlyPlan = controller.plans.firstWhereOrNull(
+          final monthlyPlan = paidPlans.firstWhereOrNull(
                   (plan) => plan.interval == 'month'
           );
 
@@ -151,7 +159,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                         Container(
                           width: double.infinity,
                           height: 150,
-
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.only(
@@ -166,7 +173,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                             ),
                             child: Image.asset(
                               AppImages.subcription_logo,
-                            fit: BoxFit.fitHeight,
+                              fit: BoxFit.fitHeight,
                             ),
                           ),
                         ),
@@ -223,7 +230,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
 
                         const SizedBox(height: 20),
 
-                        // Plan cards
+                        // ✅ Plan cards - only show if not null
                         if (yearlyPlan != null)
                           _buildPlanCard(
                             context,
