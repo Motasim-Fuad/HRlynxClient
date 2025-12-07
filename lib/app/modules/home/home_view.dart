@@ -41,7 +41,6 @@ class HomeView extends StatelessWidget {
               _buildFixedHeaderCard(
                 horizontalPadding: horizontalPadding,
                 topPadding: topPadding,
-                cardHeight: cardHeight,
                 isDesktop: isDesktop,
                 isTablet: isTablet,
               ),
@@ -83,14 +82,12 @@ class HomeView extends StatelessWidget {
   Widget _buildFixedHeaderCard({
     required double horizontalPadding,
     required double topPadding,
-    required double cardHeight,
     required bool isDesktop,
     required bool isTablet,
   }) {
     return Padding(
       padding: EdgeInsets.fromLTRB(horizontalPadding, topPadding, horizontalPadding, 0),
       child: Container(
-        height: cardHeight,
         width: double.infinity,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
@@ -109,10 +106,11 @@ class HomeView extends StatelessWidget {
                 ),
               ),
 
-              // Text Content
+              // Text Content (এটি container এর height নির্ধারণ করবে)
               Padding(
                 padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 20)),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min, // এটি important
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -141,7 +139,6 @@ class HomeView extends StatelessWidget {
       ),
     );
   }
-
   // ========== Section Title Widget ==========
   Widget _buildSectionTitle({required bool isDesktop, required bool isTablet}) {
     return Text(

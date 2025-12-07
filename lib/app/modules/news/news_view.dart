@@ -55,29 +55,37 @@ class NewsView extends StatelessWidget {
                           colorBlendMode: BlendMode.darken,
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'HR QuickScan™ News',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 24,
-                                color: Colors.white,
+                      Positioned.fill(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: size.width * 0.05,
+                            vertical: size.height * 0.02,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'HR QuickScan™ News',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: size.width * 0.055,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            const Text(
-                              'Stay updated with the latest HR insights, trends and policy changes.',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                fontSize: 16,
-                                color: Colors.white,
+                              SizedBox(height: size.height * 0.01),
+                              Text(
+                                'Stay updated with the latest HR insights, trends and policy changes.',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w400,
+                                  fontSize: size.width * 0.038,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],

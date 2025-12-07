@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:HRlynx/app/common_widgets/button.dart';
 import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
 import 'package:HRlynx/app/common_widgets/text_field.dart';
@@ -107,7 +109,7 @@ class _LogInViewState extends State<LogInView> {
 
                       _buildLabel('Password'),
                       Obx(
-                        () => CustomTextFormField(
+                            () => CustomTextFormField(
                           controller: controller.passwordController,
                           hintText: 'Password',
                           obscureText: controller.isObscured.value,
@@ -153,7 +155,7 @@ class _LogInViewState extends State<LogInView> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Obx(
-                            () => Checkbox(
+                                () => Checkbox(
                               value: controller.isChecked.value,
                               onChanged: controller.toggleCheckbox,
                               activeColor: AppColors.primarycolor,
@@ -197,7 +199,7 @@ class _LogInViewState extends State<LogInView> {
 
                       // Login Button
                       Obx(
-                        () => Button(
+                            () => Button(
                           title: 'Log In',
                           isLoading: controller.isLoading.value,
                           onTap: controller.loginUser,
@@ -237,6 +239,7 @@ class _LogInViewState extends State<LogInView> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          if(Platform.isIOS)
                           GestureDetector(
                             onTap: () {
                               appleSignUpController.isChecked.value =
