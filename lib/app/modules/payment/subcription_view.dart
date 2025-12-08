@@ -273,7 +273,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                         _buildPolicyLinks(),
 
                         const SizedBox(height: 50),
-                        // _buildRestorePurchasesButton(),
+                        _buildRestorePurchasesButton(),
 
                         const SizedBox(height: 8),
                         // _buildSubscriptionDisclosure(),
