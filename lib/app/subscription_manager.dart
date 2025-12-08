@@ -78,7 +78,7 @@ class SubscriptionManager {
       // Wait for RevenueCat
       int attempts = 0;
       const maxAttempts = 20;
-      const delayMs = 500;
+      const delayMs = 60;
 
       while (!controller.isRevenueCatAvailable.value && attempts < maxAttempts) {
         print('⏳ Waiting for RevenueCat... (${attempts + 1}/$maxAttempts)');
@@ -107,7 +107,7 @@ class SubscriptionManager {
       await controller.restorePurchases();
 
       // ✅ Give RevenueCat time to sync (critical for iOS)
-      await Future.delayed(Duration(milliseconds: 5000));
+      await Future.delayed(Duration(milliseconds: 2000));
 
       // ✅ Refresh customer info
       await controller.getCustomerInfo();

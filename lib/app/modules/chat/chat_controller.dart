@@ -660,7 +660,8 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
           print('📤 Sent transcript to AI: ${data['transcript']}');
         }
 
-        Get.snackbar("Success", "Voice message sent successfully");
+        // Get.snackbar("Success", "Voice message sent successfully");
+        print("Voice message sent successfully");
       } else {
         Get.snackbar("Error", "Failed to send voice message");
       }
