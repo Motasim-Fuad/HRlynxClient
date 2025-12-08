@@ -272,12 +272,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                         // Policy links
                         _buildPolicyLinks(),
 
-                        const SizedBox(height: 16),
-                        _buildRestorePurchasesButton(),
+                        const SizedBox(height: 50),
+                        // _buildRestorePurchasesButton(),
 
                         const SizedBox(height: 8),
-                        _buildSubscriptionDisclosure(),
-                        const SizedBox(height: 30),
+                        // _buildSubscriptionDisclosure(),
+                        // const SizedBox(height: 30),
                       ],
                     ),
                   ),
@@ -619,7 +619,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
           'Restore Purchases',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 16,
+            fontSize: 6,
             fontWeight: FontWeight.w500,
             decoration: TextDecoration.underline,
             decorationColor: Colors.white,
