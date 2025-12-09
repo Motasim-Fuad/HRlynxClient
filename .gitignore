@@ -44,3 +44,6 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 android/keystore.properties
+
+# Environment variables (API Keys)
+.env

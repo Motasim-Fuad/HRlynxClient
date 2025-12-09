@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -54,12 +55,19 @@ Future<void> _initializeRevenueCat() async {
   try {
     await Purchases.setLogLevel(LogLevel.debug);
 
-    String apiKey;
-    if (Platform.isIOS) {
-      apiKey = "appl_DVYOGtnCsySsMcoKkRTVYpJlQZw";
-    } else {
-      apiKey = "goog_fHaUFeIYngJgHloZDbONohOyWSM";
-    }
+    // String apiKey;
+    // if (Platform.isIOS) {
+    //   apiKey = "dfgdffgdfffgdfg";
+    // } else {
+    //   apiKey = "gdgfdsgdsfgdg";
+    // }
+
+
+    await dotenv.load(fileName: ".env");
+
+    String apiKey = Platform.isIOS
+        ? dotenv.env['IOS_REVENUECAT_KEY']!
+        : dotenv.env['ANDROID_REVENUECAT_KEY']!;
 
     PurchasesConfiguration configuration = PurchasesConfiguration(apiKey);
     await Purchases.configure(configuration);
