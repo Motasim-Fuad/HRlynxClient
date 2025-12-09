@@ -55,14 +55,6 @@ Future<void> _initializeRevenueCat() async {
   try {
     await Purchases.setLogLevel(LogLevel.debug);
 
-    // String apiKey;
-    // if (Platform.isIOS) {
-    //   apiKey = "dfgdffgdfffgdfg";
-    // } else {
-    //   apiKey = "gdgfdsgdsfgdg";
-    // }
-
-
     await dotenv.load(fileName: ".env");
 
     String apiKey = Platform.isIOS
