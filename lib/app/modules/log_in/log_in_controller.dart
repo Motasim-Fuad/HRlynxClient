@@ -84,7 +84,6 @@ class LogInController extends GetxController {
           colorText: Colors.white,
           duration: Duration(seconds: 2),
         );
-
         // ✅ USE SUBSCRIPTION MANAGER for navigation
         await SubscriptionManager.instance.handlePostLoginNavigation();
 

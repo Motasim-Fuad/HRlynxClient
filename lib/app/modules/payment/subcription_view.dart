@@ -276,7 +276,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                         _buildRestorePurchasesButton(),
 
                         const SizedBox(height: 8),
-                        // _buildSubscriptionDisclosure(),
+                        _buildSubscriptionDisclosure(),
                         // const SizedBox(height: 30),
                       ],
                     ),
@@ -605,12 +605,96 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 // Add BEFORE _buildPolicyLinks()
+// Replace your _buildRestorePurchasesButton method with this:
+
   Widget _buildRestorePurchasesButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: TextButton(
         onPressed: () async {
-          await controller.restorePurchases();
+          try {
+            // Show loading indicator
+            Get.dialog(
+              Center(
+                child: Container(
+                  padding: EdgeInsets.all(30),
+                  margin: EdgeInsets.symmetric(horizontal: 40),
+                  decoration: BoxDecoration(
+                    color: AppColors.primarycolor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.teal.shade700, width: 2),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.teal.shade700),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Restoring purchases...',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              barrierDismissible: false,
+            );
+
+            // Call restore purchases
+            await controller.restorePurchases();
+
+            // Close loading dialog
+            Get.back();
+
+            // Check if subscription was restored
+            if (controller.hasActiveSubscription) {
+              // ✅ Success - Purchases restored
+              Get.snackbar(
+                'Success',
+                'Purchases restored successfully!',
+                backgroundColor: Colors.green,
+                colorText: Colors.white,
+                snackPosition: SnackPosition.TOP,
+                margin: EdgeInsets.all(16),
+                duration: Duration(seconds: 3),
+              );
+
+              // Navigate to main screen after a short delay
+              await Future.delayed(Duration(seconds: 1));
+              Get.offAll(() => MainScreen());
+            } else {
+              // ⚠️ No active subscription found
+              Get.snackbar(
+                'No Purchases Found',
+                'No active subscription found to restore.',
+                backgroundColor: Colors.orange,
+                colorText: Colors.white,
+                snackPosition: SnackPosition.TOP,
+                margin: EdgeInsets.all(16),
+                duration: Duration(seconds: 3),
+              );
+            }
+          } catch (error) {
+            // ❌ Error occurred
+            Get.back(); // Close loading dialog if still open
+
+            Get.snackbar(
+              'Error',
+              'Failed to restore purchases. Please try again.',
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+              snackPosition: SnackPosition.TOP,
+              margin: EdgeInsets.all(16),
+              duration: Duration(seconds: 3),
+            );
+          }
         },
         style: TextButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 12),
@@ -619,8 +703,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
           'Restore Purchases',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 6,
-            fontWeight: FontWeight.w500,
+            fontSize: 12,
             decoration: TextDecoration.underline,
             decorationColor: Colors.white,
           ),

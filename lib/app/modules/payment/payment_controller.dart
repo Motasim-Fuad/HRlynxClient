@@ -312,19 +312,9 @@ class PaymentController extends GetxController {
       // Show feedback (not on login)
       if (!isCalledFromLogin) {
         if (info.entitlements.active.isNotEmpty) {
-          Get.snackbar(
-            'Success',
-            'Purchases restored successfully!',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
+          print("Purchases restored successfully!");
         } else {
-          Get.snackbar(
-            'No Purchases',
-            'No active purchases found to restore.',
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-          );
+          print("No active purchases found to restore.");
         }
       }
 

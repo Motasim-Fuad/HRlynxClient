@@ -1,6 +1,7 @@
 // ✅ FIXED VERSION - Works perfectly with Optimized PaymentController
 // lib/app/services/subscription_manager.dart
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:HRlynx/app/modules/payment/payment_controller.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
@@ -13,6 +14,7 @@ class SubscriptionManager {
   SubscriptionManager._internal();
 
   static SubscriptionManager get instance => _instance;
+  static final String ADMIN_EMAIL = dotenv.env['ADMIN_ACCESS_EMAIL'] ?? '';
 
   /// ✅ MAIN ENTRY POINT - RevenueCat ONLY (FIXED)
   Future<void> handlePostLoginNavigation() async {
@@ -28,6 +30,13 @@ class SubscriptionManager {
         _navigateToSubscriptionScreen();
         return;
       }
+      // ===== ADMIN CHECK =====
+      final userEmail = await TokenStorage.getUserEmail();
+      if (userEmail != null && userEmail.toLowerCase() == ADMIN_EMAIL.toLowerCase()) {
+        print('🔑 Admin account detected → MainScreen');
+        _navigateToMainScreen();
+        return; // Exit early
+      }
       print('✅ User ID: $userId');
 
       // ✅ STEP 2: Initialize PaymentController with userId
@@ -39,6 +48,8 @@ class SubscriptionManager {
       // ✅ STEP 4: Check RevenueCat subscription status FIRST
       final hasActiveSubscription = await _checkRevenueCatSubscription();
       print('📊 Active subscription: $hasActiveSubscription');
+
+
 
       if (hasActiveSubscription) {
         // ✅ User has active subscription → Go to MainScreen
