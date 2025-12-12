@@ -64,7 +64,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Loading plans...',
+                    'Loading plans.......',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
