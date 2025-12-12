@@ -111,7 +111,6 @@ class WebSocketService {
 
       _broadcastStream = null;
       _currentSessionId = null;
-
       print('✅ WebSocket disconnected');
     } catch (e) {
       print('❌ Error disconnecting WebSocket: $e');
