@@ -149,14 +149,15 @@ class ProfileView extends StatelessWidget {
                           padding: EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.green.shade400, Colors.green.shade600],
+                              colors: [Color(0xFF0F5351), Color(0xFF02A69D)],
+
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.green.withOpacity(0.3),
+                                color: Colors.grey,
                                 blurRadius: 8,
                                 offset: Offset(0, 4),
                               ),
@@ -164,40 +165,15 @@ class ProfileView extends StatelessWidget {
                           ),
                           child: Column(
                             children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: Colors.white,
-                                size: 32,
-                              ),
                               SizedBox(height: 8),
-                              Text(
-                                'Active Subscription',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Full access to all AI personas',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 12),
                               Container(
                                 padding: EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Column(
                                   children: [
-                                    Icon(Icons.info_outline, color: Colors.white, size: 20),
-                                    SizedBox(height: 8),
                                     Text(
                                       'To manage or cancel your subscription, please visit:',
                                       style: TextStyle(
