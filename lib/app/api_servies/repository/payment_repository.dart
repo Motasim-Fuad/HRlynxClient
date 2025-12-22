@@ -97,6 +97,9 @@ class PaymentRepository {
   }
 
 
+
+// linkUserToBackend method in PaymentRepository
+
   Future<void> linkUserToBackend(CustomerInfo customerInfo) async {
     try {
       String url = "${ApiConstants.baseUrl}/api/subscription/revenuecat/link-user/";
@@ -115,7 +118,7 @@ class PaymentRepository {
         productId = activeEntitlement.productIdentifier;
         expirationDate = activeEntitlement.expirationDate?.toString();
         willRenew = activeEntitlement.willRenew;
-        periodType = activeEntitlement.periodType.name; // 'normal', 'trial', 'intro'
+        periodType = activeEntitlement.periodType.name;
         originalTransactionId = activeEntitlement.originalPurchaseDate != null
             ? activeEntitlement.productIdentifier
             : null;
@@ -135,24 +138,55 @@ class PaymentRepository {
         "first_seen": customerInfo.firstSeen.toString(),
         "original_app_version": customerInfo.originalApplicationVersion,
         "original_transaction_id": originalTransactionId,
+        "force_update": true, // ✅ NEW: Tell backend to update if exists
       };
 
       print('📤 Sending data to backend:');
       print(body);
 
-      final response = await NetworkApiServices.postApi(
-        url,
-        body,
-        withAuth: true,
-        tokenType: 'login',
-      );
+      // ✅ Try POST first (create new)
+      try {
+        final response = await NetworkApiServices.postApi(
+          url,
+          body,
+          withAuth: true,
+          tokenType: 'login',
+        );
 
-      if (response != null && response['success'] == true) {
-        print('✅ User linked to backend successfully');
-        print('@@@@@  revunueCat data send to backend successfully');
-      } else {
-        throw Exception('Failed to link user to backend');
+        if (response != null && response['success'] == true) {
+          print('✅ User linked to backend successfully (POST)');
+          print('@@@@@  revenueCat data sent to backend successfully');
+          return;
+        }
+      } catch (postError) {
+        print('⚠️ POST failed (might already exist): $postError');
+
+        // ✅ If 409 conflict, try PUT to update
+        if (postError.toString().contains('409')) {
+          print('🔄 Trying PUT to update existing record...');
+
+          try {
+            final updateResponse = await NetworkApiServices.putApi(
+              url,
+              body,
+              withAuth: true,
+              tokenType: 'login',
+            );
+
+            if (updateResponse != null && updateResponse['success'] == true) {
+              print('✅ User subscription UPDATED successfully (PUT)');
+              print('@@@@@  revenueCat data updated in backend successfully');
+              return;
+            }
+          } catch (putError) {
+            print('❌ PUT also failed: $putError');
+            throw Exception('Failed to update subscription: $putError');
+          }
+        }
+
+        throw postError;
       }
+
     } catch (e) {
       print('❌ Error linking user to backend: $e');
       rethrow;
@@ -332,39 +366,6 @@ class PaymentRepository {
   }
 
 
-
-  // ============================================
-  // Helpers
-  // ============================================
-
-  // Package? findPackage(List<Package> packages, String productId, String selectedPlanType) {
-  //   // Method 1: Direct product ID match
-  //   Package? package = packages.firstWhereOrNull(
-  //         (p) => p.storeProduct.identifier == productId,
-  //   );
-  //
-  //   if (package != null) return package;
-  //
-  //   // Method 2: By package type
-  //   if (productId.contains('monthly') || selectedPlanType == 'monthly') {
-  //     package = packages.firstWhereOrNull(
-  //           (p) => p.packageType == PackageType.monthly,
-  //     );
-  //   } else if (productId.contains('yearly') || selectedPlanType == 'yearly') {
-  //     package = packages.firstWhereOrNull(
-  //           (p) => p.packageType == PackageType.annual,
-  //     );
-  //   }
-  //
-  //   if (package != null) return package;
-  //
-  //   // Method 3: By identifier match
-  //   package = packages.firstWhereOrNull(
-  //         (p) => p.identifier == productId,
-  //   );
-  //
-  //   return package;
-  // }
 
 
   Package? findPackage(

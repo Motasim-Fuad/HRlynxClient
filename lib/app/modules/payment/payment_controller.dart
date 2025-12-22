@@ -281,9 +281,9 @@ class PaymentController extends GetxController {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // 🔄 STEP 4: Restore Purchases
-  // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// 🔄 STEP 4: Restore Purchases (FIXED - With Backend Sync)
+// ═══════════════════════════════════════════════════════════
   Future<void> restorePurchases() async {
     try {
       isLoading.value = true;
@@ -291,7 +291,8 @@ class PaymentController extends GetxController {
       final isCalledFromLogin = Get.currentRoute.contains('login') ||
           Get.currentRoute.contains('splash');
 
-      print('🔄 Restoring purchases...');
+      print('🔄 RESTORING PURCHASES');
+
 
       // ✅ Restore - will sync with Apple/Google account
       CustomerInfo info = await _repository.restorePurchases();
@@ -309,17 +310,74 @@ class PaymentController extends GetxController {
 
       customerInfo.value = info;
 
-      // Show feedback (not on login)
+      // ✅ NEW: Check if user has active subscription
+      final hasActiveEntitlements = info.entitlements.active.isNotEmpty;
+
+      if (hasActiveEntitlements) {
+        print('✅ Active subscription found!');
+        print('🎫 Active entitlements: ${info.entitlements.active.keys.toList()}');
+
+        // ✅ CRITICAL FIX: Sync with backend (just like purchase success)
+        await _linkToBackendAsync(info);
+
+        // ✅ Update local subscription flag
+        await TokenStorage.saveSubscriptionCheckDone(true);
+
+        // ✅ Update subscription controller
+        try {
+          final subController = Get.find<UserIsSubcribedController>();
+          await subController.checkAndUpdateSubscriptionStatus();
+          print('✅ Subscription controller updated');
+        } catch (e) {
+          print('⚠️ Could not refresh subscription controller: $e');
+        }
+
+        print('✅ Backend sync complete');
+      } else {
+        print('⚠️ No active subscription found');
+      }
+
+      // Show feedback (not on login/splash)
       if (!isCalledFromLogin) {
-        if (info.entitlements.active.isNotEmpty) {
-          print("Purchases restored successfully!");
+        if (hasActiveEntitlements) {
+          Get.snackbar(
+            'Success',
+            'Purchases restored successfully!',
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: Duration(seconds: 2),
+          );
         } else {
-          print("No active purchases found to restore.");
+          Get.snackbar(
+            'No Purchases',
+            'No active purchases found to restore.',
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+            duration: Duration(seconds: 2),
+          );
         }
       }
 
+      print('🔄 RESTORE COMPLETE');
+
     } catch (e) {
       print('❌ Error restoring purchases: $e');
+
+      // ✅ Special handling for 409 conflict
+      if (e.toString().contains('409') || e.toString().contains('INTEGRITY_ERROR')) {
+        print('⚠️ RevenueCat ID conflict detected');
+        print('💡 This means another user is using this subscription');
+        print('💡 Please logout from RevenueCat and try again');
+
+        // Try to logout from RevenueCat
+        try {
+          await Purchases.logOut();
+          print('✅ RevenueCat logged out, please login again');
+        } catch (logoutError) {
+          print('⚠️ Could not logout from RevenueCat: $logoutError');
+        }
+      }
+
       if (!Get.currentRoute.contains('login')) {
         Get.snackbar(
           'Error',

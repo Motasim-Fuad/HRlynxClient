@@ -140,10 +140,6 @@ class AuthRepository {
       final userEmail = user['email'];
       final userID = user['id'];
 
-
-      // userController.setUserEmail(userEmail);
-      // userController.setUserID(userID);
-
       print("--------------------in repo  i send user id to cusercontroller $userID");
 
       await TokenStorage.saveLoginTokens(access, refresh);
@@ -221,6 +217,7 @@ class AuthRepository {
     String url = "${ApiConstants.baseUrl}/api/aipersona/personas/";
     return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
   }
+
 
 
   Future<String?> createSession(int personaId) async {
