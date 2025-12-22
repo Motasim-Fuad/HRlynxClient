@@ -641,41 +641,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       child: TextButton(
         onPressed: () async {
           try {
-            // Show loading indicator
-            Get.dialog(
-              Center(
-                child: Container(
-                  padding: EdgeInsets.all(screenWidth * 0.075),
-                  margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                  decoration: BoxDecoration(
-                    color: AppColors.primarycolor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.teal.shade700, width: 2),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.teal.shade700),
-                      ),
-                      SizedBox(height: screenHeight * 0.025),
-                      Text(
-                        'Restoring purchases...',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.04,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              barrierDismissible: false,
-            );
-
-            // Call restore purchases
             await controller.restorePurchases();
 
             // Close loading dialog
@@ -707,7 +672,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
               );
             }
           } catch (error) {
-            Get.back();
 
             Get.snackbar(
               'Error',
