@@ -177,71 +177,216 @@ class NewsDetailsWidgets {
     );
   }
 
-  // Formatted summary widget
+// ULTIMATE DYNAMIC SUMMARY PARSER - Handles ANY format!
   static Widget buildFormattedSummary(String summary) {
-    List<String> parts = summary.split('**');
-    List<Widget> sections = [];
+    // ONLY these 3 sections are allowed
+    final allowedTitles = [
+      'Don\'t Miss This',
+      'QuickScan Summary',
+      'Implications for HR'
+    ];
 
-    for (int i = 0; i < parts.length; i++) {
-      if (i % 2 == 1 && parts[i].isNotEmpty) {
-        String title = parts[i];
+    Map<String, String> extractedSections = {};
 
-        if (i + 1 < parts.length && parts[i + 1].isNotEmpty) {
-          // Clean and format content properly
-          String content = _cleanBulletPoints(parts[i + 1]);
-
-          sections.add(
-            Container(
-              margin: EdgeInsets.only(bottom: 16),
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Color(0xFFE6ECEB),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title.trim(),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primarycolor,
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    content,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.primarycolor,
-                      fontSize: 16,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-          i++; // Skip next part as it's already used
-        }
+    // STEP 1: Extract content for each allowed title
+    for (String allowedTitle in allowedTitles) {
+      String? content = _extractSectionContent(summary, allowedTitle);
+      if (content != null && content.isNotEmpty) {
+        extractedSections[allowedTitle] = content;
       }
+    }
+
+    // STEP 2: Build widgets from extracted sections
+    List<Widget> sections = [];
+    for (String title in allowedTitles) {
+      if (extractedSections.containsKey(title)) {
+        sections.add(_buildSection(title, extractedSections[title]!));
+      }
+    }
+
+    // STEP 3: Fallback if no sections found
+    if (sections.isEmpty) {
+      String cleanedSummary = summary.trim();
+      // Remove leading "SUMMARY:" or "**SUMMARY:**" if exists
+      cleanedSummary = cleanedSummary.replaceFirst(RegExp(r'^\*\*SUMMARY:\*\*\s*', caseSensitive: false), '');
+      cleanedSummary = cleanedSummary.replaceFirst(RegExp(r'^SUMMARY:\s*', caseSensitive: false), '');
+      sections.add(_buildSection('Summary', _cleanBulletPoints(cleanedSummary)));
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: sections,
+    );
+  }
+
+// DYNAMIC EXTRACTOR - Finds content for any title in ANY format
+  static String? _extractSectionContent(String text, String targetTitle) {
+    // Pattern 1: **Title:** or **Title**
+    String pattern1 = '\\*\\*${RegExp.escape(targetTitle)}:?\\*\\*';
+    RegExp regex1 = RegExp(pattern1, caseSensitive: false);
+
+    // Pattern 2: Title: (plain text)
+    String pattern2 = '^${RegExp.escape(targetTitle)}:';
+    RegExp regex2 = RegExp(pattern2, caseSensitive: false, multiLine: true);
+
+    Match? match = regex1.firstMatch(text) ?? regex2.firstMatch(text);
+
+    if (match != null) {
+      // Found direct match - extract content after it
+      int startIndex = match.end;
+      String remaining = text.substring(startIndex).trim();
+
+      // Find where this section ends (next title or end of text)
+      String contentEnd = _findContentEnd(remaining);
+      return contentEnd;
+    }
+
+    // Pattern 3: Search inside **SUMMARY:** or plain SUMMARY:
+    String? contentInsideSummary = _searchInsideSummary(text, targetTitle);
+    if (contentInsideSummary != null) {
+      return contentInsideSummary;
+    }
+
+    return null;
+  }
+
+// Searches for target title inside SUMMARY sections
+  static String? _searchInsideSummary(String text, String targetTitle) {
+    // Try to find **SUMMARY:** section first
+    RegExp summaryRegex = RegExp(r'\*\*SUMMARY:\*\*', caseSensitive: false);
+    Match? summaryMatch = summaryRegex.firstMatch(text);
+
+    if (summaryMatch != null) {
+      int summaryStart = summaryMatch.end;
+      String summaryContent = text.substring(summaryStart);
+
+      // Find end of SUMMARY section (next ** title or end)
+      RegExp nextTitleRegex = RegExp(r'\*\*[^*]+\*\*');
+      Match? nextTitle = nextTitleRegex.firstMatch(summaryContent);
+
+      if (nextTitle != null) {
+        summaryContent = summaryContent.substring(0, nextTitle.start);
+      }
+
+      // Now search for our target title inside summaryContent
+      // Try nested ** first
+      String nestedPattern = '\\*\\*${RegExp.escape(targetTitle)}:?\\*\\*';
+      RegExp nestedRegex = RegExp(nestedPattern, caseSensitive: false);
+      Match? nestedMatch = nestedRegex.firstMatch(summaryContent);
+
+      if (nestedMatch != null) {
+        String content = summaryContent.substring(nestedMatch.end).trim();
+        return _findContentEnd(content);
+      }
+
+      // Try plain text inside SUMMARY
+      String plainPattern = '${RegExp.escape(targetTitle)}:';
+      RegExp plainRegex = RegExp(plainPattern, caseSensitive: false);
+      Match? plainMatch = plainRegex.firstMatch(summaryContent);
+
+      if (plainMatch != null) {
+        String content = summaryContent.substring(plainMatch.end).trim();
+        return _findContentEnd(content);
+      }
+
+      // Special case: If looking for "Don't Miss This" and not found,
+      // use entire SUMMARY content
+      if (targetTitle.toLowerCase() == 'don\'t miss this') {
+        String cleanContent = summaryContent.trim();
+        // Remove any leading newlines
+        cleanContent = cleanContent.replaceFirst(RegExp(r'^\s+'), '');
+        // Take only first line/paragraph
+        int newlineIndex = cleanContent.indexOf('\n');
+        if (newlineIndex != -1) {
+          cleanContent = cleanContent.substring(0, newlineIndex).trim();
+        }
+        return cleanContent.isNotEmpty ? cleanContent : null;
+      }
+    }
+
+    return null;
+  }
+
+// Finds where content ends (at next title or end of string)
+  static String _findContentEnd(String content) {
+    // Split by newlines and look for next title pattern
+    List<String> lines = content.split('\n');
+    StringBuffer result = StringBuffer();
+
+    // Regex for any title pattern (** or ending with :)
+    RegExp titlePattern = RegExp(r'^\*\*[^*]+\*\*|^[A-Z][^:]+:$');
+
+    for (String line in lines) {
+      String trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+
+      // Check if this line is a new title
+      if (titlePattern.hasMatch(trimmed)) {
+        // Check if it's one of our allowed titles - if not, include it
+        bool isAllowedTitle = [
+          'Don\'t Miss This',
+          'QuickScan Summary',
+          'Implications for HR'
+        ].any((allowed) =>
+        trimmed.toLowerCase().replaceAll('**', '').replaceAll(':', '').trim()
+            == allowed.toLowerCase()
+        );
+
+        if (isAllowedTitle) {
+          break; // Stop here - next section starts
+        }
+      }
+
+      if (result.isNotEmpty) result.write('\n');
+      result.write(trimmed);
+    }
+
+    return result.toString().trim();
+  }
+
+// Build section widget
+  static Widget _buildSection(String title, String content) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Color(0xFFE6ECEB),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: AppColors.primarycolor,
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            _cleanBulletPoints(content),
+            style: TextStyle(
+              fontWeight: FontWeight.w400,
+              color: AppColors.primarycolor,
+              fontSize: 16,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
