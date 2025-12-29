@@ -8,6 +8,7 @@ import 'package:HRlynx/app/modules/congratulaion_screen/congratulation_view.dart
 import 'package:HRlynx/app/modules/home/user_isSubcriptionController.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import '../../api_servies/biometric_service.dart';
@@ -171,6 +172,7 @@ class PaymentController extends GetxController {
     await _startRevenueCatPurchase();
   }
 
+
   Future<void> _startRevenueCatPurchase() async {
     try {
       isLoading.value = true;
@@ -204,9 +206,34 @@ class PaymentController extends GetxController {
       CustomerInfo info = await _repository.purchasePackage(package);
       await _handlePurchaseSuccess(info);
 
-    } catch (e) {
+    } on PlatformException catch (e) {
+      // ✅ Handle PlatformException properly
       print('❌ Purchase error: $e');
-      _handlePurchaseError(e.toString());
+
+      // Extract clean error message from PlatformException
+      String errorMessage = 'Purchase failed';
+
+      if (e.details != null && e.details is Map) {
+        final details = e.details as Map;
+
+        // Check if user cancelled
+        if (details['userCancelled'] == true) {
+          errorMessage = 'Purchase was cancelled';
+        }
+        // Otherwise use the readable message
+        else if (details['message'] != null) {
+          errorMessage = details['message'].toString();
+        }
+      } else if (e.message != null) {
+        errorMessage = e.message!;
+      }
+
+      _handlePurchaseError(errorMessage);
+
+    } catch (e) {
+      // Handle other exceptions
+      print('❌ Purchase error: $e');
+      _handlePurchaseError('Purchase failed. Please try again.');
     }
   }
 
@@ -534,21 +561,25 @@ class PaymentController extends GetxController {
     paymentInProgress.value = false;
     isLoading.value = false;
 
-    String userFriendlyMessage = errorMessage;
-    if (errorMessage.toLowerCase().contains('user cancelled')) {
-      userFriendlyMessage = 'Purchase was cancelled';
-    } else if (errorMessage.toLowerCase().contains('payment')) {
-      userFriendlyMessage = 'Payment failed. Please try again.';
-    } else if (errorMessage.toLowerCase().contains('network')) {
-      userFriendlyMessage = 'Network error. Please check your connection.';
+    // Don't show snackbar if user cancelled
+    if (errorMessage.toLowerCase().contains('cancelled')) {
+      Get.snackbar(
+        'Cancelled',
+        errorMessage,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        duration: Duration(seconds: 2),
+      );
+      return;
     }
 
+    // For other errors
     Get.snackbar(
       'Purchase Failed',
-      userFriendlyMessage,
+      errorMessage,
       backgroundColor: Colors.red,
       colorText: Colors.white,
-      duration: Duration(seconds: 5),
+      duration: Duration(seconds: 3),
     );
   }
 }
