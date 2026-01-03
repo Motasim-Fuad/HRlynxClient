@@ -1,6 +1,6 @@
-// ✅ FIXED VERSION - Works perfectly with Optimized PaymentController
-// lib/app/services/subscription_manager.dart
+// lib/app/services/subscription_manager.dart - PRODUCTION READY
 
+import 'dart:async';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:HRlynx/app/modules/payment/payment_controller.dart';
@@ -14,90 +14,128 @@ class SubscriptionManager {
   SubscriptionManager._internal();
 
   static SubscriptionManager get instance => _instance;
-  static final String ADMIN_EMAIL = dotenv.env['ADMIN_ACCESS_EMAIL'] ?? '';
+  static String get ADMIN_EMAIL => dotenv.env['ADMIN_ACCESS_EMAIL'] ?? '';
 
-  /// ✅ MAIN ENTRY POINT - RevenueCat ONLY (FIXED)
   Future<void> handlePostLoginNavigation() async {
     try {
       print('\n🔐 ========================================');
-      print('🔐 POST-LOGIN NAVIGATION (FIXED)');
+      print('🔐 POST-LOGIN NAVIGATION');
       print('🔐 ========================================\n');
 
-      // ✅ STEP 1: Get userId
-      final userId = await TokenStorage.getUserId();
+      final userId = await _getUserIdSafely();
       if (userId == null) {
-        print('❌ No user ID found');
+        print('❌ No user ID');
         _navigateToSubscriptionScreen();
         return;
       }
-      // ===== ADMIN CHECK =====
-      final userEmail = await TokenStorage.getUserEmail();
-      if (userEmail != null && userEmail.toLowerCase() == ADMIN_EMAIL.toLowerCase()) {
-        print('🔑 Admin account detected → MainScreen');
+
+      if (await _isAdminUser()) {
+        print('🔑 Admin → MainScreen');
         _navigateToMainScreen();
-        return; // Exit early
+        return;
       }
-      print('✅ User ID: $userId');
 
-      // ✅ STEP 2: Initialize PaymentController with userId
-      await _ensurePaymentControllerReady(userId);
+      final controllerReady = await _ensurePaymentControllerReady(userId);
+      if (!controllerReady) {
+        print('⚠️ Controller failed');
+        _navigateToSubscriptionScreen();
+        return;
+      }
 
-      // ✅ STEP 3: Restore purchases (sync with RevenueCat)
       await _restorePurchasesAndSync();
 
-      // ✅ STEP 4: Check RevenueCat subscription status FIRST
       final hasActiveSubscription = await _checkRevenueCatSubscription();
-      print('📊 Active subscription: $hasActiveSubscription');
-
-
+      print('📊 Subscription: $hasActiveSubscription');
 
       if (hasActiveSubscription) {
-        // ✅ User has active subscription → Go to MainScreen
-        print('✅ Active subscription → MainScreen');
+        print('✅ Active → MainScreen');
         await TokenStorage.saveSubscriptionCheckDone(true);
         _navigateToMainScreen();
         return;
       }
 
-      // ✅ STEP 5: No subscription → Check if first time user
       final isFirstTime = await _isFirstTimeUser();
-      print('📊 First time user: $isFirstTime');
+      print('📊 First time: $isFirstTime');
 
-      if (isFirstTime) {
-        print('🆕 First time → SubscriptionScreen');
-        _navigateToSubscriptionScreen();
-        return;
-      }
-
-      // ✅ Returning user but no subscription → SubscriptionScreen
-      print('⚠️ Returning user, no subscription → SubscriptionScreen');
       _navigateToSubscriptionScreen();
 
-      print('\n✅ Navigation complete\n');
+      print('\n✅ POST-LOGIN COMPLETE\n');
 
-    } catch (e) {
-      print('❌ Critical error: $e');
-      _navigateToSubscriptionScreen(); // Safe fallback
+    } catch (e, stackTrace) {
+      print('\n❌ POST-LOGIN ERROR');
+      print('Error: $e');
+      print('Stack: $stackTrace\n');
+      _navigateToSubscriptionScreen();
     }
   }
 
-  /// ✅ STEP 1: Initialize PaymentController
-  Future<void> _ensurePaymentControllerReady(int userId) async {
+  Future<int?> _getUserIdSafely() async {
+    try {
+      print('🔍 Getting user ID...');
+
+      final userId = await TokenStorage.getUserId().timeout(
+        Duration(seconds: 3),
+        onTimeout: () {
+          print('⚠️ User ID timeout');
+          return null;
+        },
+      );
+
+      if (userId == null || userId <= 0) {
+        print('❌ Invalid user ID');
+        return null;
+      }
+
+      print('✅ User ID: $userId');
+      return userId;
+
+    } catch (e) {
+      print('❌ User ID error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> _isAdminUser() async {
+    try {
+      if (ADMIN_EMAIL.isEmpty) return false;
+
+      final userEmail = await TokenStorage.getUserEmail().timeout(
+        Duration(seconds: 3),
+        onTimeout: () => null,
+      );
+
+      return userEmail != null &&
+          userEmail.toLowerCase() == ADMIN_EMAIL.toLowerCase();
+    } catch (e) {
+      print('⚠️ Admin check error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> _ensurePaymentControllerReady(int userId) async {
     try {
       print('\n🔧 Setting up PaymentController...');
 
-      // Clean up old controller
       if (Get.isRegistered<PaymentController>()) {
-        Get.delete<PaymentController>();
+        try {
+          Get.delete<PaymentController>(force: true);
+          await Future.delayed(Duration(milliseconds: 100));
+        } catch (e) {
+          print('⚠️ Cleanup error: $e');
+        }
       }
 
-      // Create new controller
-      Get.put(PaymentController(userId: userId));
+      try {
+        Get.put(PaymentController(userId: userId));
+      } catch (e) {
+        print('❌ Controller creation failed: $e');
+        return false;
+      }
+
       final controller = Get.find<PaymentController>();
 
-      // Wait for RevenueCat initialization
       int attempts = 0;
-      const maxAttempts = 30;
+      const maxAttempts = 50;
 
       while (!controller.isRevenueCatAvailable.value && attempts < maxAttempts) {
         await Future.delayed(Duration(milliseconds: 100));
@@ -105,82 +143,114 @@ class SubscriptionManager {
       }
 
       if (!controller.isRevenueCatAvailable.value) {
-        throw Exception('RevenueCat timeout');
-      }
-
-      if (!controller.isRevenueCatUserLoggedIn.value) {
-        throw Exception('RevenueCat user not logged in');
-      }
-
-      print('✅ PaymentController ready');
-      print('✅ Actual User ID: ${controller.revenueCatActualUserId}');
-
-    } catch (e) {
-      print('❌ Error in PaymentController setup: $e');
-      rethrow;
-    }
-  }
-
-  /// ✅ STEP 2: Restore purchases and sync
-  Future<void> _restorePurchasesAndSync() async {
-    try {
-      print('\n🔄 Restoring purchases...');
-      final controller = Get.find<PaymentController>();
-
-      await controller.restorePurchases();
-      await Future.delayed(Duration(milliseconds: 1500));
-      await controller.getCustomerInfo();
-
-      print('✅ Restore complete');
-    } catch (e) {
-      print('⚠️ Restore error (non-critical): $e');
-    }
-  }
-
-  /// ✅ STEP 3: Check if first time user (RevenueCat ONLY)
-  Future<bool> _isFirstTimeUser() async {
-    try {
-      print('\n🔍 Checking first time status...');
-
-      // ✅ Check 1: Local flag
-      final checkDone = await TokenStorage.getSubscriptionCheckDone();
-      if (checkDone == true) {
-        print('✅ Returning user (local flag)');
+        print('❌ RevenueCat not available');
         return false;
       }
 
-      // ✅ Check 2: RevenueCat purchase history
-      final controller = Get.find<PaymentController>();
-      final customerInfo = controller.customerInfo.value;
-
-      if (customerInfo != null) {
-        final hasHistory = customerInfo.allPurchasedProductIdentifiers.isNotEmpty ||
-            customerInfo.nonSubscriptionTransactions.isNotEmpty ||
-            customerInfo.entitlements.all.isNotEmpty;
-
-        if (hasHistory) {
-          print('✅ Has purchase history');
-          await TokenStorage.saveSubscriptionCheckDone(true);
-          return false;
-        }
+      if (!controller.isRevenueCatUserLoggedIn.value) {
+        print('❌ RevenueCat not logged in');
+        return false;
       }
 
-      // ✅ No history → First time user
+      print('✅ Controller ready');
+      print('✅ User: ${controller.revenueCatActualUserId}');
+      return true;
+
+    } catch (e) {
+      print('❌ Controller error: $e');
+      return false;
+    }
+  }
+
+  Future<void> _restorePurchasesAndSync() async {
+    try {
+      print('\n🔄 Restoring...');
+
+      final controller = Get.find<PaymentController>();
+
+      await controller.restorePurchases().timeout(
+        Duration(seconds: 15),
+        onTimeout: () {
+          print('⚠️ Restore timeout');
+        },
+      );
+
+      await Future.delayed(Duration(milliseconds: 1500));
+
+      await controller.getCustomerInfo().timeout(
+        Duration(seconds: 10),
+        onTimeout: () {
+          print('⚠️ Customer info timeout');
+        },
+      );
+
+      print('✅ Restore complete');
+
+    } catch (e) {
+      print('⚠️ Restore error: $e');
+    }
+  }
+
+  Future<bool> _isFirstTimeUser() async {
+    try {
+      print('\n🔍 Checking first time...');
+
+      final checkDone = await TokenStorage.getSubscriptionCheckDone().timeout(
+        Duration(seconds: 3),
+        onTimeout: () => null,
+      );
+
+      if (checkDone == true) {
+        print('✅ Returning user');
+        return false;
+      }
+
+      try {
+        final controller = Get.find<PaymentController>();
+        final customerInfo = controller.customerInfo.value;
+
+        if (customerInfo != null) {
+          final hasHistory =
+              customerInfo.allPurchasedProductIdentifiers.isNotEmpty ||
+                  customerInfo.nonSubscriptionTransactions.isNotEmpty ||
+                  customerInfo.entitlements.all.isNotEmpty;
+
+          if (hasHistory) {
+            print('✅ Has history');
+            await TokenStorage.saveSubscriptionCheckDone(true);
+            return false;
+          }
+        }
+      } catch (e) {
+        print('⚠️ History check error: $e');
+      }
+
       print('ℹ️ First time user');
       return true;
 
     } catch (e) {
-      print('⚠️ Error checking status: $e');
-      return true; // Safe default
+      print('⚠️ First time check error: $e');
+      return true;
     }
   }
 
-  /// ✅ STEP 4: Check RevenueCat subscription (FIXED - No user ID check)
   Future<bool> _checkRevenueCatSubscription() async {
     try {
-      print('\n🔍 Checking RevenueCat subscription...');
+      print('\n🔍 Checking subscription...');
 
       final controller = Get.find<PaymentController>();
+
+      try {
+        await controller.getCustomerInfo().timeout(
+          Duration(seconds: 10),
+          onTimeout: () {
+            print('⚠️ Customer info timeout');
+          },
+        );
+      } catch (e) {
+        print('⚠️ Customer info error: $e');
+      }
+
       final customerInfo = controller.customerInfo.value;
 
       if (customerInfo == null) {
@@ -188,16 +258,14 @@ class SubscriptionManager {
         return false;
       }
 
-      // RevenueCat already verified user during login
       final hasActive = customerInfo.entitlements.active.isNotEmpty;
 
       if (hasActive) {
-        print('✅ Active entitlements found:');
+        print('✅ Active entitlements:');
         customerInfo.entitlements.active.forEach((key, value) {
           print('   - $key');
           print('     Product: ${value.productIdentifier}');
           print('     Expires: ${value.expirationDate}');
-          print('     Will Renew: ${value.willRenew}');
         });
       } else {
         print('⚠️ No active entitlements');
@@ -206,33 +274,45 @@ class SubscriptionManager {
       return hasActive;
 
     } catch (e) {
-      print('❌ Error checking subscription: $e');
+      print('❌ Subscription check error: $e');
       return false;
     }
   }
 
-  /// ✅ Navigation helpers
   void _navigateToSubscriptionScreen() {
-    Get.offAll(() => SubscriptionScreen());
+    try {
+      Future.delayed(Duration(milliseconds: 100), () {
+        Get.offAll(() => SubscriptionScreen());
+      });
+    } catch (e) {
+      print('❌ SubscriptionScreen nav failed: $e');
+    }
   }
 
   void _navigateToMainScreen() {
-    Get.offAll(() => MainScreen());
+    try {
+      Future.delayed(Duration(milliseconds: 100), () {
+        Get.offAll(() => MainScreen());
+      });
+    } catch (e) {
+      print('❌ MainScreen nav failed: $e');
+      _navigateToSubscriptionScreen();
+    }
   }
 
-  /// ✅ Mark subscription screen shown
   static Future<void> markSubscriptionScreenShown() async {
     try {
       await TokenStorage.saveSubscriptionCheckDone(true);
+
       final verified = await TokenStorage.verifySubscriptionFlagSaved(true);
 
       if (verified) {
-        print('✅ Subscription screen marked as shown');
+        print('✅ Subscription marked');
       } else {
-        print('⚠️ Flag verification failed');
+        print('⚠️ Verification failed');
       }
     } catch (e) {
-      print('❌ Error marking subscription: $e');
+      print('❌ Mark error: $e');
     }
   }
 }

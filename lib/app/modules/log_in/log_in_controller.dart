@@ -114,7 +114,7 @@ class LogInController extends GetxController {
     // Run in background - don't await
     Future.microtask(() async {
       try {
-        await FirebaseMeg().debugIOSNotifications();
+        // await FirebaseMeg().debugIOSNotifications();
         await initializeNotificationService();
         await sendFCMTokenToBackend();
         print('✅ Firebase services initialized');

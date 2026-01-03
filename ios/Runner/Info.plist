@@ -39,11 +39,6 @@
 		<false/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
-		<key>NSAppTransportSecurity</key>
-		<dict>
-			<key>NSAllowsArbitraryLoads</key>
-			<true/>
-		</dict>
 		<key>NSDocumentsFolderUsageDescription</key>
 		<string>This app needs access to documents folder to save and manage files.</string>
 		<key>NSMicrophoneUsageDescription</key>

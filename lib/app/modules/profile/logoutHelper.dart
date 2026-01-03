@@ -57,7 +57,7 @@ class LogoutController extends GetxController {
         await notificationService.disconnectWebSocket();
 
         // Clear notifications
-        notificationService.clearAllNotifications();
+        // notificationService.clearAllNotifications();
 
         print('✅ Notification service cleaned up successfully');
       }

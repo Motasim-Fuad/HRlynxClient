@@ -188,7 +188,7 @@ class OtpController extends GetxController {
         await submitSelectedPersona();
 
         // Initialize services
-        await FirebaseMeg().debugIOSNotifications();
+        // await FirebaseMeg().debugIOSNotifications();
         await initializeNotificationService();
         await sendFCMTokenToBackend();
 

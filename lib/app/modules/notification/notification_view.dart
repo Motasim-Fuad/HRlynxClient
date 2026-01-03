@@ -312,9 +312,9 @@ class NotificationTile extends StatelessWidget {
                             color: Colors.grey[500],
                           ),
                           const SizedBox(width: 4),
-                          Text(
+                           Text(
                             notification.timeAgo,
-                            style: TextStyle(
+                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[500],
                             ),
