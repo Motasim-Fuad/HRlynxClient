@@ -43,6 +43,11 @@ class AuthRepository {
     return await NetworkApiServices.postApi(url, body, withAuth: true, tokenType: 'login');
   }
 
+  Future<dynamic> getSelectedPersonaOnApi() async {
+    String url = "${ApiConstants.baseUrl}/api/aipersona/select-persona/";
+    return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
+  }
+
   // ---------- Auth ----------
   Future<dynamic> login(String email, String password) async {
     final body = {

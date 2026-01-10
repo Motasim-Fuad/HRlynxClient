@@ -49,10 +49,6 @@ class AppleSignUpController extends GetxController {
         return;
       }
 
-      // ✅ Apple Sign-In will automatically use Face ID/Touch ID
-      // If biometric is set up on device → shows Face ID/Touch ID prompt
-      // If no biometric → shows password prompt
-      // User doesn't need to do anything - Apple handles it!
       print('🍎 Starting Apple Sign-In (will use biometric if available)...');
 
       final userCredential = await signInWithApple();
@@ -87,7 +83,7 @@ class AppleSignUpController extends GetxController {
         name: name,
         provider: 'apple',
       );
-      await authRepo.setParsonaType(personaBody);
+
 
       if (success) {
         try {
@@ -96,18 +92,16 @@ class AppleSignUpController extends GetxController {
         } catch (e) {
           print('⚠️ Non-critical error (notifications): $e');
         }
+        await authRepo.setParsonaType(personaBody);
+
+        Get.snackbar("title", "persona set successfully");
 
         // ✅ Save email for future biometric login
         // Next time user opens app, they can use biometric to trigger Apple Sign-In
         await biometricService.enableBiometricLogin(email);
         print('💾 Saved email for future biometric quick login');
 
-        Get.snackbar(
-          "Success",
-          "Apple sign-in complete!",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        print("Apple sign-in complete!");
 
         await SubscriptionManager.instance.handlePostLoginNavigation();
 

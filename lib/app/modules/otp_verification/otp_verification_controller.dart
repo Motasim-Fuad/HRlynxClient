@@ -184,17 +184,12 @@ class OtpController extends GetxController {
 
         Get.snackbar("Success", response['message']);
 
-        // Set persona
-        await submitSelectedPersona();
 
-        // Initialize services
-        // await FirebaseMeg().debugIOSNotifications();
         await initializeNotificationService();
         await sendFCMTokenToBackend();
 
-        // ✅ USE SUBSCRIPTION MANAGER
-        // Note: submitSelectedPersona() already navigates, so we don't call manager here
-        // If you want to use manager, remove navigation from submitSelectedPersona()
+        Get.offAll(() => LogInView());
+
 
       } else {
         Get.snackbar("Failed", response['message'] ?? "OTP verification failed");

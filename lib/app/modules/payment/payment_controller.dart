@@ -365,25 +365,25 @@ class PaymentController extends GetxController {
       }
 
       // Show feedback (not on login/splash)
-      if (!isCalledFromLogin) {
-        if (hasActiveEntitlements) {
-          Get.snackbar(
-            'Success',
-            'Purchases restored successfully!',
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            duration: Duration(seconds: 2),
-          );
-        } else {
-          Get.snackbar(
-            'No Purchases',
-            'No active purchases found to restore.',
-            backgroundColor: Colors.orange,
-            colorText: Colors.white,
-            duration: Duration(seconds: 2),
-          );
-        }
-      }
+      // if (!isCalledFromLogin) {
+      //   if (hasActiveEntitlements) {
+      //     Get.snackbar(
+      //       'Success',
+      //       'Purchases restored successfully!',
+      //       backgroundColor: Colors.green,
+      //       colorText: Colors.white,
+      //       duration: Duration(seconds: 2),
+      //     );
+      //   } else {
+      //     Get.snackbar(
+      //       'No Purchases',
+      //       'No active purchases found to restore.',
+      //       backgroundColor: Colors.orange,
+      //       colorText: Colors.white,
+      //       duration: Duration(seconds: 2),
+      //     );
+      //   }
+      // }
 
       print('🔄 RESTORE COMPLETE');
 

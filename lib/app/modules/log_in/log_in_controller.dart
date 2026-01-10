@@ -77,15 +77,29 @@ class LogInController extends GetxController {
         _initializeFirebaseServices();
 
 
-        Get.snackbar(
-          "Success",
-          response['message'] ?? "Login successful",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: Duration(seconds: 2),
-        );
+
+        final storedPersonaId = await TokenStorage.getSelectedPersonaId();
+        if (storedPersonaId == null) {
+          Get.snackbar(
+            "Error",
+            "No persona selected. Please complete onboarding first.",
+          );
+          isLoading.value = false;
+          return;
+        }
+        final personaBody = {"persona": storedPersonaId};
+
+        await authRepo.setParsonaType(personaBody);
+
+
+        print(" ${response['message'] ?? "Login successful "} ");
+
+
+
         // ✅ USE SUBSCRIPTION MANAGER for navigation
         await SubscriptionManager.instance.handlePostLoginNavigation();
+
+
 
       } else {
         Get.snackbar(

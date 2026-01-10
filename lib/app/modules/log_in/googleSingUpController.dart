@@ -113,7 +113,8 @@ class GoogleSignUpController extends GetxController {
         provider: 'google',
       );
 
-      await authRepo.setParsonaType(personaBody);
+
+
 
       if (success) {
         // ✅ Non-blocking notifications
@@ -123,14 +124,9 @@ class GoogleSignUpController extends GetxController {
         } catch (e) {
           print('⚠️ Non-critical notification error: $e');
         }
+        await authRepo.setParsonaType(personaBody);
 
-        Get.snackbar(
-          "Success",
-          "Welcome back!",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        Get.snackbar("title", "persona set successfully");
 
         await SubscriptionManager.instance.handlePostLoginNavigation();
 

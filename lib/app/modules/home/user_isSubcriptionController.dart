@@ -483,8 +483,11 @@ class UserIsSubcribedController extends GetxController {
 
     // ✅ PRIORITY 3: Free tier - Only selected persona
     print('🟡 FREE TIER: Checking selected persona only');
+    final response = await authRepo.getSelectedPersonaOnApi();
+    print('666666666666666666666   API Selected  persona response: ${response['data']['persona_id']}');
 
-    final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
+    //final selectedPersonaId = await TokenStorage.getSelectedPersonaId(); //TODO--api
+    final selectedPersonaId = response['data']['persona_id'];
     if (selectedPersonaId != null) {
       bool hasAccess = selectedPersonaId == personaId;
       print('   Selected: $selectedPersonaId, Requested: $personaId');
