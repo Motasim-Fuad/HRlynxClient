@@ -14,13 +14,17 @@ class HomeView extends StatelessWidget {
     final UserIsSubcribedController is_SubcribedController = Get.put(UserIsSubcribedController());
     final controller = Get.put(ChatAllAiPersona());
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      is_SubcribedController.checkAndUpdateSubscriptionStatus();
-    });
+    // Only check subscription status if not already loaded
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (!is_SubcribedController.hasLoadedOnce) {
+    //     is_SubcribedController.checkAndUpdateSubscriptionStatus();
+    //   }
+    // });
 
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
           // Responsive breakpoints
@@ -33,17 +37,50 @@ class HomeView extends StatelessWidget {
 
           return RefreshIndicator(
             onRefresh: () async {
-              // Pull-to-refresh korar shomoy data refresh hobe
               await is_SubcribedController.checkAndUpdateSubscriptionStatus();
-              // Jodi persona list o refresh korte chao, uncomment koro:
               await controller.fetchAllAiPersona();
             },
             color: AppColors.primarycolor,
             backgroundColor: Colors.white,
-            child: CustomScrollView(
-              slivers: [
+            child: Stack(
+              children: [
+                // Main scrollable content with padding for fixed header
+
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: _getHeaderHeight(isDesktop, isTablet, horizontalPadding, topPadding),
+                  ),
+                  child: CustomScrollView(
+                    slivers: [
+
+                      // Scrollable Content
+                      SliverPadding(
+                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding,vertical: topPadding),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Persona Grid
+                              _buildPersonaGridSection(
+                                controller: controller,
+                                is_SubcribedController: is_SubcribedController,
+                                isTablet: isTablet,
+                                isDesktop: isDesktop,
+                              ),
+                              SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 // Fixed Header Card
-                SliverToBoxAdapter(
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
                   child: Column(
                     children: [
                       SizedBox(height: isDesktop ? 39 : (isTablet ? 34 : 29)),
@@ -53,30 +90,8 @@ class HomeView extends StatelessWidget {
                         isDesktop: isDesktop,
                         isTablet: isTablet,
                       ),
-                      SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-                      _buildSectionTitle(isDesktop: isDesktop, isTablet: isTablet),
-                      SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-                    ],
-                  ),
-                ),
 
-                // Scrollable Content
-                SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Persona Grid
-                        _buildPersonaGridSection(
-                          controller: controller,
-                          is_SubcribedController: is_SubcribedController,
-                          isTablet: isTablet,
-                          isDesktop: isDesktop,
-                        ),
-                        SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
               ],
@@ -87,6 +102,17 @@ class HomeView extends StatelessWidget {
     );
   }
 
+  // Calculate header height for padding
+  double _getHeaderHeight(bool isDesktop, bool isTablet, double horizontalPadding, double topPadding) {
+    final cardPadding = isDesktop ? 30.0 : (isTablet ? 25.0 : 20.0);
+    final titleHeight = isDesktop ? 26.0 : (isTablet ? 22.0 : 20.0);
+    final spacing = isDesktop ? 24.0 : 20.0;
+    final descriptionHeight = isDesktop ? 18.0 * 2 : (isTablet ? 17.0 * 2 : 16.0 * 2); // Approximate 2 lines
+    final topSpacing = isDesktop ? 39.0 : (isTablet ? 34.0 : 100.0);
+
+    return topSpacing + (cardPadding * 2) + titleHeight + spacing + descriptionHeight + 20; // 20 for extra spacing
+  }
+
   // ========== Fixed Header Card Widget ==========
   Widget _buildFixedHeaderCard({
     required double horizontalPadding,
@@ -94,60 +120,82 @@ class HomeView extends StatelessWidget {
     required bool isDesktop,
     required bool isTablet,
   }) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(horizontalPadding, topPadding, horizontalPadding, 0),
-      child: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            children: [
-              // Background Image
-              Positioned.fill(
-                child: Image.asset(
-                  AppImages.home_container,
-                  fit: BoxFit.cover,
-                  color: Colors.black.withOpacity(0.6),
-                  colorBlendMode: BlendMode.darken,
-                ),
+    return Container(
+      color: Colors.white, // Background color to prevent see-through
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 10),
+        child: Column(
+          children: [
+            SizedBox(height: isDesktop ? 20 : (isTablet ? 15 : 10)),
+            Container(
+              width: double.infinity,
+              //height: 150,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-
-              // Text Content (এটি container এর height নির্ধারণ করবে)
-              Padding(
-                padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 20)),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min, // এটি important
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Stack(
                   children: [
-                    Text(
-                      'Your HR Guidance, Reimagined',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: isDesktop ? 26 : (isTablet ? 22 : 20),
-                        color: Colors.white,
+
+                    // Background Image
+                    Positioned.fill(
+                      child: Image.asset(
+                        AppImages.home_container,
+                        fit: BoxFit.cover,
+                        color: Colors.black.withOpacity(0.6),
+                        colorBlendMode: BlendMode.darken,
                       ),
                     ),
-                    SizedBox(height: isDesktop ? 24 : 20),
-                    Text(
-                      'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter.',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w400,
-                        fontSize: isDesktop ? 18 : (isTablet ? 17 : 16),
-                        color: Colors.white,
+
+                    // Text Content
+                    Padding(
+                      padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 30)),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Your HR Guidance, Reimagined',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: isDesktop ? 26 : (isTablet ? 22 : 20),
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: isDesktop ? 24 : 20),
+                          Text(
+                            'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter.',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w400,
+                              fontSize: isDesktop ? 18 : (isTablet ? 17 : 16),
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+            SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+            _buildSectionTitle(isDesktop: isDesktop, isTablet: isTablet),
+            SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+          ],
         ),
       ),
+
     );
   }
+
   // ========== Section Title Widget ==========
   Widget _buildSectionTitle({required bool isDesktop, required bool isTablet}) {
     return Padding(
@@ -170,26 +218,21 @@ class HomeView extends StatelessWidget {
     required bool isTablet,
     required bool isDesktop,
   }) {
-    // Grid configuration
     int crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
     double spacing = isDesktop ? 16.0 : (isTablet ? 14.0 : 12.0);
     double aspectRatio = isDesktop ? 0.75 : (isTablet ? 0.72 : 0.7);
 
     return Obx(() {
-      // Loading state
       if (controller.isLoading.value || is_SubcribedController.isLoading.value) {
         return _buildLoadingIndicator(isDesktop: isDesktop, isTablet: isTablet);
       }
 
-      // Empty state
       if (controller.personaList.isEmpty) {
         return _buildEmptyState(isDesktop: isDesktop, isTablet: isTablet);
       }
 
-      // Debug logs
       _printDebugInfo(is_SubcribedController);
 
-      // Persona Grid
       return FutureBuilder<List<Widget>>(
         future: _buildPersonaCards(
           controller: controller,
@@ -290,7 +333,6 @@ class HomeView extends StatelessWidget {
   }) async {
     List<Widget> personaCards = [];
 
-    // Responsive sizes
     final titleFontSize = isDesktop ? 16.0 : (isTablet ? 15.0 : 14.0);
     final iconSize = isDesktop ? 32.0 : (isTablet ? 30.0 : 28.0);
     final lockTextSize = isDesktop ? 12.0 : (isTablet ? 11.0 : 10.0);
@@ -301,7 +343,6 @@ class HomeView extends StatelessWidget {
       final persona = controller.personaList[index];
       final personaId = persona.id ?? 0;
 
-      // Check accessibility
       bool isPersonaActive = await is_SubcribedController.isPersonaAccessible(personaId);
 
       print("🎭 Persona ${persona.title} (ID: $personaId) - Active: $isPersonaActive");
@@ -366,7 +407,6 @@ class HomeView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Persona Image
             _buildPersonaImage(
               persona: persona,
               isPersonaActive: isPersonaActive,
@@ -376,8 +416,6 @@ class HomeView extends StatelessWidget {
               isDesktop: isDesktop,
               isTablet: isTablet,
             ),
-
-            // Persona Title
             _buildPersonaTitle(
               title: persona.title ?? 'No Title',
               isPersonaActive: isPersonaActive,
@@ -410,7 +448,6 @@ class HomeView extends StatelessWidget {
         aspectRatio: 1,
         child: Stack(
           children: [
-            // Image
             CachedNetworkImage(
               imageUrl: "${persona.avatar}",
               fit: BoxFit.cover,
@@ -427,8 +464,6 @@ class HomeView extends StatelessWidget {
                 color: Colors.grey,
               ),
             ),
-
-            // Lock Overlay
             if (!isPersonaActive)
               _buildLockOverlay(
                 is_SubcribedController: is_SubcribedController,

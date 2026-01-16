@@ -32,7 +32,7 @@ class NewsView extends StatelessWidget {
         onRefresh: controller.refreshData,
         child: Column(
           children: [
-            SizedBox(height: 30),
+            SizedBox(height: 20),
 
             /// Header Card ///
             Padding(

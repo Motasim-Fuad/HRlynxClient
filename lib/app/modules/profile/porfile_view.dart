@@ -17,13 +17,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'UploadData/uploadDataView.dart';
+import 'UploadData/upload_data_binding.dart';
 import 'logoutHelper.dart';
 
 class ProfileView extends StatelessWidget {
   ProfileView({super.key});
 
   final UserController userController = Get.put(UserController());
-  final ProfileController profileController = Get.put(ProfileController());
+  final ProfileController profileController = Get.put(ProfileController(),);
   final LogoutController logoutController = Get.put(LogoutController());
   final DeleteAccountController deleteAccountController = Get.put(DeleteAccountController()); // 👈 Add this
   final UserIsSubcribedController subController = Get.put(UserIsSubcribedController());
@@ -38,9 +39,15 @@ class ProfileView extends StatelessWidget {
           GestureDetector(
             child: SvgPicture.asset(AppImages.edit_profile),
             onTap: () async {
-              await Get.to(() => UploadDataView());
-              print("🔄 Refreshing profile after returning from upload page");
-              await profileController.refreshProfile();
+              final result = await Get.to(
+                    () => UploadDataView(),
+                binding: UploadDataBinding(),
+              );
+
+              if (result == true) {
+                await profileController.refreshProfile();
+              }
+
             },
           ),
           SizedBox(width: 10),
