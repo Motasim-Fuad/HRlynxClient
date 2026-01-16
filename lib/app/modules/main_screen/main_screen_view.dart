@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/modules/home/home_view.dart';
 import 'package:HRlynx/app/modules/main_screen/main_screen_controller.dart';
 import 'package:HRlynx/app/modules/news/news_view.dart';
@@ -10,9 +9,9 @@ import 'package:get/get.dart';
 class MainScreen extends StatelessWidget {
   final BottomNavController navController = Get.put(BottomNavController());
 
+  // Screens instance ekbar create hoye memory te thakbe
   final List<Widget> screens = [
     HomeView(),
-    // CahtView(),
     NewsView(),
     ProfileView(),
   ];
@@ -20,9 +19,13 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Obx(() => screens[navController.currentIndex.value]),
+      // IndexedStack use koro - prottek screen memory te thakbe
+      body: Obx(() => IndexedStack(
+        index: navController.currentIndex.value,
+        children: screens,
+      )),
       bottomNavigationBar: Obx(
-        () => BottomNavigationBar(
+            () => BottomNavigationBar(
           currentIndex: navController.currentIndex.value,
           onTap: navController.changeTab,
           selectedItemColor: AppColors.primarycolor,
@@ -32,10 +35,6 @@ class MainScreen extends StatelessWidget {
               icon: Icon(Icons.home_rounded),
               label: 'Home',
             ),
-            // BottomNavigationBarItem(
-            //   icon: Icon(Icons.chat_outlined),
-            //   label: 'Chat',
-            // ),
             BottomNavigationBarItem(
               icon: Icon(Icons.newspaper_rounded),
               label: 'News',

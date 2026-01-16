@@ -93,9 +93,6 @@ class AppleSignUpController extends GetxController {
           print('⚠️ Non-critical error (notifications): $e');
         }
         await authRepo.setParsonaType(personaBody);
-
-        Get.snackbar("title", "persona set successfully");
-
         // ✅ Save email for future biometric login
         // Next time user opens app, they can use biometric to trigger Apple Sign-In
         await biometricService.enableBiometricLogin(email);

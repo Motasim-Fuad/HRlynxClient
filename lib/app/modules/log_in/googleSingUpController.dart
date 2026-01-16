@@ -114,8 +114,6 @@ class GoogleSignUpController extends GetxController {
       );
 
 
-
-
       if (success) {
         // ✅ Non-blocking notifications
         try {
@@ -125,9 +123,6 @@ class GoogleSignUpController extends GetxController {
           print('⚠️ Non-critical notification error: $e');
         }
         await authRepo.setParsonaType(personaBody);
-
-        Get.snackbar("title", "persona set successfully");
-
         await SubscriptionManager.instance.handlePostLoginNavigation();
 
       } else {

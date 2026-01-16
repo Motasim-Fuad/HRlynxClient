@@ -30,48 +30,57 @@ class HomeView extends StatelessWidget {
           // Responsive values
           final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
           final topPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
-          final cardHeight = isDesktop
-              ? size.height * 0.25
-              : (isTablet ? size.height * 0.22 : size.height * 0.20);
 
-          return Column(
-            children: [
-              SizedBox(height: isDesktop ? 39 : (isTablet ? 34 : 29)),
-              // ========== Fixed Header Card ==========
-              _buildFixedHeaderCard(
-                horizontalPadding: horizontalPadding,
-                topPadding: topPadding,
-                isDesktop: isDesktop,
-                isTablet: isTablet,
-              ),
-              SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-
-              // Title
-              _buildSectionTitle(isDesktop: isDesktop, isTablet: isTablet),
-              SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-
-              // ========== Scrollable Content ==========
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+          return RefreshIndicator(
+            onRefresh: () async {
+              // Pull-to-refresh korar shomoy data refresh hobe
+              await is_SubcribedController.checkAndUpdateSubscriptionStatus();
+              // Jodi persona list o refresh korte chao, uncomment koro:
+              await controller.fetchAllAiPersona();
+            },
+            color: AppColors.primarycolor,
+            backgroundColor: Colors.white,
+            child: CustomScrollView(
+              slivers: [
+                // Fixed Header Card
+                SliverToBoxAdapter(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
-                      // Persona Grid
-                      _buildPersonaGridSection(
-                        controller: controller,
-                        is_SubcribedController: is_SubcribedController,
-                        isTablet: isTablet,
+                      SizedBox(height: isDesktop ? 39 : (isTablet ? 34 : 29)),
+                      _buildFixedHeaderCard(
+                        horizontalPadding: horizontalPadding,
+                        topPadding: topPadding,
                         isDesktop: isDesktop,
+                        isTablet: isTablet,
                       ),
-
+                      SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+                      _buildSectionTitle(isDesktop: isDesktop, isTablet: isTablet),
                       SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
                     ],
                   ),
                 ),
-              ),
-            ],
+
+                // Scrollable Content
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Persona Grid
+                        _buildPersonaGridSection(
+                          controller: controller,
+                          is_SubcribedController: is_SubcribedController,
+                          isTablet: isTablet,
+                          isDesktop: isDesktop,
+                        ),
+                        SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         },
       ),
@@ -141,12 +150,15 @@ class HomeView extends StatelessWidget {
   }
   // ========== Section Title Widget ==========
   Widget _buildSectionTitle({required bool isDesktop, required bool isTablet}) {
-    return Text(
-      'Chat with your AI HR Assistants:',
-      style: TextStyle(
-        fontWeight: FontWeight.w500,
-        fontSize: isDesktop ? 26 : (isTablet ? 24 : 20),
-        color: AppColors.primarycolor,
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0)),
+      child: Text(
+        'Chat with your AI HR Assistants:',
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: isDesktop ? 26 : (isTablet ? 24 : 20),
+          color: AppColors.primarycolor,
+        ),
       ),
     );
   }
