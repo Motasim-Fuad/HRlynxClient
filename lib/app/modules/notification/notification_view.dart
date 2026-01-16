@@ -26,7 +26,6 @@ class NotificationView extends StatelessWidget {
       ),
       body: Column(
         children: [
-          // Header with unread count and connection status
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -62,7 +61,6 @@ class NotificationView extends StatelessWidget {
                       ),
                   ],
                 ),
-                // Connection status
                 if (notificationService.connectionStatus.value != 'Connected')
                   Container(
                     margin: const EdgeInsets.only(top: 8),
@@ -98,6 +96,32 @@ class NotificationView extends StatelessWidget {
           // Notifications list
           Expanded(
             child: Obx(() {
+              // 🔍 DEBUG: Print notification list
+              print('🖼️ UI RENDERING: ${notificationService.notifications.length} notifications');
+              for (var i = 0; i < notificationService.notifications.length; i++) {
+                final n = notificationService.notifications[i];
+                print('  [$i] ID=${n.id}, Title="${n.title}", Time=${n.timeAgo}');
+              }
+
+              // 🔍 DEBUG: Check for duplicate IDs
+              final ids = notificationService.notifications.map((n) => n.id).toList();
+              final uniqueIds = ids.toSet();
+              if (ids.length != uniqueIds.length) {
+                print('⚠️⚠️⚠️ DUPLICATE IDs FOUND IN UI LIST!');
+                print('Total items: ${ids.length}, Unique IDs: ${uniqueIds.length}');
+
+                // Find duplicates
+                final duplicates = <int>[];
+                for (var id in ids) {
+                  if (ids.where((i) => i == id).length > 1 && !duplicates.contains(id)) {
+                    duplicates.add(id);
+                  }
+                }
+                print('Duplicate IDs: $duplicates');
+              } else {
+                print('✅ No duplicate IDs in UI list');
+              }
+
               if (notificationService.notifications.isEmpty) {
                 return const EmptyNotificationsView();
               }
@@ -105,7 +129,9 @@ class NotificationView extends StatelessWidget {
               return RefreshIndicator(
                 onRefresh: () async {
                   try {
+                    print('🔄 User triggered refresh');
                     await notificationService.fetchAllNotifications();
+                    print('✅ Refresh completed');
                   } catch (e) {
                     print('❌ Error refreshing notifications: $e');
                     Get.snackbar(
@@ -115,16 +141,17 @@ class NotificationView extends StatelessWidget {
                     );
                   }
                 },
-
-
-                // show all notification "in app , eamil ,push"
-
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: notificationService.notifications.length,
                   itemBuilder: (context, index) {
                     final notification = notificationService.notifications[index];
+
+                    // 🔍 DEBUG: Print each tile being built
+                    print('🔨 Building tile at index $index for notification ID ${notification.id}');
+
                     return NotificationTile(
+                      key: ValueKey(notification.id), // ✅ ADD UNIQUE KEY
                       notification: notification,
                       onTap: () => _handleNotificationTap(context, notification, notificationService),
                     );
@@ -138,7 +165,6 @@ class NotificationView extends StatelessWidget {
     );
   }
 
-  // Fixed notification tap handler with proper error handling
   Future<void> _handleNotificationTap(
       BuildContext context,
       NotificationModel notification,
@@ -147,7 +173,6 @@ class NotificationView extends StatelessWidget {
     try {
       print('🎯 Notification tapped: ${notification.id} - ${notification.title}');
 
-      // Mark as read if not already read
       if (!notification.isRead) {
         print('📖 Marking notification ${notification.id} as read...');
         final success = await notificationService.markAsRead(notification.id);
@@ -158,14 +183,12 @@ class NotificationView extends StatelessWidget {
         }
       }
 
-      // Show notification detail
       _showNotificationDetail(context, notification);
 
     } catch (e, stackTrace) {
       print('❌ Error handling notification tap: $e');
       print('📍 Stack trace: $stackTrace');
 
-      // Show user-friendly error message
       if (context.mounted) {
         Get.snackbar(
           'Error',
@@ -192,7 +215,6 @@ class NotificationView extends StatelessWidget {
     } catch (e) {
       print('❌ Error showing notification detail: $e');
 
-      // Fallback: show simple dialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -256,7 +278,6 @@ class NotificationTile extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Notification icon
                 Container(
                   width: 48,
                   height: 48,
@@ -272,12 +293,10 @@ class NotificationTile extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
 
-                // Notification content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title
                       Text(
                         notification.title.isNotEmpty ? notification.title : 'No Title',
                         style: TextStyle(
@@ -290,7 +309,6 @@ class NotificationTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
 
-                      // Message
                       Text(
                         notification.message.isNotEmpty ? notification.message : 'No message content',
                         style: TextStyle(
@@ -303,7 +321,6 @@ class NotificationTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
 
-                      // Time and type
                       Row(
                         children: [
                           Icon(
@@ -312,36 +329,36 @@ class NotificationTile extends StatelessWidget {
                             color: Colors.grey[500],
                           ),
                           const SizedBox(width: 4),
-                           Text(
+                          Text(
                             notification.timeAgo,
-                             style: TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[500],
                             ),
                           ),
                           const Spacer(),
-                          // Container(
-                          //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          //   decoration: BoxDecoration(
-                          //     color: _getNotificationColor(notification.notificationType).withOpacity(0.1),
-                          //     borderRadius: BorderRadius.circular(12),
-                          //   ),
-                          //   child: Text(
-                          //     notification.notificationType.toUpperCase(),
-                          //     style: TextStyle(
-                          //       fontSize: 10,
-                          //       fontWeight: FontWeight.w600,
-                          //       color: _getNotificationColor(notification.notificationType),
-                          //     ),
-                          //   ),
-                          // ),
+                          // 🔍 DEBUG: Show notification ID
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'ID:${notification.id}',
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
                 ),
 
-                // Unread indicator
                 if (!notification.isRead)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
@@ -430,7 +447,6 @@ class NotificationDetailSheet extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Handle bar
           Container(
             margin: const EdgeInsets.only(top: 12),
             width: 40,
@@ -441,7 +457,6 @@ class NotificationDetailSheet extends StatelessWidget {
             ),
           ),
 
-          // Header
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -501,14 +516,12 @@ class NotificationDetailSheet extends StatelessWidget {
 
           const Divider(height: 1),
 
-          // Content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Status badge
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
@@ -538,7 +551,6 @@ class NotificationDetailSheet extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Message content
                   const Text(
                     'Message',
                     style: TextStyle(
@@ -575,8 +587,6 @@ class NotificationDetailSheet extends StatelessWidget {
       ),
     );
   }
-
-
 
   Color _getNotificationColor(String type) {
     try {
@@ -669,7 +679,6 @@ class EmptyNotificationsView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          // Refresh button
           ElevatedButton.icon(
             onPressed: () async {
               try {

@@ -1,4 +1,4 @@
-// lib/app/api_servies/notification_services.dart - PRODUCTION READY
+// lib/app/api_servies/notification_services.dart - FIXED WITH DEDUPLICATION
 
 import 'dart:async';
 import 'dart:convert';
@@ -18,6 +18,9 @@ class NotificationService extends GetxController {
   final RxInt unreadCount = 0.obs;
   final RxBool isConnected = false.obs;
   final RxString connectionStatus = 'Disconnected'.obs;
+
+  // ✅ ADD THIS: Track notification IDs to prevent duplicates
+  final Set<int> _notificationIds = {};
 
   bool _isConnecting = false;
   bool _shouldStayConnected = true;
@@ -272,52 +275,80 @@ class NotificationService extends GetxController {
   Future<void> _handleWebSocketMessage(dynamic data) async {
     try {
       if (data == null || data.toString().isEmpty) {
-        print('⚠️ Empty message');
+        print('⚠️ Empty WebSocket message received');
         return;
       }
+
+      print('📨📨📨 RAW WebSocket message received: $data');
 
       final Map<String, dynamic> message = jsonDecode(data);
 
       if (!message.containsKey('type')) {
-        print('⚠️ Missing type');
+        print('⚠️ WebSocket message missing "type" field');
         return;
       }
 
+      print('📋 Message type: ${message['type']}');
+
       switch (message['type']) {
         case 'notification':
+          print('🔔 Processing notification message...');
           await _handleNotificationMessage(message);
           break;
         case 'pong':
-          print('💓 Pong');
+          print('💓 Pong received from server');
           break;
         case 'error':
+          print('❌ Error message received from server');
           await _handleErrorMessage(message);
           break;
         default:
-          print('ℹ️ Unknown: ${message['type']}');
+          print('ℹ️ Unknown message type: ${message['type']}');
       }
-    } catch (e) {
-      print('❌ Message error: $e');
+    } catch (e, stackTrace) {
+      print('❌ Error handling WebSocket message: $e');
+      print('📍 Stack trace: $stackTrace');
     }
   }
 
+  // ✅ FIXED: Handle notification message with deduplication
   Future<void> _handleNotificationMessage(Map<String, dynamic> message) async {
     try {
       if (!message.containsKey('data')) {
-        print('⚠️ Missing data');
+        print('⚠️ Missing data in WebSocket message');
         return;
       }
 
       final notification = NotificationModel.fromJson(message['data']);
 
-      final exists = notifications.indexWhere((n) => n.id == notification.id);
-      if (exists == -1) {
-        notifications.insert(0, notification);
-        _updateUnreadCount();
-        print('✅ New notification: ${notification.title}');
+      print('📨 WebSocket notification received: ID=${notification.id}, Title="${notification.title}"');
+
+      // ✅ CHECK FOR DUPLICATES USING ID
+      if (_notificationIds.contains(notification.id)) {
+        print('⚠️⚠️⚠️ DUPLICATE DETECTED! Notification ID ${notification.id} already exists - SKIPPING');
+        return;
       }
-    } catch (e) {
-      print('❌ Notification error: $e');
+
+      // ✅ DOUBLE CHECK: Also check in notifications list
+      final existsInList = notifications.any((n) => n.id == notification.id);
+      if (existsInList) {
+        print('⚠️⚠️⚠️ DUPLICATE DETECTED IN LIST! Notification ID ${notification.id} - SKIPPING');
+        return;
+      }
+
+      // ✅ ADD TO TRACKING SET
+      _notificationIds.add(notification.id);
+
+      // ✅ ADD TO LIST
+      notifications.insert(0, notification);
+      _updateUnreadCount();
+
+      print('✅✅✅ NEW notification added successfully: ID=${notification.id}, Title="${notification.title}"');
+      print('📊 Total notifications: ${notifications.length}, Tracked IDs: ${_notificationIds.length}');
+
+    } catch (e, stackTrace) {
+      print('❌ Error handling notification message: $e');
+      print('📍 Stack trace: $stackTrace');
     }
   }
 
@@ -379,6 +410,7 @@ class NotificationService extends GetxController {
     }
   }
 
+  // ✅ FIXED: Fetch with deduplication
   Future<void> fetchAllNotifications() async {
     try {
       final url = "${ApiConstants.baseUrl}/api/notifications/list/";
@@ -390,10 +422,30 @@ class NotificationService extends GetxController {
 
       if (response != null && response['results'] != null) {
         final List<dynamic> results = response['results'];
-        notifications.value =
-            results.map((json) => NotificationModel.fromJson(json)).toList();
+
+        // ✅ CLEAR OLD DATA
+        notifications.clear();
+        _notificationIds.clear();
+
+        // ✅ ADD WITH DEDUPLICATION
+        for (var json in results) {
+          try {
+            final notification = NotificationModel.fromJson(json);
+
+            // Only add if not duplicate
+            if (!_notificationIds.contains(notification.id)) {
+              _notificationIds.add(notification.id);
+              notifications.add(notification);
+            } else {
+              print('⚠️ Skipping duplicate notification ID: ${notification.id}');
+            }
+          } catch (e) {
+            print('❌ Error parsing notification: $e');
+          }
+        }
+
         _updateUnreadCount();
-        print('✅ Fetched ${notifications.length} notifications');
+        print('✅ Fetched ${notifications.length} unique notifications (${_notificationIds.length} IDs tracked)');
       }
     } catch (e) {
       print('⚠️ Fetch error: $e');
@@ -428,39 +480,26 @@ class NotificationService extends GetxController {
   }
 
   Future<bool> _attemptMarkAsReadAPI(int id) async {
-    final attempts = [
-      {
-        'url': "${ApiConstants.baseUrl}/api/notifications/list/$id/",
-        'method': 'PATCH',
-        'body': {'is_read': true}
-      },
-    ];
+    try {
+      final String url = "${ApiConstants.baseUrl}/api/notifications/list/$id/";
+      final Map<String, dynamic> body = {'is_read': true};
 
-    for (final attempt in attempts) {
-      try {
-        dynamic response;
-        if (attempt['method'] == 'PATCH') {
-          final String url = attempt['url'] as String;  // Explicit cast to String
-          final Map<String, dynamic> body = attempt['body'] as Map<String, dynamic>;
-          response = await NetworkApiServices.patchApi(
-            url,
-            body,
-            withAuth: true,
-            tokenType: 'login',
-          ).timeout(Duration(seconds: 5));
-        }
+      final response = await NetworkApiServices.patchApi(
+        url,
+        body,
+        withAuth: true,
+        tokenType: 'login',
+      ).timeout(Duration(seconds: 5));
 
-        if (response != null) {
-          print('✅ Marked as read');
-          return true;
-        }
-      } catch (e) {
-        print('⚠️ Attempt failed: $e');
-        continue;
+      if (response != null) {
+        print('✅ Marked as read: $id');
+        return true;
       }
+      return false;
+    } catch (e) {
+      print('⚠️ Mark read API failed: $e');
+      return false;
     }
-
-    return false;
   }
 
   void _updateUnreadCount() {
@@ -469,76 +508,18 @@ class NotificationService extends GetxController {
 
   @override
   void onClose() {
-    print('🧹 Cleaning up');
+    print('🧹 Cleaning up NotificationService');
     _shouldStayConnected = false;
     _reconnectTimer?.cancel();
     _heartbeatTimer?.cancel();
+    _notificationIds.clear(); // ✅ Clear tracking set
+    notifications.clear();
     disconnectWebSocket();
     super.onClose();
   }
 }
-///right as ai ///
-// class NotificationModel {
-//   final int id;
-//   final String title;
-//   final String message;
-//   final String notificationType;
-//   final bool isRead;
-//   final Map<String, dynamic> data;
-//   final String? sentAt;
-//   final String createdAt;
-//
-//   NotificationModel({
-//     required this.id,
-//     required this.title,
-//     required this.message,
-//     required this.notificationType,
-//     required this.isRead,
-//     required this.data,
-//     this.sentAt,
-//     required this.createdAt,
-//   });
-//
-//   factory NotificationModel.fromJson(Map<String, dynamic> json) {
-//     try {
-//       return NotificationModel(
-//         id: json['id'] ?? 0,
-//         title: json['title'] ?? 'Notification',
-//         message: json['message'] ?? '',
-//         notificationType: json['notification_type'] ?? 'general',
-//         isRead: json['is_read'] ?? false,
-//         data: Map<String, dynamic>.from(json['data'] ?? {}),
-//         sentAt: json['sent_at'],
-//         createdAt: json['created_at'] ?? DateTime.now().toIso8601String(),
-//       );
-//     } catch (e) {
-//       return NotificationModel(
-//         id: json['id'] ?? 0,
-//         title: 'Error',
-//         message: 'Unable to load',
-//         notificationType: 'error',
-//         isRead: false,
-//         data: {},
-//         createdAt: DateTime.now().toIso8601String(),
-//       );
-//     }
-//   }
-//
-//   NotificationModel copyWith({bool? isRead}) {
-//     return NotificationModel(
-//       id: id,
-//       title: title,
-//       message: message,
-//       notificationType: notificationType,
-//       isRead: isRead ?? this.isRead,
-//       data: data,
-//       sentAt: sentAt,
-//       createdAt: createdAt,
-//     );
-//   }
-// }
 
-// Enhanced Notification Model with better validation
+// NotificationModel remains the same
 class NotificationModel {
   final int id;
   final String title;
@@ -574,7 +555,6 @@ class NotificationModel {
       );
     } catch (e) {
       print('❌ Error parsing notification JSON: $e');
-      // Return a default notification if parsing fails
       return NotificationModel(
         id: json['id'] ?? 0,
         title: 'Error Loading Notification',
@@ -631,7 +611,6 @@ class NotificationModel {
     }
   }
 
-  /// Get formatted date for display
   String get formattedDate {
     try {
       final dateTime = DateTime.parse(createdAt);
@@ -665,41 +644,6 @@ class NotificationModel {
     return days[weekday - 1];
   }
 
-  /// FIXED: Check if notification has action data
-  bool get hasAction => data.containsKey('action') && data['action'] != null;
-
-  /// FIXED: Get action type from data - handle both string and object formats
-  String? get actionType {
-    if (data['action'] is String) {
-      return data['action'];
-    } else if (data['action'] is Map) {
-      return data['action']['type'];
-    }
-    return null;
-  }
-
-  /// Get action URL from data
-  String? get actionUrl {
-    if (data['action'] is Map) {
-      return data['action']['url'];
-    }
-    return null;
-  }
-
-  /// Convert to JSON for storage or transmission
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'message': message,
-      'notification_type': notificationType,
-      'is_read': isRead,
-      'data': data,
-      'sent_at': sentAt,
-      'created_at': createdAt,
-    };
-  }
-
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -708,9 +652,4 @@ class NotificationModel {
 
   @override
   int get hashCode => id.hashCode;
-
-  @override
-  String toString() {
-    return 'NotificationModel(id: $id, title: $title, isRead: $isRead, type: $notificationType)';
-  }
 }
