@@ -96,32 +96,6 @@ class NotificationView extends StatelessWidget {
           // Notifications list
           Expanded(
             child: Obx(() {
-              // 🔍 DEBUG: Print notification list
-              print('🖼️ UI RENDERING: ${notificationService.notifications.length} notifications');
-              for (var i = 0; i < notificationService.notifications.length; i++) {
-                final n = notificationService.notifications[i];
-                print('  [$i] ID=${n.id}, Title="${n.title}", Time=${n.timeAgo}');
-              }
-
-              // 🔍 DEBUG: Check for duplicate IDs
-              final ids = notificationService.notifications.map((n) => n.id).toList();
-              final uniqueIds = ids.toSet();
-              if (ids.length != uniqueIds.length) {
-                print('⚠️⚠️⚠️ DUPLICATE IDs FOUND IN UI LIST!');
-                print('Total items: ${ids.length}, Unique IDs: ${uniqueIds.length}');
-
-                // Find duplicates
-                final duplicates = <int>[];
-                for (var id in ids) {
-                  if (ids.where((i) => i == id).length > 1 && !duplicates.contains(id)) {
-                    duplicates.add(id);
-                  }
-                }
-                print('Duplicate IDs: $duplicates');
-              } else {
-                print('✅ No duplicate IDs in UI list');
-              }
-
               if (notificationService.notifications.isEmpty) {
                 return const EmptyNotificationsView();
               }
@@ -146,9 +120,6 @@ class NotificationView extends StatelessWidget {
                   itemCount: notificationService.notifications.length,
                   itemBuilder: (context, index) {
                     final notification = notificationService.notifications[index];
-
-                    // 🔍 DEBUG: Print each tile being built
-                    print('🔨 Building tile at index $index for notification ID ${notification.id}');
 
                     return NotificationTile(
                       key: ValueKey(notification.id), // ✅ ADD UNIQUE KEY
@@ -336,23 +307,7 @@ class NotificationTile extends StatelessWidget {
                               color: Colors.grey[500],
                             ),
                           ),
-                          const Spacer(),
-                          // 🔍 DEBUG: Show notification ID
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'ID:${notification.id}',
-                              style: TextStyle(
-                                fontSize: 9,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
+                          // ✅ ID section removed - only time shown
                         ],
                       ),
                     ],
