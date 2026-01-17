@@ -17,81 +17,101 @@ class SplashScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              // Top spacing
-              SizedBox(height: h * 0.02),
-
-              // Logo
-              Image.asset(
-                AppImages.splash,
-                height: h * 0.25, // responsive height
-                fit: BoxFit.contain,
+        child: Column(
+          children: [
+            // Fixed image at top
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  SizedBox(height: h * 0.02),
+                  Image.asset(
+                    AppImages.splash,
+                    height: h * 0.25,
+                    fit: BoxFit.contain,
+                  ),
+                ],
               ),
+            ),
 
-              SizedBox(height: h * 0.04),
+            // Scrollable content area
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Column(
+                  children: [
+                    SizedBox(height: h * 0.04),
 
-              // Title
-              Text(
-                'Welcome to your AI-powered\nHR Assistant!',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: h * 0.028,
-                  color: AppColors.primarycolor,
-                ),
-              ),
-
-              SizedBox(height: h * 0.02),
-
-              // Subtitle
-              Text(
-                'Tailored for your role. Built for your challenges.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w400,
-                  fontSize: h * 0.02,
-                  color: const Color(0xFF7D848D),
-                ),
-              ),
-
-              Spacer(), // pushes button to bottom
-
-              // Page indicators
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return Padding(
-                    padding: EdgeInsets.all(w * 0.015),
-                    child: Container(
-                      height: h * 0.015,
-                      width: h * 0.015,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: index == 0
-                            ? AppColors.primarycolor
-                            : const Color(0xffE6ECEB),
+                    // Title
+                    Text(
+                      'Welcome to your AI-powered\nHR Assistant!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: h * 0.028,
+                        color: AppColors.primarycolor,
                       ),
                     ),
-                  );
-                }),
+
+                    SizedBox(height: h * 0.02),
+
+                    // Subtitle
+                    Text(
+                      'Tailored for your role. Built for your challenges.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: h * 0.02,
+                        color: const Color(0xFF7D848D),
+                      ),
+                    ),
+
+                    SizedBox(height: h * 0.02),
+                  ],
+                ),
               ),
+            ),
 
-              SizedBox(height: h * 0.03),
+            // Fixed bottom section (indicators + button)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  // Page indicators
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (index) {
+                      return Padding(
+                        padding: EdgeInsets.all(w * 0.015),
+                        child: Container(
+                          height: h * 0.015,
+                          width: h * 0.015,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: index == 0
+                                ? AppColors.primarycolor
+                                : const Color(0xffE6ECEB),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
 
-              // Button
-              Button(
-                title: 'Get Started',
-                onTap: () {
-                  Get.offAll(const SecondSplash());
-                },
+                  SizedBox(height: h * 0.03),
+
+                  // Button
+                  Button(
+                    title: 'Get Started',
+                    onTap: () {
+                      Get.offAll(const SecondSplash());
+                    },
+                  ),
+
+                  SizedBox(height: h * 0.01),
+                ],
               ),
-
-              SizedBox(height: h * 0.01),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

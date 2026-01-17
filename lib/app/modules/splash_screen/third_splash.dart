@@ -17,124 +17,136 @@ class ThirdSplash extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              SizedBox(height: h * 0.02),
-
-              // Logo
-              Image.asset(
-                AppImages.splash,
-                height: h * 0.25,
-                fit: BoxFit.contain,
-              ),
-
-              SizedBox(height: h * 0.02),
-
-              // Title
-              Text(
-                'Interactive \nAI HR Assistants',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: h * 0.03,
-                  color: AppColors.primarycolor,
-                ),
-              ),
-
-              SizedBox(height: h * 0.02),
-
-              // Description
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: w * 0.08),
-                child: Text(
-                  "Supportive, insightful HR guidance - powered by AI, designed for you.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    fontSize: h * 0.022,
-                    color: const Color(0xFF393636),
+        child: Column(
+          children: [
+            // Fixed image at top
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  SizedBox(height: h * 0.02),
+                  Image.asset(
+                    AppImages.splash,
+                    height: h * 0.25,
+                    fit: BoxFit.contain,
                   ),
-                ),
+                ],
               ),
+            ),
 
-              SizedBox(height: h * 0.03),
+            // Scrollable content area
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Column(
+                  children: [
+                    SizedBox(height: h * 0.02),
 
-
-
-
-
-
-              Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 300), // Controls width, keeps center
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // Left align each bullet line
-                    children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Example Prompts',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: h * 0.023,
-                            color: const Color(0xFF050505),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: h * 0.015),
-                      buildSplashText('Prepare for a difficult conversation'),
-                      buildSplashText("What's new in California labor law?"),
-
-
-                    ],
-                  ),
-                ),
-              ),
-              // Prompt Examples
-
-
-              Spacer(),
-
-              // Page indicators
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(4, (index) {
-                  return Padding(
-                    padding: EdgeInsets.all(w * 0.015),
-                    child: Container(
-                      height: h * 0.015,
-                      width: h * 0.015,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: index == 2
-                            ? AppColors.primarycolor
-                            : const Color(0xffE6ECEB),
+                    // Title
+                    Text(
+                      'Interactive \nAI HR Assistants',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: h * 0.03,
+                        color: AppColors.primarycolor,
                       ),
                     ),
-                  );
-                }),
+
+                    SizedBox(height: h * 0.02),
+
+                    // Description
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: w * 0.08),
+                      child: Text(
+                        "Supportive, insightful HR guidance - powered by AI, designed for you.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w400,
+                          fontSize: h * 0.022,
+                          color: const Color(0xFF393636),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: h * 0.03),
+
+                    // Prompt Examples
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 300),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Example Prompts',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: h * 0.023,
+                                  color: const Color(0xFF050505),
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: h * 0.015),
+                            buildSplashText('Prepare for a difficult conversation'),
+                            buildSplashText("What's new in California labor law?"),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(height: h * 0.02),
+                  ],
+                ),
               ),
+            ),
 
-              SizedBox(height: h * 0.03),
+            // Fixed bottom section (indicators + button)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  // Page indicators
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(4, (index) {
+                      return Padding(
+                        padding: EdgeInsets.all(w * 0.015),
+                        child: Container(
+                          height: h * 0.015,
+                          width: h * 0.015,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: index == 2
+                                ? AppColors.primarycolor
+                                : const Color(0xffE6ECEB),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
 
-              // Next button
-              Button(
-                title: 'Next',
-                onTap: () {
-                  Get.offAll(OnboardingView());
-                },
+                  SizedBox(height: h * 0.03),
+
+                  // Next button
+                  Button(
+                    title: 'Next',
+                    onTap: () {
+                      Get.offAll(OnboardingView());
+                    },
+                  ),
+
+                  SizedBox(height: h * 0.01),
+                ],
               ),
-
-              SizedBox(height: h * 0.01),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
-
 
   Widget buildSplashText(String text) {
     return Padding(
@@ -165,5 +177,4 @@ class ThirdSplash extends StatelessWidget {
       ),
     );
   }
-
 }
