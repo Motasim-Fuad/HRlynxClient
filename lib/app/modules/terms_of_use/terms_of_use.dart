@@ -2,6 +2,7 @@ import 'package:HRlynx/app/api_servies/api_Constant.dart';
 import 'package:HRlynx/app/api_servies/neteork_api_services.dart';
 import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
 import 'package:HRlynx/app/model/tarmsAndConditionModel.dart';
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -195,7 +196,7 @@ class TermsOfUse extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return  Center(child: CircularProgressIndicator(color: AppColors.primarycolor,));
         }
 
         if (controller.errorMessage.value != null) {

@@ -1,5 +1,6 @@
 // lib/app/common_widgets/loading_overlay.dart
 
+import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -25,7 +26,7 @@ class LoadingOverlay {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
+                CircularProgressIndicator(color: AppColors.primarycolor,),
                 SizedBox(height: 16),
                 Text(
                   message,
