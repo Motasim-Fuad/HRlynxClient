@@ -48,114 +48,38 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
 
   @override
   Widget build(BuildContext context) {
-    // Get screen size for responsive design
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
+    // Responsive breakpoints
+    final bool isSmallScreen = width < 360;
+    final bool isMediumScreen = width >= 360 && width < 400;
+    final bool isLargeScreen = width >= 400;
 
     return Scaffold(
       backgroundColor: AppColors.primarycolor,
       body: SafeArea(
         child: Obx(() {
-          // Loading state when fetching plans
           if (controller.isLoading.value && controller.plans.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                  SizedBox(height: screenHeight * 0.025),
-                  Text(
-                    'Loading plans.......',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            );
+            return _buildLoadingState(width, height);
           }
 
-          // Filter out free plans - only show paid plans
           final paidPlans = controller.plans.where((plan) =>
           plan.planType != 'free' &&
               plan.price != '0.00' &&
               plan.price != '0'
           ).toList();
 
-          // No paid plans available state
           if (paidPlans.isEmpty && !controller.isLoading.value) {
-            return Center(
-              child: Padding(
-                padding: EdgeInsets.all(screenWidth * 0.05),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: screenWidth * 0.16,
-                      color: Colors.white70,
-                    ),
-                    SizedBox(height: screenHeight * 0.025),
-                    Text(
-                      'No subscription plans available',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: screenWidth * 0.045,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: screenHeight * 0.012),
-                    Text(
-                      'Please try again later',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: screenWidth * 0.035,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: screenHeight * 0.037),
-                    ElevatedButton(
-                      onPressed: () => controller.fetchPlans(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal.shade700,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.075,
-                          vertical: screenHeight * 0.015,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        'Try Again',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.04,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return _buildEmptyState(width, height);
           }
 
-          // Find yearly and monthly plans from filtered paid plans
-          final yearlyPlan = paidPlans.firstWhereOrNull(
-                  (plan) => plan.interval == 'year'
-          );
-          final monthlyPlan = paidPlans.firstWhereOrNull(
-                  (plan) => plan.interval == 'month'
-          );
+          final yearlyPlan = paidPlans.firstWhereOrNull((plan) => plan.interval == 'year');
+          final monthlyPlan = paidPlans.firstWhereOrNull((plan) => plan.interval == 'month');
 
           return Stack(
             children: [
-              // Main content
               FadeTransition(
                 opacity: _fadeAnimation,
                 child: SlideTransition(
@@ -164,90 +88,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                     physics: BouncingScrollPhysics(),
                     child: Column(
                       children: [
-                        // Header image
-                        Container(
-                          width: double.infinity,
-                          height: screenHeight * 0.18,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(20),
-                              bottomRight: Radius.circular(20),
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(20),
-                              bottomRight: Radius.circular(20),
-                            ),
-                            child: Image.asset(
-                              AppImages.subcription_logo,
-                              fit: BoxFit.fitHeight,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: screenHeight * 0.006),
-
-                        // Title
-                        Text(
-                          'Explorer Pro',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: screenWidth * 0.085,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-
-                        SizedBox(height: screenHeight * 0.01),
-
-                        // Subtitle
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.05,
-                            vertical: screenHeight * 0.01,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.teal.shade700.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Start your 7-day free trial',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: screenWidth * 0.045,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: screenHeight * 0.012),
-
-                        // Features list
-                        Padding(
-                          padding: EdgeInsets.only(
-                            left: screenWidth * 0.145,
-                            right: 0,
-                            top: 0,
-                            bottom: 0,
-                          ),
-                          child: Column(
-                            children: [
-                              _buildFeatureRow('HR QuickScan™ News Highlights', Icons.newspaper, screenWidth, screenHeight),
-                              SizedBox(height: screenHeight * 0.01),
-                              _buildFeatureRow('Expert AI HR Persona Suite', Icons.psychology, screenWidth, screenHeight),
-                              SizedBox(height: screenHeight * 0.01),
-                              _buildFeatureRow('Priority Chat Access', Icons.chat_bubble_outline, screenWidth, screenHeight),
-                              SizedBox(height: screenHeight * 0.01),
-                              _buildFeatureRow('Save & Revisit Conversations', Icons.save_outlined, screenWidth, screenHeight),
-                            ],
-                          ),
-                        ),
-
-                        SizedBox(height: screenHeight * 0.025),
-
-                        // Plan cards - only show if not null
+                        _buildHeader(width, height),
+                        SizedBox(height: height * 0.015),
+                        _buildTitle(width, isSmallScreen),
+                        SizedBox(height: height * 0.012),
+                        _buildSubtitle(width, height, isSmallScreen),
+                        SizedBox(height: height * 0.02),
+                        _buildFeaturesList(width, height, isSmallScreen),
+                        SizedBox(height: height * 0.03),
                         if (yearlyPlan != null)
                           _buildPlanCard(
                             context,
@@ -258,12 +106,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                             yearlyPlan.interval,
                             'Save 2+ months – Invest in your HR edge',
                             true,
-                            screenWidth,
-                            screenHeight,
+                            width,
+                            height,
+                            isSmallScreen,
                           ),
-
                         if (monthlyPlan != null) ...[
-                          SizedBox(height: screenHeight * 0.025),
+                          SizedBox(height: height * 0.02),
                           _buildPlanCard(
                             context,
                             controller,
@@ -273,80 +121,29 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                             monthlyPlan.interval,
                             'Less than a daily latte. Much more satisfying.',
                             false,
-                            screenWidth,
-                            screenHeight,
+                            width,
+                            height,
+                            isSmallScreen,
                           ),
                         ],
-
-                        SizedBox(height: screenHeight * 0.02),
-
-                        // Start trial button
-                        _buildStartTrialButton(controller, screenWidth, screenHeight),
-
-                        SizedBox(height: screenHeight * 0.02),
-
-                        // Skip trial text
-                        _buildSkipTrialText(screenWidth, screenHeight),
-
-                        SizedBox(height: screenHeight * 0.016),
-
-                        // Policy links
-                        _buildPolicyLinks(screenWidth, screenHeight),
-
-                        SizedBox(height: screenHeight * 0.062),
-                        _buildRestorePurchasesButton(screenWidth, screenHeight),
-
-                        SizedBox(height: screenHeight * 0.01),
-                        _buildSubscriptionDisclosure(screenWidth, screenHeight),
+                        SizedBox(height: height * 0.025),
+                        _buildStartTrialButton(controller, width, height, isSmallScreen),
+                        SizedBox(height: height * 0.02),
+                        _buildSkipTrialText(width, height, isSmallScreen),
+                        SizedBox(height: height * 0.02),
+                        _buildPolicyLinks(width, height, isSmallScreen),
+                        SizedBox(height: height * 0.025),
+                        _buildRestorePurchasesButton(width, height, isSmallScreen),
+                        SizedBox(height: height * 0.015),
+                        _buildSubscriptionDisclosure(width, height, isSmallScreen),
+                        SizedBox(height: height * 0.02),
                       ],
                     ),
                   ),
                 ),
               ),
-
-              // Payment processing overlay
               if (controller.paymentInProgress.value)
-                Container(
-                  color: Colors.black.withOpacity(0.8),
-                  child: Center(
-                    child: Container(
-                      padding: EdgeInsets.all(screenWidth * 0.075),
-                      margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarycolor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.teal.shade700, width: 2),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.teal.shade700),
-                          ),
-                          SizedBox(height: screenHeight * 0.025),
-                          Text(
-                            'Processing payment...',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: screenHeight * 0.012),
-                          Text(
-                            'Please wait',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: screenWidth * 0.035,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                _buildPaymentOverlay(width, height, isSmallScreen),
             ],
           );
         }),
@@ -354,35 +151,187 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildFeatureRow(String text, IconData icon, double screenWidth, double screenHeight) {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      child: Row(
+  Widget _buildLoadingState(double width, double height) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: EdgeInsets.all(screenWidth * 0.02),
-            decoration: BoxDecoration(
-              color: Colors.teal.shade700.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: screenWidth * 0.0375,
-            ),
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
           ),
-          SizedBox(width: screenWidth * 0.025),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: screenWidth * 0.04,
-              ),
+          SizedBox(height: height * 0.025),
+          Text(
+            'Loading plans.......',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: width * 0.04,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEmptyState(double width, double height) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(width * 0.05),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: width * 0.16,
+              color: Colors.white70,
+            ),
+            SizedBox(height: height * 0.025),
+            Text(
+              'No subscription plans available',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: width * 0.045,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: height * 0.012),
+            Text(
+              'Please try again later',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: width * 0.035,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: height * 0.037),
+            ElevatedButton(
+              onPressed: () => controller.fetchPlans(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal.shade700,
+                padding: EdgeInsets.symmetric(
+                  horizontal: width * 0.075,
+                  vertical: height * 0.015,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Try Again',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: width * 0.04,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(double width, double height) {
+    return Container(
+      width: double.infinity,
+      height: height * 0.18,
+      margin: EdgeInsets.symmetric(horizontal: width * 0.02),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Image.asset(
+          AppImages.subcription_logo,
+          fit: BoxFit.fitHeight,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTitle(double width, bool isSmall) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: width * 0.04),
+      child: Text(
+        'Explorer Pro',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: isSmall ? width * 0.075 : width * 0.085,
+          letterSpacing: 1.2,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildSubtitle(double width, double height, bool isSmall) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: width * 0.04),
+      padding: EdgeInsets.symmetric(
+        horizontal: width * 0.05,
+        vertical: height * 0.01,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.teal.shade700.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'Start your 7-day free trial',
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: isSmall ? width * 0.04 : width * 0.045,
+          color: Colors.white,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildFeaturesList(double width, double height, bool isSmall) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: width * 0.08),
+      child: Column(
+        children: [
+          _buildFeatureRow('HR QuickScan™ News Highlights', Icons.newspaper, width, height, isSmall),
+          SizedBox(height: height * 0.012),
+          _buildFeatureRow('Expert AI HR Persona Suite', Icons.psychology, width, height, isSmall),
+          SizedBox(height: height * 0.012),
+          _buildFeatureRow('Priority Chat Access', Icons.chat_bubble_outline, width, height, isSmall),
+          SizedBox(height: height * 0.012),
+          _buildFeatureRow('Save & Revisit Conversations', Icons.save_outlined, width, height, isSmall),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(String text, IconData icon, double width, double height, bool isSmall) {
+    return Row(
+      children: [
+        Container(
+          padding: EdgeInsets.all(width * 0.02),
+          decoration: BoxDecoration(
+            color: Colors.teal.shade700.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: isSmall ? width * 0.04 : width * 0.045,
+          ),
+        ),
+        SizedBox(width: width * 0.03),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: isSmall ? width * 0.035 : width * 0.04,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -395,8 +344,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       String interval,
       String subtitle,
       bool isPopular,
-      double screenWidth,
-      double screenHeight,
+      double width,
+      double height,
+      bool isSmall,
       ) {
     final isSelected = controller.selectedPlan.value == planType;
 
@@ -405,13 +355,13 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       child: AnimatedContainer(
         duration: Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.05, vertical: 0),
+        margin: EdgeInsets.symmetric(horizontal: width * 0.04),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(screenWidth * 0.05),
+              padding: EdgeInsets.all(width * 0.04),
               decoration: BoxDecoration(
                 color: isSelected ? Colors.white : Colors.transparent,
                 border: Border.all(
@@ -433,25 +383,25 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Plan name
                       Flexible(
                         child: Text(
                           title,
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            fontSize: screenWidth * 0.0475,
+                            fontSize: isSmall ? width * 0.042 : width * 0.0475,
                             color: isSelected ? AppColors.primarycolor : Colors.white,
                           ),
                         ),
                       ),
-                      // Price
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
                             price,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              fontSize: screenWidth * 0.055,
+                              fontSize: isSmall ? width * 0.05 : width * 0.055,
                               color: isSelected ? AppColors.primarycolor : Colors.white,
                             ),
                           ),
@@ -459,7 +409,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                             interval,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              fontSize: screenWidth * 0.04,
+                              fontSize: isSmall ? width * 0.035 : width * 0.04,
                               color: isSelected ? AppColors.primarycolor : Colors.white,
                             ),
                           ),
@@ -467,33 +417,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                       )
                     ],
                   ),
-
-                  SizedBox(height: screenHeight * 0.015),
-
-                  // Subtitle
+                  SizedBox(height: height * 0.01),
                   Text(
                     subtitle,
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      fontSize: screenWidth * 0.0325,
+                      fontSize: isSmall ? width * 0.03 : width * 0.0325,
                       color: isSelected ? AppColors.primarycolor.withOpacity(0.8) : Colors.white.withOpacity(0.9),
                     ),
                   ),
                 ],
               ),
             ),
-
-            // Popular badge
             if (isPopular)
               Positioned(
-                top: -screenHeight * 0.015,
+                top: -height * 0.015,
                 left: 0,
                 right: 0,
                 child: Center(
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: screenWidth * 0.04,
-                      vertical: screenHeight * 0.0075,
+                      horizontal: width * 0.04,
+                      vertical: height * 0.0075,
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -512,7 +457,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                       'Most Popular',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: screenWidth * 0.03,
+                        fontSize: isSmall ? width * 0.028 : width * 0.03,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -525,12 +470,12 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildStartTrialButton(PaymentController controller, double screenWidth, double screenHeight) {
+  Widget _buildStartTrialButton(PaymentController controller, double width, double height, bool isSmall) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+      padding: EdgeInsets.symmetric(horizontal: width * 0.04),
       child: Container(
         width: double.infinity,
-        height: screenHeight * 0.08,
+        constraints: BoxConstraints(minHeight: height * 0.075),
         child: ElevatedButton(
           onPressed: controller.isLoading.value ? null : controller.startFreeTrial,
           style: ElevatedButton.styleFrom(
@@ -541,66 +486,54 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             ),
             elevation: 8,
             shadowColor: Colors.teal.shade700.withOpacity(0.4),
+            padding: EdgeInsets.symmetric(vertical: height * 0.015),
           ),
           child: controller.isLoading.value
               ? Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               SizedBox(
-                width: screenWidth * 0.05,
-                height: screenWidth * 0.05,
+                width: width * 0.05,
+                height: width * 0.05,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               ),
-              SizedBox(width: screenWidth * 0.03),
+              SizedBox(width: width * 0.03),
               Text(
                 'Loading...',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: screenWidth * 0.045,
+                  fontSize: isSmall ? width * 0.04 : width * 0.045,
                   color: Colors.white,
                 ),
               ),
             ],
           )
               : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(width: screenWidth * 0.02),
-                  Flexible(
-                    child: Text(
-                      controller.hasUsedTrial
-                          ? "Subscribe Now"
-                          : "Subscribe with 7 Days Free Trial",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: screenWidth * 0.045,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: screenHeight * 0.005),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
-                child: Text(
-                  'No commitment. Cancel anytime during trial.',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    fontSize: screenWidth * 0.0275,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                controller.hasUsedTrial
+                    ? "Subscribe Now"
+                    : "Subscribe with 7 Days Free Trial",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: isSmall ? width * 0.04 : width * 0.045,
+                  color: Colors.white,
                 ),
+              ),
+              SizedBox(height: height * 0.005),
+              Text(
+                'No commitment. Cancel anytime during trial.',
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: isSmall ? width * 0.025 : width * 0.0275,
+                  color: Colors.white.withOpacity(0.9),
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -609,7 +542,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildSkipTrialText(double screenWidth, double screenHeight) {
+  Widget _buildSkipTrialText(double width, double height, bool isSmall) {
     return GestureDetector(
       onTap: () async {
         await TokenStorage.saveSubscriptionCheckDone(true);
@@ -617,8 +550,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       },
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.05,
-          vertical: screenHeight * 0.01,
+          horizontal: width * 0.05,
+          vertical: height * 0.01,
         ),
         child: Text(
           'Skip trial, continue with limited free access.',
@@ -626,7 +559,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             decoration: TextDecoration.underline,
             decorationColor: Colors.white.withOpacity(0.8),
             fontWeight: FontWeight.w400,
-            fontSize: screenWidth * 0.035,
+            fontSize: isSmall ? width * 0.032 : width * 0.035,
             color: Colors.white.withOpacity(0.8),
           ),
           textAlign: TextAlign.center,
@@ -635,18 +568,15 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildRestorePurchasesButton(double screenWidth, double screenHeight) {
+  Widget _buildRestorePurchasesButton(double width, double height, bool isSmall) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+      padding: EdgeInsets.symmetric(horizontal: width * 0.04),
       child: TextButton(
         onPressed: () async {
           try {
             await controller.restorePurchases();
-
-            // Close loading dialog
             Get.back();
 
-            // Check if subscription was restored
             if (controller.hasActiveSubscription) {
               Get.snackbar(
                 'Success',
@@ -654,7 +584,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                 backgroundColor: Colors.green,
                 colorText: Colors.white,
                 snackPosition: SnackPosition.TOP,
-                margin: EdgeInsets.all(screenWidth * 0.04),
+                margin: EdgeInsets.all(width * 0.04),
                 duration: Duration(seconds: 3),
               );
 
@@ -667,31 +597,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                 backgroundColor: Colors.orange,
                 colorText: Colors.white,
                 snackPosition: SnackPosition.TOP,
-                margin: EdgeInsets.all(screenWidth * 0.04),
+                margin: EdgeInsets.all(width * 0.04),
                 duration: Duration(seconds: 3),
               );
             }
           } catch (error) {
-
             Get.snackbar(
               'Error',
               'Failed to restore purchases. Please try again.',
               backgroundColor: Colors.red,
               colorText: Colors.white,
               snackPosition: SnackPosition.TOP,
-              margin: EdgeInsets.all(screenWidth * 0.04),
+              margin: EdgeInsets.all(width * 0.04),
               duration: Duration(seconds: 3),
             );
           }
         },
         style: TextButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: screenHeight * 0.015),
+          padding: EdgeInsets.symmetric(vertical: height * 0.015),
         ),
         child: Text(
           'Restore Purchases',
           style: TextStyle(
             color: Colors.white,
-            fontSize: screenWidth * 0.03,
+            fontSize: isSmall ? width * 0.028 : width * 0.03,
             decoration: TextDecoration.underline,
             decorationColor: Colors.white,
           ),
@@ -700,11 +629,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildSubscriptionDisclosure(double screenWidth, double screenHeight) {
+  Widget _buildSubscriptionDisclosure(double width, double height, bool isSmall) {
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: screenWidth * 0.075,
-        vertical: screenHeight * 0.012,
+        horizontal: width * 0.06,
+        vertical: height * 0.01,
       ),
       child: Text(
         'Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. '
@@ -713,7 +642,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             'You can manage and cancel your subscription by going to your account settings in the App Store or Google Play after purchase.',
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: screenWidth * 0.025,
+          fontSize: isSmall ? width * 0.023 : width * 0.025,
           color: Colors.white.withOpacity(0.6),
           height: 1.4,
         ),
@@ -721,16 +650,14 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildPolicyLinks(double screenWidth, double screenHeight) {
+  Widget _buildPolicyLinks(double width, double height, bool isSmall) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.05),
+      padding: EdgeInsets.symmetric(horizontal: width * 0.04),
       child: Wrap(
         alignment: WrapAlignment.center,
         children: [
           GestureDetector(
-            onTap: () {
-              _launchUrl('https://www.hrlynx.ai/terms-conditions/');
-            },
+            onTap: () => _launchUrl('https://www.hrlynx.ai/terms-conditions/'),
             child: Text(
               'Terms of Use',
               style: TextStyle(
@@ -738,7 +665,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                 decorationColor: Colors.white.withOpacity(0.8),
                 color: Colors.white.withOpacity(0.8),
                 fontWeight: FontWeight.w400,
-                fontSize: screenWidth * 0.0325,
+                fontSize: isSmall ? width * 0.03 : width * 0.0325,
               ),
             ),
           ),
@@ -747,13 +674,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             style: TextStyle(
               fontWeight: FontWeight.w400,
               color: Colors.white.withOpacity(0.8),
-              fontSize: screenWidth * 0.0325,
+              fontSize: isSmall ? width * 0.03 : width * 0.0325,
             ),
           ),
           GestureDetector(
-            onTap: () {
-              _launchUrl('https://www.hrlynx.ai/privacy-policy/');
-            },
+            onTap: () => _launchUrl('https://www.hrlynx.ai/privacy-policy/'),
             child: Text(
               'Privacy Policy.',
               style: TextStyle(
@@ -761,7 +686,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                 decorationColor: Colors.white.withOpacity(0.8),
                 color: Colors.white.withOpacity(0.8),
                 fontWeight: FontWeight.w400,
-                fontSize: screenWidth * 0.0325,
+                fontSize: isSmall ? width * 0.03 : width * 0.0325,
               ),
             ),
           ),
@@ -770,9 +695,52 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
+  Widget _buildPaymentOverlay(double width, double height, bool isSmall) {
+    return Container(
+      color: Colors.black.withOpacity(0.8),
+      child: Center(
+        child: Container(
+          padding: EdgeInsets.all(width * 0.075),
+          margin: EdgeInsets.symmetric(horizontal: width * 0.1),
+          decoration: BoxDecoration(
+            color: AppColors.primarycolor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.teal.shade700, width: 2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.teal.shade700),
+              ),
+              SizedBox(height: height * 0.025),
+              Text(
+                'Processing payment...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isSmall ? width * 0.04 : width * 0.045,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: height * 0.012),
+              Text(
+                'Please wait',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: isSmall ? width * 0.032 : width * 0.035,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
-
     if (!await launchUrl(uri)) {
       throw Exception('Could not launch $url');
     }
