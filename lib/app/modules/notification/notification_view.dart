@@ -2,11 +2,86 @@ import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class NotificationView extends StatelessWidget {
+class NotificationView extends StatefulWidget {
   const NotificationView({Key? key}) : super(key: key);
 
   @override
+  State<NotificationView> createState() => _NotificationViewState();
+}
+
+class _NotificationViewState extends State<NotificationView> {
+  final RxBool isLoading = true.obs; // Start with loading true
+  final RxString errorMessage = ''.obs;
+  final RxBool hasError = false.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    print('🚀 NotificationView: initState called');
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    print('📡 Starting to load notifications...');
+
+    try {
+      isLoading.value = true;
+      hasError.value = false;
+      errorMessage.value = '';
+
+      print('🔄 Fetching notifications from service...');
+      final notificationService = Get.find<NotificationService>();
+      await notificationService.fetchAllNotifications();
+
+      print('✅ Notifications loaded successfully');
+
+    } on Exception catch (e) {
+      print('❌ Exception caught: $e');
+      _handleError(e);
+    } catch (e) {
+      print('❌ Error caught: $e');
+      _handleError(e);
+    } finally {
+      isLoading.value = false;
+      print('⏹️ Loading finished. hasError: ${hasError.value}, errorMessage: ${errorMessage.value}');
+    }
+  }
+
+  void _handleError(dynamic error) {
+    print('🔴 Handling error: $error');
+
+    hasError.value = true;
+    final errorStr = error.toString().toLowerCase();
+
+    if (errorStr.contains('network') ||
+        errorStr.contains('socket') ||
+        errorStr.contains('failed host lookup') ||
+        errorStr.contains('network_error')) {
+      errorMessage.value = 'No internet connection';
+      print('📶 Network error detected');
+    } else if (errorStr.contains('server') ||
+        errorStr.contains('503') ||
+        errorStr.contains('500') ||
+        errorStr.contains('server_error')) {
+      errorMessage.value = 'Server is temporarily down';
+      print('🌐 Server error detected');
+    } else if (errorStr.contains('session') || errorStr.contains('401')) {
+      errorMessage.value = 'Session expired';
+      print('🔐 Session error detected');
+    } else if (errorStr.contains('timeout')) {
+      errorMessage.value = 'Connection timeout';
+      print('⏱️ Timeout error detected');
+    } else {
+      errorMessage.value = 'Something went wrong';
+      print('⚠️ Generic error detected');
+    }
+
+    print('📝 Final error message: ${errorMessage.value}');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    print('🎨 Building NotificationView');
     final notificationService = Get.find<NotificationService>();
 
     return Scaffold(
@@ -24,94 +99,142 @@ class NotificationView extends StatelessWidget {
         backgroundColor: Colors.white,
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Obx(() => Column(
+      body: Obx(() {
+        print('🔄 Rebuilding with: isLoading=${isLoading.value}, hasError=${hasError.value}');
+
+        // Show loading indicator
+        if (isLoading.value) {
+          print('⏳ Showing loading indicator');
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'All Notifications',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (notificationService.unreadCount.value > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${notificationService.unreadCount.value} unread',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                  ],
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text(
+                  'Loading notifications...',
+                  style: TextStyle(color: Colors.grey),
                 ),
-                if (notificationService.connectionStatus.value != 'Connected')
-                  Container(
-                    margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.orange[100],
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.info,
-                          size: 16,
-                          color: Colors.orange[700],
+              ],
+            ),
+          );
+        }
+
+        // Show error screen
+        if (hasError.value) {
+          print('❌ Showing error view: ${errorMessage.value}');
+          return ErrorView(
+            errorMessage: errorMessage.value,
+            onRetry: () {
+              print('🔄 Retry button pressed');
+              _loadNotifications();
+            },
+            onGoBack: () {
+              print('⬅️ Go back button pressed');
+              Get.back();
+            },
+          );
+        }
+
+        print('📋 Showing notifications list');
+        // Show notifications list
+        return Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'All Notifications',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          notificationService.connectionStatus.value,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.orange[700],
-                            fontWeight: FontWeight.w500,
+                      ),
+                      const Spacer(),
+                      if (notificationService.unreadCount.value > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${notificationService.unreadCount.value} unread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
-              ],
-            )),
-          ),
+                  if (notificationService.connectionStatus.value != 'Connected')
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.orange[100],
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.info,
+                            size: 16,
+                            color: Colors.orange[700],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            notificationService.connectionStatus.value,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange[700],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
 
-          // Notifications list
-          Expanded(
-            child: Obx(() {
-              if (notificationService.notifications.isEmpty) {
-                return const EmptyNotificationsView();
-              }
-
-              return RefreshIndicator(
+            // Notifications list
+            Expanded(
+              child: notificationService.notifications.isEmpty
+                  ? const EmptyNotificationsView()
+                  : RefreshIndicator(
                 onRefresh: () async {
                   try {
                     print('🔄 User triggered refresh');
+                    hasError.value = false;
                     await notificationService.fetchAllNotifications();
                     print('✅ Refresh completed');
                   } catch (e) {
                     print('❌ Error refreshing notifications: $e');
+                    _handleError(e);
+
                     Get.snackbar(
-                      'Error',
-                      'Failed to refresh notifications',
+                      _getErrorTitle(e),
+                      _getErrorMessage(e),
                       snackPosition: SnackPosition.TOP,
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                      duration: const Duration(seconds: 3),
+                      icon: Icon(
+                        _getErrorIcon(e),
+                        color: Colors.white,
+                      ),
                     );
                   }
                 },
@@ -119,28 +242,60 @@ class NotificationView extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   itemCount: notificationService.notifications.length,
                   itemBuilder: (context, index) {
-                    final notification = notificationService.notifications[index];
+                    final notification =
+                    notificationService.notifications[index];
 
                     return NotificationTile(
-                      key: ValueKey(notification.id), // ✅ ADD UNIQUE KEY
+                      key: ValueKey(notification.id),
                       notification: notification,
-                      onTap: () => _handleNotificationTap(context, notification, notificationService),
+                      onTap: () => _handleNotificationTap(
+                          context, notification, notificationService),
                     );
                   },
                 ),
-              );
-            }),
-          ),
-        ],
-      ),
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 
-  Future<void> _handleNotificationTap(
-      BuildContext context,
-      NotificationModel notification,
-      NotificationService notificationService
-      ) async {
+  String _getErrorTitle(dynamic error) {
+    final errorStr = error.toString();
+    if (errorStr.contains('NETWORK_ERROR')) {
+      return 'No Internet';
+    } else if (errorStr.contains('SERVER_ERROR')) {
+      return 'Server Error';
+    } else {
+      return 'Error';
+    }
+  }
+
+  String _getErrorMessage(dynamic error) {
+    final errorStr = error.toString();
+    if (errorStr.contains('NETWORK_ERROR')) {
+      return 'Please check your internet connection';
+    } else if (errorStr.contains('SERVER_ERROR')) {
+      return 'Server is temporarily unavailable';
+    } else {
+      return 'Failed to refresh notifications';
+    }
+  }
+
+  IconData _getErrorIcon(dynamic error) {
+    final errorStr = error.toString();
+    if (errorStr.contains('NETWORK_ERROR')) {
+      return Icons.wifi_off;
+    } else if (errorStr.contains('SERVER_ERROR')) {
+      return Icons.cloud_off;
+    } else {
+      return Icons.error_outline;
+    }
+  }
+
+  Future<void> _handleNotificationTap(BuildContext context,
+      NotificationModel notification, NotificationService notificationService) async {
     try {
       print('🎯 Notification tapped: ${notification.id} - ${notification.title}');
 
@@ -155,25 +310,40 @@ class NotificationView extends StatelessWidget {
       }
 
       _showNotificationDetail(context, notification);
-
     } catch (e, stackTrace) {
       print('❌ Error handling notification tap: $e');
       print('📍 Stack trace: $stackTrace');
 
       if (context.mounted) {
+        final errorStr = e.toString();
+        String errorMessage = 'Failed to open notification';
+
+        if (errorStr.contains('NETWORK_ERROR')) {
+          errorMessage = 'No internet connection';
+        } else if (errorStr.contains('SERVER_ERROR')) {
+          errorMessage = 'Server is temporarily down';
+        }
+
         Get.snackbar(
           'Error',
-          'Failed to open notification',
+          errorMessage,
           snackPosition: SnackPosition.TOP,
           backgroundColor: Colors.red,
           colorText: Colors.white,
           duration: const Duration(seconds: 3),
+          icon: Icon(
+            errorStr.contains('NETWORK_ERROR')
+                ? Icons.wifi_off
+                : Icons.cloud_off,
+            color: Colors.white,
+          ),
         );
       }
     }
   }
 
-  void _showNotificationDetail(BuildContext context, NotificationModel notification) {
+  void _showNotificationDetail(
+      BuildContext context, NotificationModel notification) {
     try {
       print('📱 Showing notification detail for: ${notification.id}');
 
@@ -181,7 +351,8 @@ class NotificationView extends StatelessWidget {
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (context) => NotificationDetailSheet(notification: notification),
+        builder: (context) =>
+            NotificationDetailSheet(notification: notification),
       );
     } catch (e) {
       print('❌ Error showing notification detail: $e');
@@ -200,6 +371,157 @@ class NotificationView extends StatelessWidget {
         ),
       );
     }
+  }
+}
+
+// ✅ Error View Widget with Enhanced Design
+class ErrorView extends StatelessWidget {
+  final String errorMessage;
+  final VoidCallback onRetry;
+  final VoidCallback onGoBack;
+
+  const ErrorView({
+    Key? key,
+    required this.errorMessage,
+    required this.onRetry,
+    required this.onGoBack,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    print('🎨 Building ErrorView with message: $errorMessage');
+
+    final isNetworkError = errorMessage.contains('internet') ||
+        errorMessage.contains('connection');
+    final isServerError = errorMessage.contains('Server') ||
+        errorMessage.contains('down');
+
+    return Container(
+      color: Colors.grey[50],
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Error Icon
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: isNetworkError
+                      ? Colors.orange[100]
+                      : isServerError
+                      ? Colors.red[100]
+                      : Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isNetworkError
+                      ? Icons.wifi_off_rounded
+                      : isServerError
+                      ? Icons.cloud_off_rounded
+                      : Icons.error_outline_rounded,
+                  size: 60,
+                  color: isNetworkError
+                      ? Colors.orange[600]
+                      : isServerError
+                      ? Colors.red[600]
+                      : Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Error Title
+              Text(
+                isNetworkError
+                    ? 'No Internet Connection'
+                    : isServerError
+                    ? 'Server Down'
+                    : 'Something Went Wrong',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey[800],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+
+              // Error Message
+              Text(
+                isNetworkError
+                    ? 'Please check your internet connection\nand try again.'
+                    : isServerError
+                    ? 'The server is temporarily unavailable.\nPlease try again later.'
+                    : errorMessage,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Action Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Go Back Button
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      print('⬅️ Go Back pressed');
+                      onGoBack();
+                    },
+                    icon: const Icon(Icons.arrow_back, size: 20),
+                    label: const Text('Go Back'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey[700],
+                      side: BorderSide(color: Colors.grey[300]!, width: 1.5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Retry Button
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      print('🔄 Retry pressed');
+                      onRetry();
+                    },
+                    icon: const Icon(Icons.refresh, size: 20),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isNetworkError
+                          ? Colors.orange
+                          : isServerError
+                          ? Colors.red
+                          : Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -263,15 +585,18 @@ class NotificationTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 16),
-
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        notification.title.isNotEmpty ? notification.title : 'No Title',
+                        notification.title.isNotEmpty
+                            ? notification.title
+                            : 'No Title',
                         style: TextStyle(
-                          fontWeight: notification.isRead ? FontWeight.w500 : FontWeight.w600,
+                          fontWeight: notification.isRead
+                              ? FontWeight.w500
+                              : FontWeight.w600,
                           fontSize: 16,
                           color: Colors.black87,
                         ),
@@ -279,9 +604,10 @@ class NotificationTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-
                       Text(
-                        notification.message.isNotEmpty ? notification.message : 'No message content',
+                        notification.message.isNotEmpty
+                            ? notification.message
+                            : 'No message content',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -291,7 +617,6 @@ class NotificationTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 8),
-
                       Row(
                         children: [
                           Icon(
@@ -307,13 +632,11 @@ class NotificationTile extends StatelessWidget {
                               color: Colors.grey[500],
                             ),
                           ),
-                          // ✅ ID section removed - only time shown
                         ],
                       ),
                     ],
                   ),
                 ),
-
                 if (!notification.isRead)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
@@ -411,7 +734,6 @@ class NotificationDetailSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -435,7 +757,9 @@ class NotificationDetailSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        notification.title.isNotEmpty ? notification.title : 'No Title',
+                        notification.title.isNotEmpty
+                            ? notification.title
+                            : 'No Title',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
@@ -468,9 +792,7 @@ class NotificationDetailSheet extends StatelessWidget {
               ],
             ),
           ),
-
           const Divider(height: 1),
-
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -478,18 +800,25 @@ class NotificationDetailSheet extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: notification.isRead ? Colors.green[100] : Colors.orange[100],
+                      color: notification.isRead
+                          ? Colors.green[100]
+                          : Colors.orange[100],
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          notification.isRead ? Icons.check_circle : Icons.circle,
+                          notification.isRead
+                              ? Icons.check_circle
+                              : Icons.circle,
                           size: 16,
-                          color: notification.isRead ? Colors.green[700] : Colors.orange[700],
+                          color: notification.isRead
+                              ? Colors.green[700]
+                              : Colors.orange[700],
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -497,15 +826,15 @@ class NotificationDetailSheet extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: notification.isRead ? Colors.green[700] : Colors.orange[700],
+                            color: notification.isRead
+                                ? Colors.green[700]
+                                : Colors.orange[700],
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
-
                   const Text(
                     'Message',
                     style: TextStyle(
@@ -524,7 +853,9 @@ class NotificationDetailSheet extends StatelessWidget {
                       border: Border.all(color: Colors.grey[200]!),
                     ),
                     child: Text(
-                      notification.message.isNotEmpty ? notification.message : 'No message content available',
+                      notification.message.isNotEmpty
+                          ? notification.message
+                          : 'No message content available',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[700],
@@ -532,7 +863,6 @@ class NotificationDetailSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
                 ],
               ),

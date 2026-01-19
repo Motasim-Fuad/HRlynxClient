@@ -1,11 +1,16 @@
+// ==========================================
+// 1️⃣ UPDATED: lib/app/api_servies/neteork_api_services.dart
+// Better error messages for different scenarios
+// ==========================================
 import 'dart:convert';
 import 'dart:io';
 import 'package:HRlynx/app/api_servies/token.dart';
+import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
+import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' show MediaType;
 
 class NetworkApiServices {
-  /// ✅ Get appropriate token based on tokenType
   static Future<String?> getToken(String tokenType) async {
     switch (tokenType) {
       case 'otp':
@@ -18,7 +23,6 @@ class NetworkApiServices {
     }
   }
 
-  /// ✅ Build headers with optional auth
   static Future<Map<String, String>> getHeaders({
     bool withAuth = true,
     String tokenType = 'login',
@@ -44,9 +48,17 @@ class NetworkApiServices {
         bool withAuth = true,
         String tokenType = 'login',
       }) async {
-    final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
-    final response = await http.get(Uri.parse(url), headers: headers);
-    return _handleResponse(response);
+    try {
+      final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
+      final response = await http.get(Uri.parse(url), headers: headers);
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception('NETWORK_ERROR');
+    } on HttpException {
+      throw Exception('NETWORK_ERROR');
+    } catch (e) {
+      rethrow;
+    }
   }
 
   /// POST request
@@ -56,10 +68,21 @@ class NetworkApiServices {
         bool withAuth = true,
         String tokenType = 'login',
       }) async {
-    final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
-    final response =
-    await http.post(Uri.parse(url), body: jsonEncode(body), headers: headers);
-    return _handleResponse(response);
+    try {
+      final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
+      final response = await http.post(
+          Uri.parse(url),
+          body: jsonEncode(body),
+          headers: headers
+      );
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception('NETWORK_ERROR');
+    } on HttpException {
+      throw Exception('NETWORK_ERROR');
+    } catch (e) {
+      rethrow;
+    }
   }
 
   /// PUT request
@@ -69,10 +92,21 @@ class NetworkApiServices {
         bool withAuth = true,
         String tokenType = 'login',
       }) async {
-    final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
-    final response =
-    await http.put(Uri.parse(url), body: jsonEncode(body), headers: headers);
-    return _handleResponse(response);
+    try {
+      final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
+      final response = await http.put(
+          Uri.parse(url),
+          body: jsonEncode(body),
+          headers: headers
+      );
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception('NETWORK_ERROR');
+    } on HttpException {
+      throw Exception('NETWORK_ERROR');
+    } catch (e) {
+      rethrow;
+    }
   }
 
   /// PATCH request
@@ -82,10 +116,21 @@ class NetworkApiServices {
         bool withAuth = true,
         String tokenType = 'login',
       }) async {
-    final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
-    final response =
-    await http.patch(Uri.parse(url), body: jsonEncode(body), headers: headers);
-    return _handleResponse(response);
+    try {
+      final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
+      final response = await http.patch(
+          Uri.parse(url),
+          body: jsonEncode(body),
+          headers: headers
+      );
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception('NETWORK_ERROR');
+    } on HttpException {
+      throw Exception('NETWORK_ERROR');
+    } catch (e) {
+      rethrow;
+    }
   }
 
   /// DELETE request
@@ -95,20 +140,29 @@ class NetworkApiServices {
         bool withAuth = true,
         String tokenType = 'login',
       }) async {
-    final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
+    try {
+      final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
 
-    print('🔍 DELETE URL: $url');
-    print('📦 DELETE Body: ${body != null ? jsonEncode(body) : "null"}');
-    print('🔑 DELETE Headers: $headers');
+      print('🔍 DELETE URL: $url');
+      print('📦 DELETE Body: ${body != null ? jsonEncode(body) : "null"}');
+      print('🔑 DELETE Headers: $headers');
 
-    final response = await http.delete(
-      Uri.parse(url),
-      headers: headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
-    return _handleResponse(response);
+      final response = await http.delete(
+        Uri.parse(url),
+        headers: headers,
+        body: body != null ? jsonEncode(body) : null,
+      );
+      return _handleResponse(response);
+    } on SocketException {
+      throw Exception('NETWORK_ERROR');
+    } on HttpException {
+      throw Exception('NETWORK_ERROR');
+    } catch (e) {
+      rethrow;
+    }
   }
-  // NEW METHOD: For multipart data with file upload
+
+  /// Multipart request
   static Future<dynamic> postMultipartApi(
       String url,
       Map<String, dynamic> fields, {
@@ -124,33 +178,23 @@ class NetworkApiServices {
 
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
-      // Add authorization header if required
       if (withAuth) {
-        String? token;
-        if (tokenType == 'login') {
-          token = await TokenStorage.getLoginAccessToken();
-        } else {
-          token = await TokenStorage.getLoginAccessToken();
-        }
-
+        String? token = await TokenStorage.getLoginAccessToken();
         if (token != null && token.isNotEmpty) {
           request.headers['Authorization'] = 'Bearer $token';
         }
       }
 
-      // Add text fields
       fields.forEach((key, value) {
         if (value != null) {
           request.fields[key] = value.toString();
         }
       });
 
-      // Add image file if provided
       if (imageFile != null && imageFile.existsSync()) {
         String fileName = imageFile.path.split('/').last;
         String fileExtension = fileName.split('.').last.toLowerCase();
 
-        // Determine MIME type based on file extension
         MediaType mediaType;
         switch (fileExtension) {
           case 'jpg':
@@ -167,7 +211,7 @@ class NetworkApiServices {
             mediaType = MediaType('image', 'webp');
             break;
           default:
-            mediaType = MediaType('image', 'jpeg'); // default
+            mediaType = MediaType('image', 'jpeg');
         }
 
         var multipartFile = await http.MultipartFile.fromPath(
@@ -197,13 +241,17 @@ class NetworkApiServices {
         print('❌ Multipart Error: $errorData');
         throw Exception('API Error: ${errorData['message'] ?? 'Unknown error'}');
       }
+    } on SocketException {
+      throw Exception('NETWORK_ERROR');
+    } on HttpException {
+      throw Exception('NETWORK_ERROR');
     } catch (e) {
       print('❌ Multipart Exception: $e');
       rethrow;
     }
   }
 
-  /// Add retry mechanism for CloudFlare issues
+  /// Retry mechanism for CloudFlare issues
   static Future<dynamic> getApiWithRetry(
       String url, {
         bool withAuth = true,
@@ -216,14 +264,19 @@ class NetworkApiServices {
         final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
         final response = await http.get(Uri.parse(url), headers: headers);
         return _handleResponse(response);
+      } on SocketException {
+        if (attempt == maxRetries) {
+          throw Exception('NETWORK_ERROR');
+        }
+        print('⏳ Network error, retrying in ${retryDelay.inSeconds} seconds...');
+        await Future.delayed(retryDelay);
       } catch (e) {
         print('🔄 Attempt $attempt failed: $e');
 
         if (attempt == maxRetries) {
-          rethrow; // Last attempt, throw the error
+          rethrow;
         }
 
-        // Only retry for CloudFlare/network issues
         if (e.toString().contains('CloudFlare') ||
             e.toString().contains('523') ||
             e.toString().contains('tunnel') ||
@@ -231,18 +284,47 @@ class NetworkApiServices {
           print('⏳ Retrying in ${retryDelay.inSeconds} seconds...');
           await Future.delayed(retryDelay);
         } else {
-          rethrow; // Don't retry for other errors
+          rethrow;
         }
       }
     }
     throw Exception('Max retries reached');
   }
 
+  /// ✅ NEW: Force logout and navigate to login
+  static Future<void> _handleUnauthorized() async {
+    try {
+      print('🚨 401 Unauthorized - Forcing logout...');
+
+      await TokenStorage.clearAllTokens();
+      await TokenStorage.clearAllPersonaSessions();
+
+      Get.snackbar(
+        "Session Expired",
+        "Your session has expired. Please login again.",
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: 3),
+      );
+
+      Get.offAll(() => LogInView());
+
+    } catch (e) {
+      print('❌ Error during forced logout: $e');
+    }
+  }
+
+  /// ✅ UPDATED: Handle response with proper error messages
   static dynamic _handleResponse(http.Response response) {
     print('🔎 Response Code: ${response.statusCode}');
     print('📦 Raw Response Body: ${response.body}');
 
     try {
+      // ✅ Handle 401 Unauthorized - AUTO LOGOUT
+      if (response.statusCode == 401) {
+        Future.microtask(() => _handleUnauthorized());
+        throw Exception('Session expired. Please login again.');
+      }
+
       // Handle successful responses (200-299)
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) {
@@ -250,62 +332,39 @@ class NetworkApiServices {
         }
         return jsonDecode(response.body);
       }
+
       if (response.statusCode == 400) {
         throw Exception('Validation Error or you give common password when you create account');
       }
-      // Handle 401 Unauthorized
-      if (response.statusCode == 401) {
-        throw Exception('Invalid email or password.');
-      }
 
-      // ✅ FIXED: Handle 429 - Rate Limit/Quota Exceeded
+      // ✅ Handle 429 - Rate Limit
       if (response.statusCode == 429) {
-        String errorMessage = 'AI usage limit exceeded. Please check your plan or billing.';
-
-        // Try to get more specific error message from response
-        if (response.body.isNotEmpty) {
-          try {
-            final responseBody = jsonDecode(response.body);
-
-            // Handle OpenAI style error format
-            if (responseBody['error'] != null) {
-              final error = responseBody['error'];
-              if (error is Map) {
-                errorMessage = error['message'] ?? errorMessage;
-              } else if (error is String) {
-                errorMessage = error;
-              }
-            }
-            // Handle simple message format
-            else if (responseBody['message'] != null) {
-              errorMessage = responseBody['message'];
-            }
-          } catch (e) {
-            print('Could not parse 429 error details: $e');
-          }
-        }
-
-        throw Exception(errorMessage);
+        throw Exception('AI usage limit exceeded. Please check your plan or billing.');
       }
 
-      // Handle 500 Internal Server Error
+      // ✅ Handle 500 Internal Server Error
       if (response.statusCode == 500) {
-        throw Exception('Server error. Please try again later!');
+        throw Exception('SERVER_ERROR');
       }
 
-      // Handle CloudFlare specific errors
+      // ✅ Handle 503 Service Unavailable
+      if (response.statusCode == 503) {
+        throw Exception('SERVER_ERROR');
+      }
+
+      // ✅ Handle CloudFlare specific errors
       if (response.statusCode == 523) {
-        throw Exception('Server temporarily unavailable (CloudFlare tunnel down). Please try again later.');
+        throw Exception('SERVER_ERROR');
       }
 
       if (response.statusCode >= 520 && response.statusCode <= 530) {
-        throw Exception('CloudFlare error (${response.statusCode}). Please check your internet connection and try again.');
+        throw Exception('SERVER_ERROR');
       }
 
       // Check if response is HTML (CloudFlare error page)
       if (response.body.trim().startsWith('<!DOCTYPE html>') ||
           response.body.trim().startsWith('<html')) {
-        throw Exception('Server error: Received HTML instead of JSON. Please try again later.');
+        throw Exception('SERVER_ERROR');
       }
 
       // Handle other error responses
@@ -318,8 +377,7 @@ class NetworkApiServices {
               'Unknown error (${response.statusCode})';
           throw Exception('API Error: $errorMsg');
         } catch (jsonError) {
-          // If JSON parsing fails, it might be HTML error page
-          throw Exception('Server error (${response.statusCode}). Please try again later.');
+          throw Exception('SERVER_ERROR');
         }
       } else {
         throw Exception('API Error: ${response.statusCode} - ${response.reasonPhrase}');
@@ -332,12 +390,10 @@ class NetworkApiServices {
     }
   }
 
-  /// Helper method for handling common HTTP status codes
   static bool isSuccessResponse(int statusCode) {
     return statusCode >= 200 && statusCode < 300;
   }
 
-  /// Helper method to check if token is expired based on response
   static bool isTokenExpiredResponse(http.Response response) {
     return response.statusCode == 401 ||
         (response.body.contains('token') && response.body.contains('expired'));

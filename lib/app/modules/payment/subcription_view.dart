@@ -35,7 +35,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     _slideAnimation = Tween<Offset>(
       begin: Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
+    ).animate(
+        CurvedAnimation(parent: _animationController, curve: Curves.easeOut));
 
     _animationController.forward();
   }
@@ -48,19 +49,24 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery
+        .of(context)
+        .size;
     final width = size.width;
     final height = size.height;
 
-    // Responsive breakpoints
     final bool isSmallScreen = width < 360;
-    final bool isMediumScreen = width >= 360 && width < 400;
-    final bool isLargeScreen = width >= 400;
 
     return Scaffold(
       backgroundColor: AppColors.primarycolor,
       body: SafeArea(
         child: Obx(() {
+          // ✅ SHOW ERROR UI FIRST
+          if (controller.hasError.value) {
+            return _buildErrorUI(width, height);
+          }
+
+          // Show loading state
           if (controller.isLoading.value && controller.plans.isEmpty) {
             return _buildLoadingState(width, height);
           }
@@ -75,8 +81,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             return _buildEmptyState(width, height);
           }
 
-          final yearlyPlan = paidPlans.firstWhereOrNull((plan) => plan.interval == 'year');
-          final monthlyPlan = paidPlans.firstWhereOrNull((plan) => plan.interval == 'month');
+          final yearlyPlan = paidPlans.firstWhereOrNull((plan) =>
+          plan.interval == 'year');
+          final monthlyPlan = paidPlans.firstWhereOrNull((plan) =>
+          plan.interval == 'month');
 
           return Stack(
             children: [
@@ -127,15 +135,18 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                           ),
                         ],
                         SizedBox(height: height * 0.025),
-                        _buildStartTrialButton(controller, width, height, isSmallScreen),
+                        _buildStartTrialButton(controller, width, height,
+                            isSmallScreen),
                         SizedBox(height: height * 0.02),
                         _buildSkipTrialText(width, height, isSmallScreen),
                         SizedBox(height: height * 0.02),
                         _buildPolicyLinks(width, height, isSmallScreen),
                         SizedBox(height: height * 0.025),
-                        _buildRestorePurchasesButton(width, height, isSmallScreen),
+                        _buildRestorePurchasesButton(width, height,
+                            isSmallScreen),
                         SizedBox(height: height * 0.015),
-                        _buildSubscriptionDisclosure(width, height, isSmallScreen),
+                        _buildSubscriptionDisclosure(width, height,
+                            isSmallScreen),
                         SizedBox(height: height * 0.02),
                       ],
                     ),
@@ -147,6 +158,160 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             ],
           );
         }),
+      ),
+    );
+  }
+
+  // ✅ ERROR UI WIDGET
+  Widget _buildErrorUI(double width, double height) {
+    final errorType = controller.errorType.value;
+    final errorMessage = controller.errorMessage.value;
+
+    final isNetworkError = errorType == 'network';
+    final isServerError = errorType == 'server';
+
+    return Container(
+      color: AppColors.primarycolor,
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(width * 0.05),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Error Icon
+              Container(
+                width: width * 0.3,
+                height: width * 0.3,
+                decoration: BoxDecoration(
+                  color: isNetworkError
+                      ? Colors.orange.withOpacity(0.2)
+                      : isServerError
+                      ? Colors.red.withOpacity(0.2)
+                      : Colors.grey.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isNetworkError
+                      ? Icons.wifi_off_rounded
+                      : isServerError
+                      ? Icons.cloud_off_rounded
+                      : Icons.error_outline_rounded,
+                  size: width * 0.15,
+                  color: isNetworkError
+                      ? Colors.orange
+                      : isServerError
+                      ? Colors.red
+                      : Colors.grey[300],
+                ),
+              ),
+              SizedBox(height: height * 0.03),
+
+              // Error Title
+              Text(
+                isNetworkError
+                    ? 'No Internet Connection'
+                    : isServerError
+                    ? 'Server Down'
+                    : 'Something Went Wrong',
+                style: TextStyle(
+                  fontSize: width * 0.06,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: height * 0.015),
+
+              // Error Message
+              Text(
+                isNetworkError
+                    ? 'Please check your internet connection\nand try again.'
+                    : isServerError
+                    ? 'The server is temporarily unavailable.\nPlease try again later.'
+                    : errorMessage,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: width * 0.04,
+                  color: Colors.white70,
+                  height: 1.5,
+                ),
+              ),
+              SizedBox(height: height * 0.04),
+
+              // Action Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Go Back Button
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Get.back();
+                    },
+                    icon: Icon(Icons.arrow_back, size: width * 0.05),
+                    label: Text('Go Back'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(
+                          color: Colors.white.withOpacity(0.7), width: 2),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: width * 0.05,
+                        vertical: height * 0.015,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: width * 0.03),
+
+                  // Retry Button
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      controller.clearError();
+                      controller.fetchPlans();
+                    },
+                    icon: Icon(Icons.refresh, size: width * 0.05),
+                    label: Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isNetworkError
+                          ? Colors.orange
+                          : isServerError
+                          ? Colors.red
+                          : Colors.teal.shade700,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: width * 0.06,
+                        vertical: height * 0.015,
+                      ),
+                      elevation: 5,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: height * 0.03),
+
+              // Skip to Free Access
+              TextButton(
+                onPressed: () async {
+                  await TokenStorage.saveSubscriptionCheckDone(true);
+                  Get.offAll(() => MainScreen());
+                },
+                child: Text(
+                  'Skip and continue with free access',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: width * 0.035,
+                    decoration: TextDecoration.underline,
+                    decorationColor: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -294,19 +459,28 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       padding: EdgeInsets.symmetric(horizontal: width * 0.08),
       child: Column(
         children: [
-          _buildFeatureRow('HR QuickScan™ News Highlights', Icons.newspaper, width, height, isSmall),
+          _buildFeatureRow(
+              'HR QuickScan™ News Highlights', Icons.newspaper, width, height,
+              isSmall),
           SizedBox(height: height * 0.012),
-          _buildFeatureRow('Expert AI HR Persona Suite', Icons.psychology, width, height, isSmall),
+          _buildFeatureRow(
+              'Expert AI HR Persona Suite', Icons.psychology, width, height,
+              isSmall),
           SizedBox(height: height * 0.012),
-          _buildFeatureRow('Priority Chat Access', Icons.chat_bubble_outline, width, height, isSmall),
+          _buildFeatureRow(
+              'Priority Chat Access', Icons.chat_bubble_outline, width, height,
+              isSmall),
           SizedBox(height: height * 0.012),
-          _buildFeatureRow('Save & Revisit Conversations', Icons.save_outlined, width, height, isSmall),
+          _buildFeatureRow(
+              'Save & Revisit Conversations', Icons.save_outlined, width,
+              height, isSmall),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureRow(String text, IconData icon, double width, double height, bool isSmall) {
+  Widget _buildFeatureRow(String text, IconData icon, double width,
+      double height, bool isSmall) {
     return Row(
       children: [
         Container(
@@ -335,8 +509,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildPlanCard(
-      BuildContext context,
+  Widget _buildPlanCard(BuildContext context,
       PaymentController controller,
       String planType,
       String title,
@@ -346,8 +519,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       bool isPopular,
       double width,
       double height,
-      bool isSmall,
-      ) {
+      bool isSmall,) {
     final isSelected = controller.selectedPlan.value == planType;
 
     return GestureDetector(
@@ -366,7 +538,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                 color: isSelected ? Colors.white : Colors.transparent,
                 border: Border.all(
                   width: isSelected ? 3 : 2,
-                  color: isSelected ? Colors.teal.shade700 : Colors.white.withOpacity(0.7),
+                  color: isSelected ? Colors.teal.shade700 : Colors.white
+                      .withOpacity(0.7),
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: isSelected ? [
@@ -389,7 +562,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             fontSize: isSmall ? width * 0.042 : width * 0.0475,
-                            color: isSelected ? AppColors.primarycolor : Colors.white,
+                            color: isSelected ? AppColors.primarycolor : Colors
+                                .white,
                           ),
                         ),
                       ),
@@ -402,7 +576,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: isSmall ? width * 0.05 : width * 0.055,
-                              color: isSelected ? AppColors.primarycolor : Colors.white,
+                              color: isSelected
+                                  ? AppColors.primarycolor
+                                  : Colors.white,
                             ),
                           ),
                           Text(
@@ -410,7 +586,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: isSmall ? width * 0.035 : width * 0.04,
-                              color: isSelected ? AppColors.primarycolor : Colors.white,
+                              color: isSelected
+                                  ? AppColors.primarycolor
+                                  : Colors.white,
                             ),
                           ),
                         ],
@@ -423,7 +601,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
                       fontSize: isSmall ? width * 0.03 : width * 0.0325,
-                      color: isSelected ? AppColors.primarycolor.withOpacity(0.8) : Colors.white.withOpacity(0.9),
+                      color: isSelected ? AppColors.primarycolor.withOpacity(
+                          0.8) : Colors.white.withOpacity(0.9),
                     ),
                   ),
                 ],
@@ -470,14 +649,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildStartTrialButton(PaymentController controller, double width, double height, bool isSmall) {
+  Widget _buildStartTrialButton(PaymentController controller, double width,
+      double height, bool isSmall) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: width * 0.04),
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(minHeight: height * 0.075),
         child: ElevatedButton(
-          onPressed: controller.isLoading.value ? null : controller.startFreeTrial,
+          onPressed: controller.isLoading.value ? null : controller
+              .startFreeTrial,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.teal.shade700,
             disabledBackgroundColor: Colors.teal.shade700.withOpacity(0.6),
@@ -568,7 +749,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildRestorePurchasesButton(double width, double height, bool isSmall) {
+  Widget _buildRestorePurchasesButton(double width, double height,
+      bool isSmall) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: width * 0.04),
       child: TextButton(
@@ -629,7 +811,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildSubscriptionDisclosure(double width, double height, bool isSmall) {
+  Widget _buildSubscriptionDisclosure(double width, double height,
+      bool isSmall) {
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: width * 0.06,
@@ -695,6 +878,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
+
   Widget _buildPaymentOverlay(double width, double height, bool isSmall) {
     return Container(
       color: Colors.black.withOpacity(0.8),
@@ -745,4 +929,5 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       throw Exception('Could not launch $url');
     }
   }
+
 }

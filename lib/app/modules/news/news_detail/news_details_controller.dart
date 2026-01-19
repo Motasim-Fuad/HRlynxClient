@@ -20,7 +20,11 @@ class NewsDetailsViewModel extends GetxController {
   final RxString error = ''.obs;
   final RxInt selectedTagIndex = RxInt(-1);
 
+  // ✅ NEW: Error type tracking
+  final RxString errorType = ''.obs;
+
   NewsDetailsModel? _cachedArticle;
+  int? _currentArticleId; // ✅ Store article ID for retry
 
   @override
   void onInit() {
@@ -29,9 +33,11 @@ class NewsDetailsViewModel extends GetxController {
   }
 
   void initializeArticle(int articleId) {
+    _currentArticleId = articleId; // ✅ Save for retry
     fetchArticleDetails(articleId);
   }
 
+  /// ✅ UPDATED: Better error handling
   Future<void> fetchArticleDetails(int articleId) async {
     try {
       if (_cachedArticle != null) {
@@ -49,6 +55,7 @@ class NewsDetailsViewModel extends GetxController {
 
       isLoading.value = true;
       error.value = '';
+      errorType.value = '';
 
       print('🔍 Fetching article details for ID: $articleId');
 
@@ -70,15 +77,30 @@ class NewsDetailsViewModel extends GetxController {
         throw Exception('Failed to load article details - ${response['error']}');
       }
     } catch (e) {
-      error.value = 'Failed to load article details: $e';
-      print('❌ Error fetching article details: $e');
+      String errorMsg = e.toString();
+      print('❌ Error fetching article details: $errorMsg');
+
+      // ✅ Categorize errors
+      if (errorMsg.contains('NETWORK_ERROR')) {
+        error.value = 'No Internet Connection';
+        errorType.value = 'NETWORK_ERROR';
+      } else if (errorMsg.contains('SERVER_ERROR')) {
+        error.value = 'Server Error';
+        errorType.value = 'SERVER_ERROR';
+      } else if (errorMsg.contains('Session expired')) {
+        error.value = 'Session Expired';
+        errorType.value = 'SESSION_EXPIRED';
+      } else {
+        error.value = 'Failed to load article details';
+        errorType.value = 'UNKNOWN_ERROR';
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<void> loadAffiliateProducts(CategoryModel category) async {
-    print('🔍 Loading affiliate products for category: ${category.name} (Slug: ${category.slug}');
+    print('🔍 Loading affiliate products for category: ${category.name} (Slug: ${category.slug})');
 
     await _affiliateController.fetchAffiliateProducts(
       categorySlug: category.slug,
@@ -147,10 +169,15 @@ class NewsDetailsViewModel extends GetxController {
       await _launchUrl(url);
     } catch (e) {
       print('Error launching URL: $e');
+      Get.snackbar(
+        'Error',
+        'Could not open link',
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 
-  // ✅ ONLY CHANGE HERE - sharePositionOrigin parameter add korlam iPad ar jonno
+  /// ✅ iPad share fix
   Future<void> shareArticle({Rect? sharePositionOrigin}) async {
     final currentArticle = article.value;
     if (currentArticle == null) return;
@@ -160,11 +187,9 @@ class NewsDetailsViewModel extends GetxController {
       final title = currentArticle.aiTitle ?? 'Check out this article';
       final summary = currentArticle.aiSummary ?? '';
 
-      // Create share text
       String shareText = '$title\n\n';
 
       if (summary.isNotEmpty) {
-        // Short summary for better sharing experience
         String shortSummary = summary.length > 150
             ? '${summary.substring(0, 150)}...'
             : summary;
@@ -177,15 +202,19 @@ class NewsDetailsViewModel extends GetxController {
 
       shareText += 'Shared via HRlynx App';
 
-      // Simple share - iPad + iPhone both a perfect kaj korbe
       await Share.share(
         shareText,
-        subject: title, // iOS e use hobe
-        sharePositionOrigin: sharePositionOrigin, // ✅ iPad ar jonno must!
+        subject: title,
+        sharePositionOrigin: sharePositionOrigin, // ✅ iPad fix
       );
 
     } catch (e) {
       print('Error sharing article: $e');
+      Get.snackbar(
+        'Error',
+        'Could not share article',
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 
@@ -223,10 +252,19 @@ class NewsDetailsViewModel extends GetxController {
     }
   }
 
+  /// ✅ NEW: Retry method
+  Future<void> retryLoadArticle() async {
+    if (_currentArticleId != null) {
+      clearCache();
+      await fetchArticleDetails(_currentArticleId!);
+    }
+  }
+
   void clearCache() {
     _cachedArticle = null;
     article.value = null;
     error.value = '';
+    errorType.value = '';
     _affiliateController.clearData();
   }
 
@@ -236,3 +274,4 @@ class NewsDetailsViewModel extends GetxController {
     super.onClose();
   }
 }
+

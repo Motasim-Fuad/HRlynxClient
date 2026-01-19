@@ -2,7 +2,6 @@ import 'package:HRlynx/app/api_servies/repository/news_repo.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 class NewsController extends GetxController {
   final NewsRepository _newsRepository = NewsRepository();
 
@@ -11,13 +10,17 @@ class NewsController extends GetxController {
   var articles = <dynamic>[].obs;
   var categories = <dynamic>[].obs;
   var allTags = <dynamic>[].obs;
-  var selectedCategoryId = Rxn<int>(); // Changed to ID instead of object
+  var selectedCategoryId = Rxn<int>();
   var selectedTag = Rxn<Map<String, dynamic>>();
   var searchController = TextEditingController();
   var searchText = ''.obs;
   var currentPage = 1.obs;
   var hasNextPage = true.obs;
   var isLoadingMore = false.obs;
+
+  // ✅ NEW: Error handling
+  var hasError = false.obs;
+  var errorMessage = ''.obs;
 
   @override
   void onInit() {
@@ -35,20 +38,33 @@ class NewsController extends GetxController {
     super.onClose();
   }
 
+  /// ✅ UPDATED: Better error handling
   Future<void> loadInitialData() async {
     isLoading.value = true;
+    hasError.value = false;
+    errorMessage.value = '';
+
     try {
       await Future.wait([
         loadCategories(),
         loadArticles(),
       ]);
     } catch (e) {
-      print('Error loading initial data: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to load news data',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      hasError.value = true;
+      String error = e.toString();
+
+      print('❌ Error loading initial data: $error');
+
+      // ✅ Categorize errors
+      if (error.contains('NETWORK_ERROR')) {
+        errorMessage.value = 'NETWORK_ERROR';
+      } else if (error.contains('SERVER_ERROR')) {
+        errorMessage.value = 'SERVER_ERROR';
+      } else if (error.contains('Session expired')) {
+        errorMessage.value = 'SESSION_EXPIRED';
+      } else {
+        errorMessage.value = 'UNKNOWN_ERROR';
+      }
     } finally {
       isLoading.value = false;
     }
@@ -61,7 +77,8 @@ class NewsController extends GetxController {
         allTags.value = response['data'];
       }
     } catch (e) {
-      print('Error loading tags: $e');
+      print('⚠️ Error loading tags: $e');
+      // Don't show error for tags, it's not critical
     }
   }
 
@@ -72,14 +89,18 @@ class NewsController extends GetxController {
         categories.value = response['data'];
       }
     } catch (e) {
-      print('Error loading categories: $e');
+      print('❌ Error loading categories: $e');
+      rethrow; // Propagate error to loadInitialData
     }
   }
 
+  /// ✅ UPDATED: Better error handling
   Future<void> loadArticles({bool refresh = false}) async {
     if (refresh) {
       currentPage.value = 1;
       articles.clear();
+      hasError.value = false;
+      errorMessage.value = '';
     }
 
     try {
@@ -115,12 +136,22 @@ class NewsController extends GetxController {
         hasNextPage.value = pagination['has_next'] ?? false;
       }
     } catch (e) {
-      print('Error loading articles: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to load articles',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      String error = e.toString();
+      print('❌ Error loading articles: $error');
+
+      // ✅ Set error state
+      hasError.value = true;
+      if (error.contains('NETWORK_ERROR')) {
+        errorMessage.value = 'NETWORK_ERROR';
+      } else if (error.contains('SERVER_ERROR')) {
+        errorMessage.value = 'SERVER_ERROR';
+      } else if (error.contains('Session expired')) {
+        errorMessage.value = 'SESSION_EXPIRED';
+      } else {
+        errorMessage.value = 'UNKNOWN_ERROR';
+      }
+
+      rethrow; // Propagate to caller
     }
   }
 
@@ -141,12 +172,13 @@ class NewsController extends GetxController {
       await loadArticles();
     } catch (e) {
       currentPage.value--;
-      print('Error loading more articles: $e');
+      print('❌ Error loading more articles: $e');
     } finally {
       isLoadingMore.value = false;
     }
   }
 
+  /// ✅ UPDATED: Better search error handling
   Future<void> searchArticles(String query) async {
     if (query.trim().isEmpty) {
       selectedCategoryId.value = null;
@@ -156,6 +188,9 @@ class NewsController extends GetxController {
     }
 
     isLoading.value = true;
+    hasError.value = false;
+    errorMessage.value = '';
+
     try {
       final response = await _newsRepository.searchArticles(
         query: query.trim(),
@@ -171,12 +206,19 @@ class NewsController extends GetxController {
         selectedTag.value = null;
       }
     } catch (e) {
-      print('Error searching articles: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to search articles',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      hasError.value = true;
+      String error = e.toString();
+      print('❌ Error searching articles: $error');
+
+      if (error.contains('NETWORK_ERROR')) {
+        errorMessage.value = 'NETWORK_ERROR';
+      } else if (error.contains('SERVER_ERROR')) {
+        errorMessage.value = 'SERVER_ERROR';
+      } else if (error.contains('Session expired')) {
+        errorMessage.value = 'SESSION_EXPIRED';
+      } else {
+        errorMessage.value = 'UNKNOWN_ERROR';
+      }
     } finally {
       isLoading.value = false;
     }
@@ -218,7 +260,6 @@ class NewsController extends GetxController {
     }
   }
 
-  // Helper method to get selected category object
   Map<String, dynamic>? get selectedCategory {
     if (selectedCategoryId.value == null) return null;
     try {

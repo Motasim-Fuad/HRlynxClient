@@ -1,6 +1,5 @@
 // lib/app/modules/payment/payment_controller.dart
-// 🏆 PRODUCTION READY - Industry Standard (Cleaned & Simplified)
-// ✅ Anonymous → Automatic Apple/Google Email Link
+// ✅ WITH COMPLETE ERROR HANDLING
 
 import 'package:HRlynx/app/api_servies/repository/payment_repository.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
@@ -18,7 +17,6 @@ class PaymentController extends GetxController {
   final UserController userController = Get.put(UserController());
   final BiometricService biometricService = BiometricService();
 
-  // Required userId (for backend sync only)
   final int? userId;
 
   PaymentController({this.userId});
@@ -36,7 +34,11 @@ class PaymentController extends GetxController {
   var customerInfo = Rxn<CustomerInfo>();
   bool hasUsedTrial = false;
 
-  // Store actual RevenueCat user ID (anonymous → email after purchase)
+  // ✅ ERROR HANDLING STATES
+  var hasError = false.obs;
+  var errorMessage = ''.obs;
+  var errorType = ''.obs; // 'network', 'server', 'generic'
+
   String? revenueCatActualUserId;
 
   @override
@@ -49,56 +51,105 @@ class PaymentController extends GetxController {
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 🚀 STEP 1: Initialize RevenueCat (Simplified)
+  // ✅ ERROR HANDLING HELPERS
+  // ═══════════════════════════════════════════════════════════
+  void _handleError(dynamic error, {String context = 'Operation'}) {
+    final errorStr = error.toString().toLowerCase();
+
+    print('❌ Error in $context: $error');
+
+    hasError.value = true;
+
+    if (errorStr.contains('network_error') ||
+        errorStr.contains('socket') ||
+        errorStr.contains('failed host lookup')) {
+      errorType.value = 'network';
+      errorMessage.value = 'No internet connection';
+      print('📶 Network error detected');
+    } else if (errorStr.contains('server_error') ||
+        errorStr.contains('503') ||
+        errorStr.contains('500') ||
+        errorStr.contains('cloudflare')) {
+      errorType.value = 'server';
+      errorMessage.value = 'Server is temporarily down';
+      print('🌐 Server error detected');
+    } else if (errorStr.contains('timeout')) {
+      errorType.value = 'network';
+      errorMessage.value = 'Connection timeout';
+      print('⏱️ Timeout error detected');
+    } else if (errorStr.contains('session') || errorStr.contains('401')) {
+      errorType.value = 'auth';
+      errorMessage.value = 'Session expired';
+      print('🔐 Session error detected');
+    } else {
+      errorType.value = 'generic';
+      errorMessage.value = 'Something went wrong';
+      print('⚠️ Generic error detected');
+    }
+
+    print('📝 Final error: type=${errorType.value}, message=${errorMessage.value}');
+  }
+
+  void clearError() {
+    hasError.value = false;
+    errorMessage.value = '';
+    errorType.value = '';
+    print('✅ Error cleared');
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 🚀 STEP 1: Initialize RevenueCat (WITH ERROR HANDLING)
   // ═══════════════════════════════════════════════════════════
   Future<void> _initializeRevenueCat() async {
     try {
+      clearError();
 
-
-      // Initialize SDK
       await _repository.initializeRevenueCat();
       isRevenueCatAvailable.value = true;
-      print(' RevenueCat SDK initialized');
+      print('✅ RevenueCat SDK initialized');
 
-      // Get customer info (will be anonymous initially)
       CustomerInfo info = await _repository.getCustomerInfo();
       revenueCatActualUserId = info.originalAppUserId;
       customerInfo.value = info;
       isRevenueCatUserLoggedIn.value = true;
 
-      print(' User ID: $revenueCatActualUserId');
+      print('✅ User ID: $revenueCatActualUserId');
 
       if (revenueCatActualUserId?.startsWith('\$RCAnonymousID:') == true) {
-        print(' Anonymous user - will link to Apple/Google email on purchase');
+        print('📝 Anonymous user - will link to Apple/Google email on purchase');
       } else if (revenueCatActualUserId?.contains('@') == true) {
-        print('Already linked to store account: $revenueCatActualUserId');
+        print('✅ Already linked to store account: $revenueCatActualUserId');
       }
 
-      print('\n ========================================');
-      print(' REVENUECAT READY');
-      print(' Has Subscription: ${hasActiveSubscription}');
-      print(' ========================================\n');
+      print('\n✅ ========================================');
+      print('✅ REVENUECAT READY');
+      print('✅ Has Subscription: ${hasActiveSubscription}');
+      print('✅ ========================================\n');
 
     } catch (e) {
       print('❌ Error initializing RevenueCat: $e');
+      _handleError(e, context: 'RevenueCat initialization');
       isRevenueCatAvailable.value = false;
       isRevenueCatUserLoggedIn.value = false;
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 📦 STEP 2: Load Plans & Packages
+  // 📦 STEP 2: Load Plans & Packages (WITH ERROR HANDLING)
   // ═══════════════════════════════════════════════════════════
   Future<void> fetchPlans() async {
     try {
       isLoading.value = true;
+      clearError();
+
+      print('📡 Fetching subscription plans...');
 
       // Load plans from backend
       List<SubscriptionPlan> fetchedPlans = await _repository.fetchPlans();
       plans.assignAll(fetchedPlans);
       hasPlans.value = plans.isNotEmpty;
 
-      print('\n ===== PLANS LOADED =====');
+      print('\n✅ ===== PLANS LOADED =====');
       for (var plan in plans) {
         print('Plan: ${plan.planType}');
         print('  Name: ${plan.name}');
@@ -119,7 +170,7 @@ class PaymentController extends GetxController {
 
     } catch (e) {
       print('❌ Error fetching plans: $e');
-      Get.snackbar('Error', 'Failed to load subscription plans: ${e.toString()}');
+      _handleError(e, context: 'Loading subscription plans');
     } finally {
       isLoading.value = false;
     }
@@ -127,33 +178,34 @@ class PaymentController extends GetxController {
 
   Future<void> _loadRevenueCatPackages() async {
     if (!isRevenueCatAvailable.value) {
-      print('RevenueCat not ready, skipping package loading');
+      print('⚠️ RevenueCat not ready, skipping package loading');
       return;
     }
 
     try {
       List<Package> packages = await _repository.loadRevenueCatPackages();
       revenueCatPackages.assignAll(packages);
-      print(' Loaded ${packages.length} RevenueCat packages');
+      print('✅ Loaded ${packages.length} RevenueCat packages');
     } catch (e) {
-      print(' Error loading RevenueCat packages: $e');
+      print('❌ Error loading RevenueCat packages: $e');
+      _handleError(e, context: 'Loading packages');
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  // 💳 STEP 3: Purchase
+  // 💳 STEP 3: Purchase (WITH ERROR HANDLING)
   // ═══════════════════════════════════════════════════════════
   SubscriptionPlan? get selectedPlanData {
     final plan = plans.firstWhereOrNull((p) => p.planType == selectedPlan.value);
     if (plan != null) {
-      print(' Selected Plan: ${plan.name} (\$${plan.price})');
+      print('✅ Selected Plan: ${plan.name} (\$${plan.price})');
     }
     return plan;
   }
 
   Future<void> startFreeTrial() async {
     if (isLoading.value || selectedPlanData == null) {
-      print(' Cannot start purchase: Loading or no plan selected');
+      print('⚠️ Cannot start purchase: Loading or no plan selected');
       return;
     }
 
@@ -163,6 +215,7 @@ class PaymentController extends GetxController {
         'Payment system not ready. Please try again.',
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        icon: Icon(Icons.error_outline, color: Colors.white),
       );
       return;
     }
@@ -170,14 +223,14 @@ class PaymentController extends GetxController {
     await _startRevenueCatPurchase();
   }
 
-
   Future<void> _startRevenueCatPurchase() async {
     try {
       isLoading.value = true;
       paymentInProgress.value = true;
+      clearError();
 
       final planData = selectedPlanData!;
-      print('\n ===== STARTING PURCHASE =====');
+      print('\n💳 ===== STARTING PURCHASE =====');
       print('Plan: ${planData.planType}');
       print('Price: \$${planData.price}');
       print('Product ID: ${planData.revenuecatProductId}');
@@ -198,28 +251,22 @@ class PaymentController extends GetxController {
         throw Exception('Package not found for: ${planData.revenuecatProductId}');
       }
 
-      print(' Found package: ${package.identifier}');
+      print('✅ Found package: ${package.identifier}');
 
-      //  Make purchase - RevenueCat will automatically link to Apple/Google email
       CustomerInfo info = await _repository.purchasePackage(package);
       await _handlePurchaseSuccess(info);
 
     } on PlatformException catch (e) {
-      // Handle PlatformException properly
-      print(' Purchase error: $e');
+      print('❌ Purchase PlatformException: $e');
 
-      // Extract clean error message from PlatformException
       String errorMessage = 'Purchase failed';
 
       if (e.details != null && e.details is Map) {
         final details = e.details as Map;
 
-        // Check if user cancelled
         if (details['userCancelled'] == true) {
           errorMessage = 'Purchase was cancelled';
-        }
-        // Otherwise use the readable message
-        else if (details['message'] != null) {
+        } else if (details['message'] != null) {
           errorMessage = details['message'].toString();
         }
       } else if (e.message != null) {
@@ -229,29 +276,28 @@ class PaymentController extends GetxController {
       _handlePurchaseError(errorMessage);
 
     } catch (e) {
-      // Handle other exceptions
-      print(' Purchase error: $e');
+      print('❌ Purchase error: $e');
+      _handleError(e, context: 'Purchase');
       _handlePurchaseError('Purchase failed. Please try again.');
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  //  Handle Purchase Success
+  // ✅ Handle Purchase Success
   // ═══════════════════════════════════════════════════════════
   Future<void> _handlePurchaseSuccess(CustomerInfo customerInfo) async {
     try {
       print('🎉 Purchase completed!');
 
-      //  Check if user ID changed (anonymous → Apple/Google email)
       if (customerInfo.originalAppUserId != revenueCatActualUserId) {
-        print('\n ========================================');
-        print(' USER LINKED TO STORE ACCOUNT!');
-        print(' ========================================');
-        print(' Old ID: $revenueCatActualUserId');
-        print(' New ID: ${customerInfo.originalAppUserId}');
+        print('\n✅ ========================================');
+        print('✅ USER LINKED TO STORE ACCOUNT!');
+        print('✅ ========================================');
+        print('Old ID: $revenueCatActualUserId');
+        print('New ID: ${customerInfo.originalAppUserId}');
 
         if (customerInfo.originalAppUserId.contains('@')) {
-          print(' Now using Apple/Google account email!');
+          print('✅ Now using Apple/Google account email!');
         }
 
         print('========================================\n');
@@ -259,27 +305,23 @@ class PaymentController extends GetxController {
       }
 
       this.customerInfo.value = customerInfo;
-      print(' Active entitlements: ${customerInfo.entitlements.active.keys.toList()}');
+      print('✅ Active entitlements: ${customerInfo.entitlements.active.keys.toList()}');
 
       if (customerInfo.entitlements.active.isEmpty) {
         throw Exception('No active entitlements found after purchase');
       }
 
-      //  Sync with backend (async, non-blocking)
       _linkToBackendAsync(customerInfo);
 
-      // Save locally
       await TokenStorage.saveSubscriptionCheckDone(true);
 
-      // Update subscription controller
       try {
         final subController = Get.find<UserIsSubcribedController>();
         await subController.checkAndUpdateSubscriptionStatus();
       } catch (e) {
-        print('️ Could not refresh subscription controller: $e');
+        print('⚠️ Could not refresh subscription controller: $e');
       }
 
-      // Ask for biometric
       await _askToEnableBiometricAfterSubscription();
 
       Get.snackbar(
@@ -287,6 +329,7 @@ class PaymentController extends GetxController {
         'Subscription activated successfully!',
         backgroundColor: Colors.green,
         colorText: Colors.white,
+        icon: Icon(Icons.check_circle, color: Colors.white),
         duration: Duration(seconds: 3),
       );
 
@@ -294,11 +337,14 @@ class PaymentController extends GetxController {
 
     } catch (e) {
       print('❌ Error handling purchase success: $e');
+      _handleError(e, context: 'Activating subscription');
+
       Get.snackbar(
         'Error',
         'Purchase completed but failed to activate. Please contact support.',
         backgroundColor: Colors.orange,
         colorText: Colors.white,
+        icon: Icon(Icons.warning, color: Colors.white),
       );
     } finally {
       paymentInProgress.value = false;
@@ -306,28 +352,26 @@ class PaymentController extends GetxController {
     }
   }
 
-// ═══════════════════════════════════════════════════════════
-//  STEP 4: Restore Purchases (FIXED - With Backend Sync)
-// ═══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // 🔄 STEP 4: Restore Purchases (WITH ERROR HANDLING)
+  // ═══════════════════════════════════════════════════════════
   Future<void> restorePurchases() async {
     try {
       isLoading.value = true;
+      clearError();
 
       final isCalledFromLogin = Get.currentRoute.contains('login') ||
           Get.currentRoute.contains('splash');
 
-      print(' RESTORING PURCHASES');
+      print('🔄 RESTORING PURCHASES');
 
-
-      //  Restore - will sync with Apple/Google account
       CustomerInfo info = await _repository.restorePurchases();
 
-      // Update user ID if changed
       if (info.originalAppUserId != revenueCatActualUserId) {
-        print(' User ID updated: $revenueCatActualUserId → ${info.originalAppUserId}');
+        print('✅ User ID updated: $revenueCatActualUserId → ${info.originalAppUserId}');
 
         if (info.originalAppUserId.contains('@')) {
-          print(' Found store account email: ${info.originalAppUserId}');
+          print('✅ Found store account email: ${info.originalAppUserId}');
         }
 
         revenueCatActualUserId = info.originalAppUserId;
@@ -335,71 +379,42 @@ class PaymentController extends GetxController {
 
       customerInfo.value = info;
 
-      //  NEW: Check if user has active subscription
       final hasActiveEntitlements = info.entitlements.active.isNotEmpty;
 
       if (hasActiveEntitlements) {
-        print(' Active subscription found!');
-        print(' Active entitlements: ${info.entitlements.active.keys.toList()}');
+        print('✅ Active subscription found!');
+        print('✅ Active entitlements: ${info.entitlements.active.keys.toList()}');
 
-        //  CRITICAL FIX: Sync with backend (just like purchase success)
         await _linkToBackendAsync(info);
-
-        //  Update local subscription flag
         await TokenStorage.saveSubscriptionCheckDone(true);
 
-        //  Update subscription controller
         try {
           final subController = Get.find<UserIsSubcribedController>();
           await subController.checkAndUpdateSubscriptionStatus();
-          print(' Subscription controller updated');
+          print('✅ Subscription controller updated');
         } catch (e) {
-          print(' Could not refresh subscription controller: $e');
+          print('⚠️ Could not refresh subscription controller: $e');
         }
 
-        print(' Backend sync complete');
+        print('✅ Backend sync complete');
       } else {
-        print(' No active subscription found');
+        print('⚠️ No active subscription found');
       }
 
-      // Show feedback (not on login/splash)
-      // if (!isCalledFromLogin) {
-      //   if (hasActiveEntitlements) {
-      //     Get.snackbar(
-      //       'Success',
-      //       'Purchases restored successfully!',
-      //       backgroundColor: Colors.green,
-      //       colorText: Colors.white,
-      //       duration: Duration(seconds: 2),
-      //     );
-      //   } else {
-      //     Get.snackbar(
-      //       'No Purchases',
-      //       'No active purchases found to restore.',
-      //       backgroundColor: Colors.orange,
-      //       colorText: Colors.white,
-      //       duration: Duration(seconds: 2),
-      //     );
-      //   }
-      // }
-
-      print(' RESTORE COMPLETE');
+      print('✅ RESTORE COMPLETE');
 
     } catch (e) {
       print('❌ Error restoring purchases: $e');
+      _handleError(e, context: 'Restoring purchases');
 
-      //  Special handling for 409 conflict
       if (e.toString().contains('409') || e.toString().contains('INTEGRITY_ERROR')) {
-        print(' RevenueCat ID conflict detected');
-        print(' This means another user is using this subscription');
-        print(' Please logout from RevenueCat and try again');
+        print('⚠️ RevenueCat ID conflict detected');
 
-        // Try to logout from RevenueCat
         try {
           await Purchases.logOut();
-          print(' RevenueCat logged out, please login again');
+          print('✅ RevenueCat logged out');
         } catch (logoutError) {
-          print(' Could not logout from RevenueCat: $logoutError');
+          print('❌ Could not logout from RevenueCat: $logoutError');
         }
       }
 
@@ -409,6 +424,7 @@ class PaymentController extends GetxController {
           'Failed to restore purchases',
           backgroundColor: Colors.red,
           colorText: Colors.white,
+          icon: Icon(Icons.error_outline, color: Colors.white),
         );
       }
     } finally {
@@ -417,15 +433,15 @@ class PaymentController extends GetxController {
   }
 
   // ═══════════════════════════════════════════════════════════
-  //  Backend Sync (Async, Non-blocking)
+  // 🔗 Backend Sync (Async, Non-blocking)
   // ═══════════════════════════════════════════════════════════
   Future<void> _linkToBackendAsync(CustomerInfo info) async {
     try {
-      print(' Linking to backend (async)...');
+      print('🔗 Linking to backend (async)...');
       await _repository.linkUserToBackend(info);
-      print(' Backend link complete');
+      print('✅ Backend link complete');
     } catch (e) {
-      print(' Backend link failed (non-critical): $e');
+      print('⚠️ Backend link failed (non-critical): $e');
     }
   }
 
@@ -436,21 +452,20 @@ class PaymentController extends GetxController {
     try {
       CustomerInfo info = await _repository.getCustomerInfo();
 
-      // Update user ID if changed
       if (info.originalAppUserId != revenueCatActualUserId) {
-        print(' User ID linked: $revenueCatActualUserId → ${info.originalAppUserId}');
+        print('✅ User ID linked: $revenueCatActualUserId → ${info.originalAppUserId}');
         revenueCatActualUserId = info.originalAppUserId;
       }
 
       customerInfo.value = info;
-      print(' Customer info updated');
+      print('✅ Customer info updated');
     } catch (e) {
-      print(' Error getting customer info: $e');
+      print('❌ Error getting customer info: $e');
     }
   }
 
   // ═══════════════════════════════════════════════════════════
-  //  Helper Methods
+  // 🛠️ Helper Methods
   // ═══════════════════════════════════════════════════════════
   bool get hasActiveSubscription {
     if (customerInfo.value == null) return false;
@@ -467,9 +482,9 @@ class PaymentController extends GetxController {
       final info = await Purchases.getCustomerInfo();
       hasUsedTrial = info.nonSubscriptionTransactions.isNotEmpty ||
           info.entitlements.active.isNotEmpty;
-      print('Has used trial: $hasUsedTrial');
+      print('✅ Has used trial: $hasUsedTrial');
     } catch (e) {
-      print('Error checking trial status: $e');
+      print('❌ Error checking trial status: $e');
     }
   }
 
@@ -485,7 +500,7 @@ class PaymentController extends GetxController {
   }
 
   // ═══════════════════════════════════════════════════════════
-  //  Biometric Prompt
+  // 🔐 Biometric Prompt
   // ═══════════════════════════════════════════════════════════
   Future<void> _askToEnableBiometricAfterSubscription() async {
     try {
@@ -559,24 +574,24 @@ class PaymentController extends GetxController {
     paymentInProgress.value = false;
     isLoading.value = false;
 
-    // Don't show snackbar if user cancelled
     if (errorMessage.toLowerCase().contains('cancelled')) {
       Get.snackbar(
         'Cancelled',
         errorMessage,
         backgroundColor: Colors.orange,
         colorText: Colors.white,
+        icon: Icon(Icons.cancel, color: Colors.white),
         duration: Duration(seconds: 2),
       );
       return;
     }
 
-    // For other errors
     Get.snackbar(
       'Purchase Failed',
       errorMessage,
       backgroundColor: Colors.red,
       colorText: Colors.white,
+      icon: Icon(Icons.error_outline, color: Colors.white),
       duration: Duration(seconds: 3),
     );
   }

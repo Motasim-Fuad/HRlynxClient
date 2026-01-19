@@ -12,6 +12,10 @@ class ChatAllAiPersona extends GetxController {
   var personaList = <Data>[].obs;
   final isLoading = true.obs;
 
+  // ✅ NEW: Error handling
+  final hasError = false.obs;
+  final errorMessage = ''.obs;
+
   final authRepo = AuthRepository();
 
   /// Cache: personaId -> sessionId
@@ -29,14 +33,13 @@ class ChatAllAiPersona extends GetxController {
       final tag = 'chat_$personaId';
       print('👉 Starting chat for persona: $personaId');
 
-      // ADDED: Check if persona is accessible before starting chat
+      // Check if persona is accessible before starting chat
       final subController = Get.find<UserIsSubcribedController>();
       final isAccessible = await subController.isPersonaAccessible(personaId);
 
       if (!isAccessible) {
         print('❌ Persona $personaId is not accessible');
 
-        // Show appropriate message based on subscription status
         String title = 'Access Restricted';
         String message = 'This persona is not available with your current subscription';
 
@@ -62,22 +65,20 @@ class ChatAllAiPersona extends GetxController {
       final token = await TokenStorage.getLoginAccessToken();
       if (token == null) throw Exception('Token is null');
 
-      // Step 1: Get existing sessionId if stored
+      // Get existing sessionId if stored
       String? sessionIdNullable = await TokenStorage.getPersonaSessionId(personaId);
       late String sessionId;
       bool isNewSession = false;
 
       if (sessionIdNullable == null) {
-        // This is a new session
         isNewSession = true;
         print('🆕 Creating new session for persona: $personaId');
         sessionId = await authRepo.createSession(personaId) ?? (throw Exception('Failed to create session'));
         await TokenStorage.savePersonaSessionId(personaId, sessionId);
-        sessionMap[personaId] = sessionId; // Cache it
+        sessionMap[personaId] = sessionId;
       } else {
-        // This is an existing session
         sessionId = sessionIdNullable;
-        sessionMap[personaId] = sessionId; // Cache it
+        sessionMap[personaId] = sessionId;
         print('🔄 Using existing session for persona: $personaId, sessionId: $sessionId');
       }
 
@@ -89,7 +90,7 @@ class ChatAllAiPersona extends GetxController {
           wsService: wsService,
           sessionId: sessionId,
           personaId: personaId,
-          isNewSession: isNewSession, // Pass the flag here
+          isNewSession: isNewSession,
         ), tag: tag);
       }
 
@@ -106,9 +107,12 @@ class ChatAllAiPersona extends GetxController {
     }
   }
 
+  /// ✅ UPDATED: Better error handling
   Future<void> fetchAllAiPersona() async {
     try {
       isLoading.value = true;
+      hasError.value = false;
+      errorMessage.value = '';
       print("🔄 Fetching all AI personas...");
 
       final response = await authRepo.getAllAiPersona();
@@ -116,8 +120,28 @@ class ChatAllAiPersona extends GetxController {
       personaList.value = model.data ?? [];
 
       print("✅ Fetched ${personaList.length} personas");
+
     } catch (e) {
-      print("❌ Error fetching personas: $e");
+      hasError.value = true;
+      String error = e.toString();
+
+      print("❌ Error fetching personas: $error");
+
+      // ✅ Categorize errors
+      if (error.contains('NETWORK_ERROR')) {
+        errorMessage.value = 'NETWORK_ERROR';
+      } else if (error.contains('SERVER_ERROR')) {
+        errorMessage.value = 'SERVER_ERROR';
+      } else if (error.contains('Session expired')) {
+        errorMessage.value = 'SESSION_EXPIRED';
+        // Don't set personaList to empty on session expired
+        // User will be redirected to login automatically
+      } else {
+        errorMessage.value = 'UNKNOWN_ERROR';
+      }
+
+      personaList.value = [];
+
     } finally {
       isLoading.value = false;
     }
@@ -148,7 +172,6 @@ class ChatAllAiPersona extends GetxController {
   // Clear session cache when subscription is canceled or user logs out
   Future<void> clearSessionCache() async {
     sessionMap.clear();
-    // Also clear from TokenStorage
     await TokenStorage.clearAllPersonaSessions();
     print("🧹 Session cache cleared");
   }
@@ -158,33 +181,27 @@ class ChatAllAiPersona extends GetxController {
     return sessionMap[personaId];
   }
 
-  // ADDED: Method to handle subscription cancellation effects
+  // Handle subscription cancellation effects
   Future<void> handleSubscriptionCancellation() async {
     try {
       print("🔄 Handling subscription cancellation...");
 
-      // Get the subscription controller
       final subController = Get.find<UserIsSubcribedController>();
-
-      // Get the selected persona ID from onboarding
       final selectedPersonaId = await TokenStorage.getSelectedPersonaId();
 
       if (selectedPersonaId != null) {
-        // Clear sessions for all personas except the selected one
         final List<int> personasToKeep = [selectedPersonaId];
 
-        // Clear sessions for non-accessible personas
         for (int personaId in sessionMap.keys.toList()) {
           if (!personasToKeep.contains(personaId)) {
             sessionMap.remove(personaId);
-            await TokenStorage.savePersonaSessionId(personaId, ''); // Clear from storage
+            await TokenStorage.savePersonaSessionId(personaId, '');
             print("🗑️ Cleared session for persona: $personaId");
           }
         }
 
         print("✅ Kept session only for selected persona: $selectedPersonaId");
       } else {
-        // If no selected persona, clear all sessions
         await clearSessionCache();
       }
 

@@ -2,29 +2,28 @@ import 'package:HRlynx/app/api_servies/repository/auth_repo.dart';
 import 'package:HRlynx/app/model/news/affiliate_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:url_launcher/url_launcher.dart';
+
 class AffiliateProductsController extends GetxController {
   final AuthRepository _authRepository = AuthRepository();
 
-  // Observables for affiliate products
   final RxList<AffiliateProductModel> affiliateProducts = <AffiliateProductModel>[].obs;
   final RxBool isLoadingProducts = false.obs;
   final RxString error = ''.obs;
   final RxBool hasMoreData = true.obs;
 
-  // Pagination
+  // ✅ NEW: Error type
+  final RxString errorType = ''.obs;
+
   final RxInt currentPage = 1.obs;
   PaginationModel? pagination;
 
   @override
   void onInit() {
     super.onInit();
-    // Initialize if needed
   }
 
-// In affiliate_controller.dart - Replace the existing fetchAffiliateProducts method
-
+  /// ✅ UPDATED: Better error handling
   Future<void> fetchAffiliateProducts({
     required String categorySlug,
     bool isRefresh = false,
@@ -34,24 +33,24 @@ class AffiliateProductsController extends GetxController {
         currentPage.value = 1;
         affiliateProducts.clear();
         hasMoreData.value = true;
+        error.value = '';
+        errorType.value = '';
       }
 
       if (isLoadingProducts.value || !hasMoreData.value) return;
 
       isLoadingProducts.value = true;
       error.value = '';
-
-      // print('📦 Fetching affiliate products for category: $categorySlug (ID: $categoryId) - Page: ${currentPage.value}');
+      errorType.value = '';
 
       final response = await _authRepository.getAffiliateProducts(
         categorySlug: categorySlug,
-        page: currentPage.value, // Add page parameter
+        page: currentPage.value,
       );
 
       if (response['success'] == true && response['data'] != null) {
         final affiliateResponse = AffiliateProductsResponse.fromJson(response['data']);
 
-        // Update pagination info
         pagination = affiliateResponse.pagination;
         hasMoreData.value = affiliateResponse.pagination.hasNext;
 
@@ -63,7 +62,6 @@ class AffiliateProductsController extends GetxController {
 
         currentPage.value++;
 
-        // Show success message if products loaded
         if (affiliateResponse.results.isNotEmpty) {
           print('✅ Loaded ${affiliateResponse.results.length} affiliate products');
         } else if (isRefresh) {
@@ -72,29 +70,38 @@ class AffiliateProductsController extends GetxController {
 
       } else {
         error.value = response['error'] ?? 'Failed to load affiliate products';
+        errorType.value = 'UNKNOWN_ERROR';
         print('❌ Error loading affiliate products: ${error.value}');
       }
     } catch (e) {
-      error.value = 'Error loading affiliate products: $e';
-      print('❌ Exception in fetchAffiliateProducts: $e');
+      String errorMsg = e.toString();
+      print('❌ Exception in fetchAffiliateProducts: $errorMsg');
+
+      // ✅ Categorize errors (but don't show to user - affiliate products are not critical)
+      if (errorMsg.contains('NETWORK_ERROR')) {
+        error.value = 'Network error loading products';
+        errorType.value = 'NETWORK_ERROR';
+      } else if (errorMsg.contains('SERVER_ERROR')) {
+        error.value = 'Server error loading products';
+        errorType.value = 'SERVER_ERROR';
+      } else {
+        error.value = 'Error loading affiliate products';
+        errorType.value = 'UNKNOWN_ERROR';
+      }
     } finally {
       isLoadingProducts.value = false;
     }
   }
 
-// Update the onAffiliateProductClick method to ensure proper tracking
   Future<void> onAffiliateProductClick(AffiliateProductModel product) async {
     try {
-      print('🔗 @@@@@@@@@@@@@@@@@@@@@@@@@User clicked on product: ${product.title} (ID: ${product.id})');
+      print('🔗 User clicked on product: ${product.title} (ID: ${product.id})');
 
-      // Track the click first
       final response = await _authRepository.trackClick(product.id);
 
       if (response['success'] == true) {
-        // Update local click count for immediate UI feedback
         _updateLocalClickCount(product.id);
 
-        // Get redirect URL from response or use product's affiliate URL
         String redirectUrl = response['data']?['redirect_url'] ?? product.affiliateUrl;
 
         if (redirectUrl.isNotEmpty) {
@@ -105,7 +112,6 @@ class AffiliateProductsController extends GetxController {
         }
 
       } else {
-        // If tracking fails, still try to open the URL
         print('⚠️ Click tracking failed, opening direct URL');
         if (product.affiliateUrl.isNotEmpty) {
           await _launchUrl(product.affiliateUrl);
@@ -115,7 +121,6 @@ class AffiliateProductsController extends GetxController {
     } catch (e) {
       print('❌ Error handling affiliate click: $e');
 
-      // Final fallback: try direct URL
       try {
         if (product.affiliateUrl.isNotEmpty) {
           await _launchUrl(product.affiliateUrl);
@@ -126,8 +131,6 @@ class AffiliateProductsController extends GetxController {
     }
   }
 
-
-  // Update local click count for UI feedback
   void _updateLocalClickCount(int productId) {
     final index = affiliateProducts.indexWhere((p) => p.id == productId);
     if (index != -1) {
@@ -149,7 +152,6 @@ class AffiliateProductsController extends GetxController {
     }
   }
 
-  // Launch URL with multiple fallback options
   Future<void> _launchUrl(String url) async {
     if (url.isEmpty) {
       throw Exception('URL is empty');
@@ -158,7 +160,6 @@ class AffiliateProductsController extends GetxController {
     try {
       String cleanUrl = url.trim();
 
-      // Ensure URL has protocol
       if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
         cleanUrl = 'https://$cleanUrl';
       }
@@ -166,13 +167,11 @@ class AffiliateProductsController extends GetxController {
       final Uri uri = Uri.parse(cleanUrl);
       print('Launching URL: $cleanUrl');
 
-      // Try external application first (opens in default browser/app)
       bool launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
       );
 
-      // If external app fails, try platform default
       if (!launched) {
         print('External launch failed, trying platform default');
         launched = await launchUrl(
@@ -181,7 +180,6 @@ class AffiliateProductsController extends GetxController {
         );
       }
 
-      // Last resort: in-app web view
       if (!launched) {
         print('Platform default failed, trying in-app web view');
         launched = await launchUrl(
@@ -202,10 +200,8 @@ class AffiliateProductsController extends GetxController {
     }
   }
 
-  // Refresh products
   Future<void> refreshProducts({
     required String categorySlug,
-
   }) async {
     await fetchAffiliateProducts(
       categorySlug: categorySlug,
@@ -213,20 +209,17 @@ class AffiliateProductsController extends GetxController {
     );
   }
 
-  // Load more products (for pagination)
   Future<void> loadMoreProducts({
     required String categorySlug,
   }) async {
     if (hasMoreData.value && !isLoadingProducts.value) {
       await fetchAffiliateProducts(
         categorySlug: categorySlug,
-
         isRefresh: false,
       );
     }
   }
 
-  // Get product by ID
   AffiliateProductModel? getProductById(int productId) {
     try {
       return affiliateProducts.firstWhere((product) => product.id == productId);
@@ -235,65 +228,15 @@ class AffiliateProductsController extends GetxController {
     }
   }
 
-  // Clear all data
   void clearData() {
     affiliateProducts.clear();
     error.value = '';
+    errorType.value = '';
     currentPage.value = 1;
     hasMoreData.value = true;
     pagination = null;
   }
 
-  // Utility methods for user feedback
-  void _showSuccessSnackbar(String message) {
-    Get.snackbar(
-      'Success',
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.green[100],
-      colorText: Colors.green[800],
-      duration: const Duration(seconds: 3),
-      icon: const Icon(Icons.check_circle, color: Colors.green),
-    );
-  }
-
-  void _showErrorSnackbar(String message) {
-    Get.snackbar(
-      'Error',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red[100],
-      colorText: Colors.red[800],
-      duration: const Duration(seconds: 4),
-      icon: const Icon(Icons.error, color: Colors.red),
-    );
-  }
-
-  void _showWarningSnackbar(String message) {
-    Get.snackbar(
-      'Warning',
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.orange[100],
-      colorText: Colors.orange[800],
-      duration: const Duration(seconds: 3),
-      icon: const Icon(Icons.warning, color: Colors.orange),
-    );
-  }
-
-  void _showInfoSnackbar(String message) {
-    Get.snackbar(
-      'Info',
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.blue[100],
-      colorText: Colors.blue[800],
-      duration: const Duration(seconds: 2),
-      icon: const Icon(Icons.info, color: Colors.blue),
-    );
-  }
-
-  // Dispose resources
   @override
   void onClose() {
     clearData();

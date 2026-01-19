@@ -1,4 +1,3 @@
-import 'package:HRlynx/app/modules/main_screen/main_screen_controller.dart';
 import 'package:HRlynx/app/modules/news/news_controller.dart';
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:HRlynx/app/utils/app_images.dart';
@@ -136,7 +135,7 @@ class NewsView extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // Category Dropdown with Subscription Lock
+            // Category Dropdown
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Obx(() => Container(
@@ -171,9 +170,7 @@ class NewsView extends StatelessWidget {
                             value: categoryId,
                             child: GestureDetector(
                               onTap: isLocked ? () {
-                                // Close dropdown first
                                 Navigator.of(context).pop();
-                                // Show snackbar
                                 Future.delayed(Duration(milliseconds: 100), () {
                                   Get.snackbar(
                                     'Subscription Required',
@@ -217,7 +214,6 @@ class NewsView extends StatelessWidget {
                       if (value == null) {
                         controller.clearCategoryFilter();
                       } else {
-                        // Find category to check if locked
                         final category = controller.categories.firstWhere(
                               (cat) => cat['id'] == value,
                           orElse: () => null,
@@ -225,7 +221,6 @@ class NewsView extends StatelessWidget {
 
                         if (category != null) {
                           final isLocked = category['is_subscription_required'] == true;
-
                           if (!isLocked) {
                             controller.filterByCategory(value);
                           }
@@ -239,9 +234,10 @@ class NewsView extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // Articles List
+            // ✅ UPDATED: Articles List with Error Handling
             Expanded(
               child: Obx(() {
+                // ✅ Show loading
                 if (controller.isLoading.value && controller.articles.isEmpty) {
                   return Center(
                     child: CircularProgressIndicator(
@@ -250,29 +246,20 @@ class NewsView extends StatelessWidget {
                   );
                 }
 
-                if (controller.articles.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.article_outlined,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'No articles found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
+                // ✅ Show error states
+                if (controller.hasError.value) {
+                  return _buildErrorWidget(
+                    errorType: controller.errorMessage.value,
+                    onRetry: () => controller.refreshData(),
                   );
                 }
 
+                // ✅ Show empty state
+                if (controller.articles.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                // ✅ Show articles list
                 return NotificationListener<ScrollNotification>(
                   onNotification: (ScrollNotification scrollInfo) {
                     if (!controller.isLoadingMore.value &&
@@ -400,7 +387,7 @@ class NewsView extends StatelessWidget {
 
                                   SizedBox(width: 12),
 
-                                  // Article Text Content
+                                  // Article Text
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,6 +453,129 @@ class NewsView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// ✅ NEW: Error Widget
+  Widget _buildErrorWidget({
+    required String errorType,
+    required VoidCallback onRetry,
+  }) {
+    IconData icon;
+    String title;
+    String message;
+    Color iconColor;
+
+    switch (errorType) {
+      case 'NETWORK_ERROR':
+        icon = Icons.wifi_off;
+        title = 'No Internet Connection';
+        message = 'Please check your internet connection and try again';
+        iconColor = Colors.orange;
+        break;
+      case 'SERVER_ERROR':
+        icon = Icons.cloud_off;
+        title = 'Server Error';
+        message = 'Sorry, please try later. We are working on the server';
+        iconColor = Colors.red;
+        break;
+      case 'SESSION_EXPIRED':
+        icon = Icons.lock_clock;
+        title = 'Session Expired';
+        message = 'Redirecting to login...';
+        iconColor = Colors.blue;
+        break;
+      default:
+        icon = Icons.error_outline;
+        title = 'Something went wrong';
+        message = 'Please try again';
+        iconColor = Colors.red;
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 64,
+              color: iconColor,
+            ),
+            SizedBox(height: 20),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (errorType != 'SESSION_EXPIRED') ...[
+              SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: Icon(Icons.refresh),
+                label: Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primarycolor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  textStyle: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// ✅ NEW: Empty State Widget
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.article_outlined,
+            size: 64,
+            color: Colors.grey,
+          ),
+          SizedBox(height: 16),
+          Text(
+            'No Articles Found',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'There are no articles available at the moment',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

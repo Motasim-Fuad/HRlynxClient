@@ -14,24 +14,15 @@ class HomeView extends StatelessWidget {
     final UserIsSubcribedController is_SubcribedController = Get.put(UserIsSubcribedController());
     final controller = Get.put(ChatAllAiPersona());
 
-    // Only check subscription status if not already loaded
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (!is_SubcribedController.hasLoadedOnce) {
-    //     is_SubcribedController.checkAndUpdateSubscriptionStatus();
-    //   }
-    // });
-
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Responsive breakpoints
           final isTablet = constraints.maxWidth > 600;
           final isDesktop = constraints.maxWidth > 1024;
 
-          // Responsive values
           final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
           final topPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
 
@@ -44,23 +35,18 @@ class HomeView extends StatelessWidget {
             backgroundColor: Colors.white,
             child: Stack(
               children: [
-                // Main scrollable content with padding for fixed header
-
                 Padding(
                   padding: EdgeInsets.only(
                     top: _getHeaderHeight(isDesktop, isTablet, horizontalPadding, topPadding),
                   ),
                   child: CustomScrollView(
                     slivers: [
-
-                      // Scrollable Content
                       SliverPadding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding,vertical: topPadding),
+                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: topPadding),
                         sliver: SliverToBoxAdapter(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Persona Grid
                               _buildPersonaGridSection(
                                 controller: controller,
                                 is_SubcribedController: is_SubcribedController,
@@ -76,7 +62,6 @@ class HomeView extends StatelessWidget {
                   ),
                 ),
 
-                // Fixed Header Card
                 Positioned(
                   top: 0,
                   left: 0,
@@ -90,7 +75,6 @@ class HomeView extends StatelessWidget {
                         isDesktop: isDesktop,
                         isTablet: isTablet,
                       ),
-
                     ],
                   ),
                 ),
@@ -102,18 +86,16 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // Calculate header height for padding
   double _getHeaderHeight(bool isDesktop, bool isTablet, double horizontalPadding, double topPadding) {
     final cardPadding = isDesktop ? 30.0 : (isTablet ? 25.0 : 20.0);
     final titleHeight = isDesktop ? 26.0 : (isTablet ? 22.0 : 20.0);
     final spacing = isDesktop ? 24.0 : 20.0;
-    final descriptionHeight = isDesktop ? 18.0 * 2 : (isTablet ? 17.0 * 2 : 16.0 * 2); // Approximate 2 lines
+    final descriptionHeight = isDesktop ? 18.0 * 2 : (isTablet ? 17.0 * 2 : 16.0 * 2);
     final topSpacing = isDesktop ? 39.0 : (isTablet ? 34.0 : 100.0);
 
-    return topSpacing + (cardPadding * 2) + titleHeight + spacing + descriptionHeight + 20; // 20 for extra spacing
+    return topSpacing + (cardPadding * 2) + titleHeight + spacing + descriptionHeight + 20;
   }
 
-  // ========== Fixed Header Card Widget ==========
   Widget _buildFixedHeaderCard({
     required double horizontalPadding,
     required double topPadding,
@@ -121,7 +103,7 @@ class HomeView extends StatelessWidget {
     required bool isTablet,
   }) {
     return Container(
-      color: Colors.white, // Background color to prevent see-through
+      color: Colors.white,
       child: Padding(
         padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 10),
         child: Column(
@@ -129,7 +111,6 @@ class HomeView extends StatelessWidget {
             SizedBox(height: isDesktop ? 20 : (isTablet ? 15 : 10)),
             Container(
               width: double.infinity,
-              //height: 150,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
@@ -144,8 +125,6 @@ class HomeView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: Stack(
                   children: [
-
-                    // Background Image
                     Positioned.fill(
                       child: Image.asset(
                         AppImages.home_container,
@@ -154,8 +133,6 @@ class HomeView extends StatelessWidget {
                         colorBlendMode: BlendMode.darken,
                       ),
                     ),
-
-                    // Text Content
                     Padding(
                       padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 30)),
                       child: Column(
@@ -192,11 +169,9 @@ class HomeView extends StatelessWidget {
           ],
         ),
       ),
-
     );
   }
 
-  // ========== Section Title Widget ==========
   Widget _buildSectionTitle({required bool isDesktop, required bool isTablet}) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0)),
@@ -211,7 +186,7 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // ========== Persona Grid Section Widget ==========
+  /// ✅ UPDATED: Persona Grid with proper error handling
   Widget _buildPersonaGridSection({
     required ChatAllAiPersona controller,
     required UserIsSubcribedController is_SubcribedController,
@@ -223,10 +198,25 @@ class HomeView extends StatelessWidget {
     double aspectRatio = isDesktop ? 0.75 : (isTablet ? 0.72 : 0.7);
 
     return Obx(() {
+      // ✅ Show loading
       if (controller.isLoading.value || is_SubcribedController.isLoading.value) {
         return _buildLoadingIndicator(isDesktop: isDesktop, isTablet: isTablet);
       }
 
+      // ✅ Show error states
+      if (controller.hasError.value) {
+        return _buildErrorWidget(
+          errorType: controller.errorMessage.value,
+          onRetry: () async {
+            await controller.fetchAllAiPersona();
+            await is_SubcribedController.checkAndUpdateSubscriptionStatus();
+          },
+          isDesktop: isDesktop,
+          isTablet: isTablet,
+        );
+      }
+
+      // ✅ Show empty state
       if (controller.personaList.isEmpty) {
         return _buildEmptyState(isDesktop: isDesktop, isTablet: isTablet);
       }
@@ -245,14 +235,6 @@ class HomeView extends StatelessWidget {
             return _buildLoadingIndicator(isDesktop: isDesktop, isTablet: isTablet);
           }
 
-          if (snapshot.hasError) {
-            return _buildErrorState(
-              error: snapshot.error.toString(),
-              isDesktop: isDesktop,
-              isTablet: isTablet,
-            );
-          }
-
           return GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -267,7 +249,6 @@ class HomeView extends StatelessWidget {
     });
   }
 
-  // ========== Loading Indicator Widget ==========
   Widget _buildLoadingIndicator({required bool isDesktop, required bool isTablet}) {
     return Center(
       child: Padding(
@@ -280,41 +261,137 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // ========== Empty State Widget ==========
-  Widget _buildEmptyState({required bool isDesktop, required bool isTablet}) {
-    return Center(
-      child: Padding(
-        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
-        child: const Text('No personas available'),
-      ),
-    );
-  }
-
-  // ========== Error State Widget ==========
-  Widget _buildErrorState({
-    required String error,
+  /// ✅ NEW: Error Widget with specific messages
+  Widget _buildErrorWidget({
+    required String errorType,
+    required VoidCallback onRetry,
     required bool isDesktop,
     required bool isTablet,
   }) {
+    IconData icon;
+    String title;
+    String message;
+    Color iconColor;
+
+    switch (errorType) {
+      case 'NETWORK_ERROR':
+        icon = Icons.wifi_off;
+        title = 'No Internet Connection';
+        message = 'Please check your internet connection and try again';
+        iconColor = Colors.orange;
+        break;
+      case 'SERVER_ERROR':
+        icon = Icons.cloud_off;
+        title = 'Server Error';
+        message = 'Sorry, please try later. We are working on the server';
+        iconColor = Colors.red;
+        break;
+      case 'SESSION_EXPIRED':
+        icon = Icons.lock_clock;
+        title = 'Session Expired';
+        message = 'Redirecting to login...';
+        iconColor = Colors.blue;
+        break;
+      default:
+        icon = Icons.error_outline;
+        title = 'Something went wrong';
+        message = 'Please try again';
+        iconColor = Colors.red;
+    }
+
     return Center(
       child: Padding(
         padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.error_outline,
-              size: isDesktop ? 56 : (isTablet ? 52 : 48),
-              color: Colors.red,
+              icon,
+              size: isDesktop ? 80 : (isTablet ? 70 : 60),
+              color: iconColor,
             ),
-            const SizedBox(height: 10),
-            Text('Error loading personas: $error'),
+            SizedBox(height: isDesktop ? 24 : 20),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: isDesktop ? 20 : (isTablet ? 18 : 16),
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: isDesktop ? 12 : 10),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: isDesktop ? 16 : (isTablet ? 15 : 14),
+                color: Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (errorType != 'SESSION_EXPIRED') ...[
+              SizedBox(height: isDesktop ? 32 : 24),
+              ElevatedButton.icon(
+                onPressed: onRetry,
+                icon: Icon(Icons.refresh),
+                label: Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primarycolor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isDesktop ? 32 : 24,
+                    vertical: isDesktop ? 16 : 12,
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: isDesktop ? 16 : 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  // ========== Debug Info ==========
+  /// ✅ UPDATED: Empty State
+  Widget _buildEmptyState({required bool isDesktop, required bool isTablet}) {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.person_off_outlined,
+              size: isDesktop ? 80 : (isTablet ? 70 : 60),
+              color: Colors.grey.shade400,
+            ),
+            SizedBox(height: isDesktop ? 24 : 20),
+            Text(
+              'No Persona Available',
+              style: TextStyle(
+                fontSize: isDesktop ? 20 : (isTablet ? 18 : 16),
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            SizedBox(height: isDesktop ? 12 : 10),
+            Text(
+              'There are no AI personas available at the moment',
+              style: TextStyle(
+                fontSize: isDesktop ? 16 : (isTablet ? 15 : 14),
+                color: Colors.grey.shade500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _printDebugInfo(UserIsSubcribedController controller) {
     print("📊 Subscription status in HomeView:");
     print("   isActive: ${controller.isActive.value}");
@@ -324,7 +401,6 @@ class HomeView extends StatelessWidget {
     print("   selectedPersona: ${controller.selectedPersona.value?.id}");
   }
 
-  // ========== Build Persona Cards ==========
   Future<List<Widget>> _buildPersonaCards({
     required ChatAllAiPersona controller,
     required UserIsSubcribedController is_SubcribedController,
@@ -367,7 +443,6 @@ class HomeView extends StatelessWidget {
     return personaCards;
   }
 
-  // ========== Single Persona Card Widget ==========
   Widget _buildPersonaCard({
     required dynamic persona,
     required bool isPersonaActive,
@@ -429,7 +504,6 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // ========== Persona Image Widget ==========
   Widget _buildPersonaImage({
     required dynamic persona,
     required bool isPersonaActive,
@@ -476,7 +550,6 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // ========== Lock Overlay Widget ==========
   Widget _buildLockOverlay({
     required UserIsSubcribedController is_SubcribedController,
     required double iconSize,
@@ -526,7 +599,6 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // ========== Persona Title Widget ==========
   Widget _buildPersonaTitle({
     required String title,
     required bool isPersonaActive,
@@ -553,7 +625,6 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // ========== Handle Persona Tap ==========
   Future<void> _handlePersonaTap({
     required dynamic persona,
     required bool isPersonaActive,
@@ -569,7 +640,6 @@ class HomeView extends StatelessWidget {
     }
   }
 
-  // ========== Show Access Restricted Message ==========
   void _showAccessRestrictedMessage(UserIsSubcribedController controller) {
     String title = 'Access Restricted';
     String message = 'This persona is not available';

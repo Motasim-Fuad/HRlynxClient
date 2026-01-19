@@ -1,4 +1,3 @@
-// 5. UPDATED VIEW - news_details_view.dart
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -15,7 +14,6 @@ class NewsDetailsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize ViewModel
     final viewModel = Get.put(NewsDetailsViewModel());
     viewModel.initializeArticle(articleId);
 
@@ -35,22 +33,18 @@ class NewsDetailsView extends StatelessWidget {
           ),
         ),
         actions: [
-          // ✅ ONLY CHANGE HERE - Builder wrap korlam iPad fix ar jonno
           Builder(
             builder: (BuildContext context) {
               return IconButton(
                 icon: Icon(Icons.share),
                 onPressed: () async {
-                  // iPad ar jonno button position calculate kora
                   final RenderBox? box = context.findRenderObject() as RenderBox?;
 
                   if (box != null) {
-                    // Position pass kortesi - iPad a share sheet properly show hobe
                     await viewModel.shareArticle(
                       sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size,
                     );
                   } else {
-                    // iPhone ar jonno - normally call hobe
                     await viewModel.shareArticle();
                   }
                 },
@@ -60,17 +54,28 @@ class NewsDetailsView extends StatelessWidget {
         ],
       ),
       body: Obx(() {
+        // ✅ Show loading
         if (viewModel.isLoading.value) {
           return NewsDetailsWidgets.buildLoadingWidget();
         }
 
+        // ✅ Show error with retry
         if (viewModel.error.value.isNotEmpty) {
-          return NewsDetailsWidgets.buildErrorWidget(() => Get.back());
+          return _buildErrorWidget(
+            errorType: viewModel.errorType.value,
+            onRetry: () => viewModel.retryLoadArticle(),
+            onBack: () => Get.back(),
+          );
         }
 
+        // ✅ Show article
         final article = viewModel.article.value;
         if (article == null) {
-          return NewsDetailsWidgets.buildErrorWidget(() => Get.back());
+          return _buildErrorWidget(
+            errorType: 'UNKNOWN_ERROR',
+            onRetry: () => viewModel.retryLoadArticle(),
+            onBack: () => Get.back(),
+          );
         }
 
         return SingleChildScrollView(
@@ -112,7 +117,6 @@ class NewsDetailsView extends StatelessWidget {
                 )),
                 SizedBox(height: 20),
 
-                // Selected tag info
                 Obx(() {
                   final selectedIndex = viewModel.selectedTagIndex.value;
                   if (selectedIndex >= 0 && selectedIndex < article.tags.length) {
@@ -201,6 +205,115 @@ class NewsDetailsView extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+
+  /// ✅ Error Widget
+  Widget _buildErrorWidget({
+    required String errorType,
+    required VoidCallback onRetry,
+    required VoidCallback onBack,
+  }) {
+    IconData icon;
+    String title;
+    String message;
+    Color iconColor;
+
+    switch (errorType) {
+      case 'NETWORK_ERROR':
+        icon = Icons.wifi_off;
+        title = 'No Internet Connection';
+        message = 'Please check your internet connection and try again';
+        iconColor = Colors.orange;
+        break;
+      case 'SERVER_ERROR':
+        icon = Icons.cloud_off;
+        title = 'Server Error';
+        message = 'Sorry, please try later. We are working on the server';
+        iconColor = Colors.red;
+        break;
+      case 'SESSION_EXPIRED':
+        icon = Icons.lock_clock;
+        title = 'Session Expired';
+        message = 'Redirecting to login...';
+        iconColor = Colors.blue;
+        break;
+      default:
+        icon = Icons.error_outline;
+        title = 'Failed to Load Article';
+        message = 'Something went wrong. Please try again';
+        iconColor = Colors.red;
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 64, color: iconColor),
+            SizedBox(height: 20),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24),
+
+            if (errorType != 'SESSION_EXPIRED')
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onBack,
+                    icon: Icon(Icons.arrow_back),
+                    label: Text('Go Back'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primarycolor,
+                      side: BorderSide(color: AppColors.primarycolor),
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    onPressed: onRetry,
+                    icon: Icon(Icons.refresh),
+                    label: Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primarycolor,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                  ),
+                ],
+              )
+            else
+              OutlinedButton.icon(
+                onPressed: onBack,
+                icon: Icon(Icons.arrow_back),
+                label: Text('Go Back'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primarycolor,
+                  side: BorderSide(color: AppColors.primarycolor),
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
