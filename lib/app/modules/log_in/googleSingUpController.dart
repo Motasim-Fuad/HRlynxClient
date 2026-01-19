@@ -1,9 +1,10 @@
-// lib/app/modules/sign_up/google_signup_controller.dart
+// lib/app/modules/sign_up/google_signup_controller.dart - OPTIMIZED
 
 import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:HRlynx/app/subscription_manager.dart';
+import 'package:HRlynx/app/common_widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,7 +17,6 @@ class GoogleSignUpController extends GetxController {
   final userController = Get.put(UserController());
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
-
   final isChecked = false.obs;
   late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -24,6 +24,7 @@ class GoogleSignUpController extends GetxController {
     isChecked.value = value ?? false;
   }
 
+  /// ✅ OPTIMIZED: Shows loading during entire process
   Future<void> handleGoogleSignUp() async {
     if (!isChecked.value) {
       Get.snackbar(
@@ -35,47 +36,33 @@ class GoogleSignUpController extends GetxController {
 
     try {
       isLoading.value = true;
+      //LoadingOverlay.show(message: 'Connecting to Google...');
 
-      // ✅ PLATFORM-SPECIFIC CONFIGURATION
       final GoogleSignIn googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
-        // ✅ Only add clientId for iOS/iPad (NOT for Android)
         clientId: Platform.isIOS
             ? '907467608466-9c7kk86ghtfqrvou3hpk3m45uj3sg07v.apps.googleusercontent.com'
             : null,
       );
 
-      // ✅ Sign out first to ensure clean state
       await googleSignIn.signOut();
-
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser == null) {
-        print('⚠️ User cancelled Google Sign-In');
+        LoadingOverlay.hide();
         isLoading.value = false;
         return;
       }
 
-      print('✅ Google User: ${googleUser.email}');
-
+      LoadingOverlay.updateMessage('Authenticating...');
       final googleAuth = await googleUser.authentication;
 
-      // ✅ Detailed token check
-      if (googleAuth.accessToken == null) {
-        print('❌ Access token is null');
-        Get.snackbar("Error", "Failed to get access token");
+      if (googleAuth.accessToken == null || googleAuth.idToken == null) {
+        LoadingOverlay.hide();
+        Get.snackbar("Error", "Failed to get authentication tokens");
         isLoading.value = false;
         return;
       }
-
-      if (googleAuth.idToken == null) {
-        print('❌ ID token is null');
-        Get.snackbar("Error", "Failed to get ID token");
-        isLoading.value = false;
-        return;
-      }
-
-      print('✅ Tokens received successfully');
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -86,22 +73,20 @@ class GoogleSignUpController extends GetxController {
       final user = userCredential.user;
 
       if (user == null || user.email == null) {
+        LoadingOverlay.hide();
         Get.snackbar("Error", "Google sign-in failed: No user data.");
         isLoading.value = false;
         return;
       }
 
-      print('✅ Firebase user authenticated: ${user.email}');
-
+      LoadingOverlay.updateMessage('Creating your account...');
       final email = user.email!;
       final name = user.displayName ?? 'Google User';
 
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
       if (storedPersonaId == null) {
-        Get.snackbar(
-          "Error",
-          "No persona selected. Please complete onboarding first.",
-        );
+        LoadingOverlay.hide();
+        Get.snackbar("Error", "No persona selected. Please complete onboarding first.");
         isLoading.value = false;
         return;
       }
@@ -113,78 +98,93 @@ class GoogleSignUpController extends GetxController {
         provider: 'google',
       );
 
-
       if (success) {
-        // ✅ Non-blocking notifications
-        try {
-          await initializeNotificationService();
-          await sendFCMTokenToBackend();
-        } catch (e) {
-          print('⚠️ Non-critical notification error: $e');
-        }
+        // Non-blocking notifications
+        _initializeFirebaseServices();
+
+        //LoadingOverlay.updateMessage('Setting up profile...');
         await authRepo.setParsonaType(personaBody);
+
+        // Subscription Manager handles its own loading
+        LoadingOverlay.hide();
         await SubscriptionManager.instance.handlePostLoginNavigation();
 
       } else {
+        LoadingOverlay.hide();
         Get.snackbar("Error", "Failed to complete sign-in. Please try again.");
       }
 
     } on FirebaseAuthException catch (e) {
-      print('🔥 Firebase Auth Error: ${e.code} - ${e.message}');
-
-      String errorMessage = 'Authentication failed';
-
-      switch (e.code) {
-        case 'network-request-failed':
-          errorMessage = 'Network problem. Please check your connection.';
-          break;
-        case 'user-disabled':
-          errorMessage = 'This account has been disabled.';
-          break;
-        case 'invalid-credential':
-          errorMessage = 'Invalid credentials. Please try again.';
-          break;
-        case 'account-exists-with-different-credential':
-          errorMessage = 'An account already exists with this email.';
-          break;
-        default:
-          errorMessage = e.message ?? 'Something went wrong';
-      }
-
-      Get.snackbar(
-        "Error",
-        errorMessage,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 4),
-      );
-
+      LoadingOverlay.hide();
+      _handleFirebaseError(e);
     } catch (e) {
-      print('❌ GoogleSignUp Error: $e');
-
-      // ✅ Handle ApiException: 10 specifically
-      if (e.toString().contains('ApiException: 10')) {
-        Get.snackbar(
-          "Configuration Error",
-          "Google Sign-In is not properly configured. Please contact support.",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 5),
-        );
-      } else {
-        Get.snackbar(
-          "Error",
-          "Something went wrong. Please try again.",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
+      LoadingOverlay.hide();
+      _handleGeneralError(e);
     } finally {
       isLoading.value = false;
     }
+  }
+
+  void _handleFirebaseError(FirebaseAuthException e) {
+    String errorMessage = 'Authentication failed';
+
+    switch (e.code) {
+      case 'network-request-failed':
+        errorMessage = 'Network problem. Please check your connection.';
+        break;
+      case 'user-disabled':
+        errorMessage = 'This account has been disabled.';
+        break;
+      case 'invalid-credential':
+        errorMessage = 'Invalid credentials. Please try again.';
+        break;
+      case 'account-exists-with-different-credential':
+        errorMessage = 'An account already exists with this email.';
+        break;
+      default:
+        errorMessage = e.message ?? 'Something went wrong';
+    }
+
+    Get.snackbar(
+      "Error",
+      errorMessage,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 4),
+    );
+  }
+
+  void _handleGeneralError(dynamic e) {
+    if (e.toString().contains('ApiException: 10')) {
+      Get.snackbar(
+        "Configuration Error",
+        "Google Sign-In is not properly configured. Please contact support.",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    } else {
+      Get.snackbar(
+        "Error",
+        "Something went wrong. Please try again.",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> _initializeFirebaseServices() async {
+    Future.microtask(() async {
+      try {
+        await initializeNotificationService();
+        await sendFCMTokenToBackend();
+      } catch (e) {
+        print('⚠️ Firebase services error: $e');
+      }
+    });
   }
 
   Future<void> initializeNotificationService() async {
@@ -194,9 +194,7 @@ class GoogleSignUpController extends GetxController {
       }
       final notificationService = NotificationService.instance;
       await notificationService.enableConnection();
-      print('✅ Notification service initialized');
     } catch (e) {
-      print('❌ Notification service error: $e');
       rethrow;
     }
   }
@@ -205,9 +203,7 @@ class GoogleSignUpController extends GetxController {
     try {
       final firebaseMsg = FirebaseMeg();
       await firebaseMsg.sendFCMTokenAfterLogin();
-      print('✅ FCM token sent');
     } catch (e) {
-      print('❌ FCM token error: $e');
       rethrow;
     }
   }

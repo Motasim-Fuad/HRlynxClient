@@ -1,7 +1,10 @@
+// lib/app/modules/sign_up/apple_signup_controller.dart - OPTIMIZED
+
 import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:HRlynx/app/subscription_manager.dart';
+import 'package:HRlynx/app/common_widgets/loading_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,8 +21,6 @@ class AppleSignUpController extends GetxController {
   final AuthRepository authRepo = AuthRepository();
   final BiometricService biometricService = BiometricService();
   final isLoading = false.obs;
-
-  // ✅ Terms & Conditions checkbox state
   final isChecked = false.obs;
   late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -27,9 +28,7 @@ class AppleSignUpController extends GetxController {
     isChecked.value = value ?? false;
   }
 
-  /// ✅ Apple Sign-In with NATIVE biometric support
-  /// Apple automatically uses Face ID/Touch ID if available on device
-  /// NO manual password needed - Apple handles everything
+  /// ✅ OPTIMIZED: Shows loading during entire Apple Sign-In
   Future<void> handleAppleSignUp() async {
     if (!isChecked.value) {
       Get.snackbar(
@@ -41,37 +40,38 @@ class AppleSignUpController extends GetxController {
 
     try {
       isLoading.value = true;
+     // LoadingOverlay.show(message: 'Connecting to Apple...');
 
       final isAvailable = await SignInWithApple.isAvailable();
       if (!isAvailable) {
+        LoadingOverlay.hide();
         Get.snackbar("Error", "Apple Sign-In is not available on this device");
         isLoading.value = false;
         return;
       }
 
-      print('🍎 Starting Apple Sign-In (will use biometric if available)...');
-
       final userCredential = await signInWithApple();
       if (userCredential == null) {
+        LoadingOverlay.hide();
         isLoading.value = false;
         return;
       }
 
       final user = userCredential.user;
       if (user == null || user.email == null) {
+        LoadingOverlay.hide();
         Get.snackbar("Error", "Apple sign-in failed: No user data.");
         isLoading.value = false;
         return;
       }
 
+      LoadingOverlay.updateMessage('Creating your account...');
       final email = user.email!;
       final name = user.displayName ?? 'Apple User';
 
-      print('✅ Apple Sign-In successful with email: $email');
-      print('🔐 Authentication was handled by Apple (Face ID/Touch ID/Password)');
-
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
       if (storedPersonaId == null) {
+        LoadingOverlay.hide();
         Get.snackbar("Error", "No persona selected. Please complete onboarding first.");
         isLoading.value = false;
         return;
@@ -84,40 +84,37 @@ class AppleSignUpController extends GetxController {
         provider: 'apple',
       );
 
-
       if (success) {
-        try {
-          await initializeNotificationService();
-          await sendFCMTokenToBackend();
-        } catch (e) {
-          print('⚠️ Non-critical error (notifications): $e');
-        }
+        // Non-blocking notifications
+        _initializeFirebaseServices();
+
+       // LoadingOverlay.updateMessage('Setting up profile...');
         await authRepo.setParsonaType(personaBody);
-        // ✅ Save email for future biometric login
-        // Next time user opens app, they can use biometric to trigger Apple Sign-In
+
+        // Enable biometric for future login
         await biometricService.enableBiometricLogin(email);
-        print('💾 Saved email for future biometric quick login');
 
-        print("Apple sign-in complete!");
-
+        // Subscription Manager handles its own loading
+        LoadingOverlay.hide();
         await SubscriptionManager.instance.handlePostLoginNavigation();
 
       } else {
+        LoadingOverlay.hide();
         Get.snackbar("Error", "Failed to set persona after Apple login.");
       }
     } on SignInWithAppleAuthorizationException catch (e) {
+      LoadingOverlay.hide();
       if (e.code == AuthorizationErrorCode.canceled) {
         Get.snackbar("Cancelled", "Apple Sign-In was cancelled");
       } else {
         Get.snackbar("Error", "Apple Sign-In error: ${e.message}");
-        print("Apple Auth Error: ${e.code} - ${e.message}");
       }
     } catch (e) {
+      LoadingOverlay.hide();
       if (e.toString().contains('network')) {
         Get.snackbar("Error", "Network problem. Please check your connection.");
       } else {
         Get.snackbar("Error", "Something went wrong. Please try again.");
-        print("❌ AppleSignUp Error: $e");
       }
     } finally {
       isLoading.value = false;
@@ -125,18 +122,11 @@ class AppleSignUpController extends GetxController {
   }
 
   /// ✅ Apple Sign-In with Firebase
-  /// Apple AUTOMATICALLY shows Face ID/Touch ID if available
-  /// NO extra code needed - it's built into Apple Sign-In!
   Future<UserCredential?> signInWithApple() async {
     try {
       final rawNonce = generateNonce();
       final nonce = sha256ofString(rawNonce);
 
-      // ✅ This line triggers Apple's native authentication
-      // Apple will show:
-      // - Face ID prompt (if Face ID is set up)
-      // - Touch ID prompt (if Touch ID is set up)
-      // - Password prompt (if no biometric is set up)
       final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
@@ -144,8 +134,6 @@ class AppleSignUpController extends GetxController {
         ],
         nonce: nonce,
       );
-
-      print('✅ Apple credential received - user authenticated via Apple');
 
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
@@ -171,26 +159,39 @@ class AppleSignUpController extends GetxController {
     }
   }
 
-  Future<void> updateUserDisplayName(User? user, String? givenName, String? familyName) async {
+  Future<void> updateUserDisplayName(
+      User? user, String? givenName, String? familyName) async {
     if (user != null && (givenName != null || familyName != null)) {
       String displayName = '';
       if (givenName != null) displayName += givenName;
       if (familyName != null) displayName += ' $familyName';
       await user.updateDisplayName(displayName.trim());
-      print("Display name updated: ${displayName.trim()}");
     }
   }
 
   String generateNonce([int length = 32]) {
-    const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
-    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
   }
 
   String sha256ofString(String input) {
     final bytes = utf8.encode(input);
     final digest = sha256.convert(bytes);
     return digest.toString();
+  }
+
+  Future<void> _initializeFirebaseServices() async {
+    Future.microtask(() async {
+      try {
+        await initializeNotificationService();
+        await sendFCMTokenToBackend();
+      } catch (e) {
+        print('⚠️ Firebase services error: $e');
+      }
+    });
   }
 
   Future<void> initializeNotificationService() async {
@@ -200,9 +201,8 @@ class AppleSignUpController extends GetxController {
       }
       final notificationService = NotificationService.instance;
       await notificationService.enableConnection();
-      print('✅ Notification service initialized successfully');
     } catch (e) {
-      print('❌ Error initializing notification service: $e');
+      print('❌ Notification service error: $e');
     }
   }
 
@@ -210,9 +210,8 @@ class AppleSignUpController extends GetxController {
     try {
       final firebaseMsg = FirebaseMeg();
       await firebaseMsg.sendFCMTokenAfterLogin();
-      print('✅ FCM token sent to backend after Apple login');
     } catch (e) {
-      print('❌ Error sending FCM token after Apple login: $e');
+      print('❌ FCM token error: $e');
     }
   }
 }
