@@ -14,8 +14,6 @@ class HomeView extends StatelessWidget {
     final UserIsSubcribedController is_SubcribedController = Get.put(UserIsSubcribedController());
     final controller = Get.put(ChatAllAiPersona());
 
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       backgroundColor: Colors.white,
       body: LayoutBuilder(
@@ -24,7 +22,6 @@ class HomeView extends StatelessWidget {
           final isDesktop = constraints.maxWidth > 1024;
 
           final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
-          final topPadding = isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0);
 
           return RefreshIndicator(
             onRefresh: () async {
@@ -33,49 +30,24 @@ class HomeView extends StatelessWidget {
             },
             color: AppColors.primarycolor,
             backgroundColor: Colors.white,
-            child: Stack(
+            child: Column(
               children: [
-                Padding(
-                  padding: EdgeInsets.only(
-                    top: _getHeaderHeight(isDesktop, isTablet, horizontalPadding, topPadding),
-                  ),
-                  child: CustomScrollView(
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: topPadding),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildPersonaGridSection(
-                                controller: controller,
-                                is_SubcribedController: is_SubcribedController,
-                                isTablet: isTablet,
-                                isDesktop: isDesktop,
-                              ),
-                              SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                SizedBox(height: 20,),
+                // Fixed Header Section
+                _buildFixedHeader(
+                  horizontalPadding: horizontalPadding,
+                  isDesktop: isDesktop,
+                  isTablet: isTablet,
                 ),
 
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Column(
-                    children: [
-                      SizedBox(height: isDesktop ? 39 : (isTablet ? 34 : 29)),
-                      _buildFixedHeaderCard(
-                        horizontalPadding: horizontalPadding,
-                        topPadding: topPadding,
-                        isDesktop: isDesktop,
-                        isTablet: isTablet,
-                      ),
-                    ],
+                // Scrollable GridView Section
+                Expanded(
+                  child: _buildPersonaGridSection(
+                    controller: controller,
+                    is_SubcribedController: is_SubcribedController,
+                    isTablet: isTablet,
+                    isDesktop: isDesktop,
+                    horizontalPadding: horizontalPadding,
                   ),
                 ),
               ],
@@ -86,143 +58,157 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  double _getHeaderHeight(bool isDesktop, bool isTablet, double horizontalPadding, double topPadding) {
-    final cardPadding = isDesktop ? 30.0 : (isTablet ? 25.0 : 20.0);
-    final titleHeight = isDesktop ? 26.0 : (isTablet ? 22.0 : 20.0);
-    final spacing = isDesktop ? 24.0 : 20.0;
-    final descriptionHeight = isDesktop ? 18.0 * 2 : (isTablet ? 17.0 * 2 : 16.0 * 2);
-    final topSpacing = isDesktop ? 39.0 : (isTablet ? 34.0 : 100.0);
-
-    return topSpacing + (cardPadding * 2) + titleHeight + spacing + descriptionHeight + 20;
-  }
-
-  Widget _buildFixedHeaderCard({
+  Widget _buildFixedHeader({
     required double horizontalPadding,
-    required double topPadding,
     required bool isDesktop,
     required bool isTablet,
   }) {
     return Container(
       color: Colors.white,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 10),
-        child: Column(
-          children: [
-            SizedBox(height: isDesktop ? 20 : (isTablet ? 15 : 10)),
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: isDesktop ? 40 : (isTablet ? 30 : 20)),
+
+          // Header Card with MediaQuery Height
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final screenHeight = MediaQuery.of(context).size.height;
+              final cardHeight = screenHeight * 0.20;
+
+              return Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: Container(
+                  width: double.infinity,
+                  height: cardHeight,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Image.asset(
-                        AppImages.home_container,
-                        fit: BoxFit.cover,
-                        color: Colors.black.withOpacity(0.6),
-                        colorBlendMode: BlendMode.darken,
-                      ),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 30)),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Your HR Guidance, Reimagined',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: isDesktop ? 26 : (isTablet ? 22 : 20),
-                              color: Colors.white,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Image.asset(
+                            AppImages.home_container,
+                            fit: BoxFit.cover,
+                            color: Colors.black.withOpacity(0.6),
+                            colorBlendMode: BlendMode.darken,
+                          ),
+                        ),
+                        Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 20)),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Your HR Guidance, Reimagined',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: isDesktop ? 28 : (isTablet ? 24 : 20),
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(height: isDesktop ? 16 : (isTablet ? 14 : 12)),
+                                Text(
+                                  'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter.',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: isDesktop ? 16 : (isTablet ? 15 : 14),
+                                    color: Colors.white.withOpacity(0.95),
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          SizedBox(height: isDesktop ? 24 : 20),
-                          Text(
-                            'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter.',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w400,
-                              fontSize: isDesktop ? 18 : (isTablet ? 17 : 16),
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                ),
+              );
+            },
+          ),
+
+          SizedBox(height: isDesktop ? 32 : (isTablet ? 28 : 24)),
+
+          // Section Title
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Chat with your AI HR Assistants:',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: isDesktop ? 24 : (isTablet ? 22 : 18),
+                  color: AppColors.primarycolor,
                 ),
               ),
             ),
-            SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-            _buildSectionTitle(isDesktop: isDesktop, isTablet: isTablet),
-            SizedBox(height: isDesktop ? 30 : (isTablet ? 25 : 20)),
-          ],
-        ),
+          ),
+
+          SizedBox(height: isDesktop ? 24 : (isTablet ? 20 : 16)),
+        ],
       ),
     );
   }
 
-  Widget _buildSectionTitle({required bool isDesktop, required bool isTablet}) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40.0 : (isTablet ? 30.0 : 20.0)),
-      child: Text(
-        'Chat with your AI HR Assistants:',
-        style: TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: isDesktop ? 26 : (isTablet ? 24 : 20),
-          color: AppColors.primarycolor,
-        ),
-      ),
-    );
-  }
-
-  /// ✅ UPDATED: Persona Grid with proper error handling
   Widget _buildPersonaGridSection({
     required ChatAllAiPersona controller,
     required UserIsSubcribedController is_SubcribedController,
     required bool isTablet,
     required bool isDesktop,
+    required double horizontalPadding,
   }) {
     int crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
-    double spacing = isDesktop ? 16.0 : (isTablet ? 14.0 : 12.0);
-    double aspectRatio = isDesktop ? 0.75 : (isTablet ? 0.72 : 0.7);
+    double spacing = isDesktop ? 20.0 : (isTablet ? 16.0 : 12.0);
+    double childAspectRatio = isDesktop ? 0.8 : (isTablet ? 0.75 : 0.7);
 
     return Obx(() {
-      // ✅ Show loading
+      // Loading State
       if (controller.isLoading.value || is_SubcribedController.isLoading.value) {
         return _buildLoadingIndicator(isDesktop: isDesktop, isTablet: isTablet);
       }
 
-      // ✅ Show error states
+      // Error State
       if (controller.hasError.value) {
-        return _buildErrorWidget(
-          errorType: controller.errorMessage.value,
-          onRetry: () async {
-            await controller.fetchAllAiPersona();
-            await is_SubcribedController.checkAndUpdateSubscriptionStatus();
-          },
-          isDesktop: isDesktop,
-          isTablet: isTablet,
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: _buildErrorWidget(
+            errorType: controller.errorMessage.value,
+            onRetry: () async {
+              await controller.fetchAllAiPersona();
+              await is_SubcribedController.checkAndUpdateSubscriptionStatus();
+            },
+            isDesktop: isDesktop,
+            isTablet: isTablet,
+          ),
         );
       }
 
-      // ✅ Show empty state
+      // Empty State
       if (controller.personaList.isEmpty) {
-        return _buildEmptyState(isDesktop: isDesktop, isTablet: isTablet);
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: _buildEmptyState(isDesktop: isDesktop, isTablet: isTablet),
+        );
       }
 
       _printDebugInfo(is_SubcribedController);
 
+      // GridView with Personas
       return FutureBuilder<List<Widget>>(
         future: _buildPersonaCards(
           controller: controller,
@@ -236,12 +222,16 @@ class HomeView extends StatelessWidget {
           }
 
           return GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              0,
+              horizontalPadding,
+              isDesktop ? 40 : (isTablet ? 30 : 20),
+            ),
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: spacing,
             mainAxisSpacing: spacing,
-            childAspectRatio: aspectRatio,
+            childAspectRatio: childAspectRatio,
             children: snapshot.data ?? [],
           );
         },
@@ -252,16 +242,15 @@ class HomeView extends StatelessWidget {
   Widget _buildLoadingIndicator({required bool isDesktop, required bool isTablet}) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
+        padding: EdgeInsets.all(isDesktop ? 80 : (isTablet ? 60 : 40)),
         child: const CircularProgressIndicator(
-          strokeWidth: 2,
+          strokeWidth: 3,
           valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
         ),
       ),
     );
   }
 
-  /// ✅ NEW: Error Widget with specific messages
   Widget _buildErrorWidget({
     required String errorType,
     required VoidCallback onRetry,
@@ -275,25 +264,25 @@ class HomeView extends StatelessWidget {
 
     switch (errorType) {
       case 'NETWORK_ERROR':
-        icon = Icons.wifi_off;
+        icon = Icons.wifi_off_rounded;
         title = 'No Internet Connection';
         message = 'Please check your internet connection and try again';
         iconColor = Colors.orange;
         break;
       case 'SERVER_ERROR':
-        icon = Icons.cloud_off;
+        icon = Icons.cloud_off_rounded;
         title = 'Server Error';
         message = 'Sorry, please try later. We are working on the server';
         iconColor = Colors.red;
         break;
       case 'SESSION_EXPIRED':
-        icon = Icons.lock_clock;
+        icon = Icons.lock_clock_rounded;
         title = 'Session Expired';
         message = 'Redirecting to login...';
         iconColor = Colors.blue;
         break;
       default:
-        icon = Icons.error_outline;
+        icon = Icons.error_outline_rounded;
         title = 'Something went wrong';
         message = 'Please try again';
         iconColor = Colors.red;
@@ -301,49 +290,62 @@ class HomeView extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
+        padding: EdgeInsets.all(isDesktop ? 80 : (isTablet ? 60 : 40)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: isDesktop ? 80 : (isTablet ? 70 : 60),
-              color: iconColor,
+            Container(
+              padding: EdgeInsets.all(isDesktop ? 24 : (isTablet ? 20 : 16)),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: isDesktop ? 64 : (isTablet ? 56 : 48),
+                color: iconColor,
+              ),
             ),
-            SizedBox(height: isDesktop ? 24 : 20),
+            SizedBox(height: isDesktop ? 24 : (isTablet ? 20 : 16)),
             Text(
               title,
               style: TextStyle(
-                fontSize: isDesktop ? 20 : (isTablet ? 18 : 16),
-                fontWeight: FontWeight.w600,
+                fontSize: isDesktop ? 22 : (isTablet ? 20 : 18),
+                fontWeight: FontWeight.w700,
                 color: Colors.black87,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: isDesktop ? 12 : 10),
+            SizedBox(height: isDesktop ? 12 : (isTablet ? 10 : 8)),
             Text(
               message,
               style: TextStyle(
                 fontSize: isDesktop ? 16 : (isTablet ? 15 : 14),
                 color: Colors.grey.shade600,
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
             if (errorType != 'SESSION_EXPIRED') ...[
-              SizedBox(height: isDesktop ? 32 : 24),
+              SizedBox(height: isDesktop ? 32 : (isTablet ? 28 : 24)),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: Icon(Icons.refresh),
-                label: Text('Retry'),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primarycolor,
                   foregroundColor: Colors.white,
+                  elevation: 2,
                   padding: EdgeInsets.symmetric(
-                    horizontal: isDesktop ? 32 : 24,
-                    vertical: isDesktop ? 16 : 12,
+                    horizontal: isDesktop ? 32 : (isTablet ? 28 : 24),
+                    vertical: isDesktop ? 16 : (isTablet ? 14 : 12),
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   textStyle: TextStyle(
-                    fontSize: isDesktop ? 16 : 14,
+                    fontSize: isDesktop ? 16 : (isTablet ? 15 : 14),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -355,34 +357,42 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  /// ✅ UPDATED: Empty State
   Widget _buildEmptyState({required bool isDesktop, required bool isTablet}) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(isDesktop ? 60 : (isTablet ? 50 : 40)),
+        padding: EdgeInsets.all(isDesktop ? 80 : (isTablet ? 60 : 40)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.person_off_outlined,
-              size: isDesktop ? 80 : (isTablet ? 70 : 60),
-              color: Colors.grey.shade400,
+            Container(
+              padding: EdgeInsets.all(isDesktop ? 24 : (isTablet ? 20 : 16)),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person_off_outlined,
+                size: isDesktop ? 64 : (isTablet ? 56 : 48),
+                color: Colors.grey.shade400,
+              ),
             ),
-            SizedBox(height: isDesktop ? 24 : 20),
+            SizedBox(height: isDesktop ? 24 : (isTablet ? 20 : 16)),
             Text(
               'No Persona Available',
               style: TextStyle(
-                fontSize: isDesktop ? 20 : (isTablet ? 18 : 16),
-                fontWeight: FontWeight.w600,
+                fontSize: isDesktop ? 22 : (isTablet ? 20 : 18),
+                fontWeight: FontWeight.w700,
                 color: Colors.grey.shade700,
               ),
             ),
-            SizedBox(height: isDesktop ? 12 : 10),
+            SizedBox(height: isDesktop ? 12 : (isTablet ? 10 : 8)),
             Text(
               'There are no AI personas available at the moment',
               style: TextStyle(
                 fontSize: isDesktop ? 16 : (isTablet ? 15 : 14),
                 color: Colors.grey.shade500,
+                height: 1.4,
               ),
               textAlign: TextAlign.center,
             ),
@@ -410,10 +420,9 @@ class HomeView extends StatelessWidget {
     List<Widget> personaCards = [];
 
     final titleFontSize = isDesktop ? 16.0 : (isTablet ? 15.0 : 14.0);
-    final iconSize = isDesktop ? 32.0 : (isTablet ? 30.0 : 28.0);
-    final lockTextSize = isDesktop ? 12.0 : (isTablet ? 11.0 : 10.0);
-    final cardPadding = isDesktop ? 12.0 : (isTablet ? 10.0 : 8.0);
-    final verticalPadding = isDesktop ? 12.0 : (isTablet ? 11.0 : 10.0);
+    final iconSize = isDesktop ? 36.0 : (isTablet ? 32.0 : 28.0);
+    final lockTextSize = isDesktop ? 13.0 : (isTablet ? 12.0 : 11.0);
+    final cardPadding = isDesktop ? 14.0 : (isTablet ? 12.0 : 10.0);
 
     for (int index = 0; index < controller.personaList.length; index++) {
       final persona = controller.personaList[index];
@@ -433,7 +442,6 @@ class HomeView extends StatelessWidget {
           iconSize: iconSize,
           lockTextSize: lockTextSize,
           cardPadding: cardPadding,
-          verticalPadding: verticalPadding,
           isDesktop: isDesktop,
           isTablet: isTablet,
         ),
@@ -452,7 +460,6 @@ class HomeView extends StatelessWidget {
     required double iconSize,
     required double lockTextSize,
     required double cardPadding,
-    required double verticalPadding,
     required bool isDesktop,
     required bool isTablet,
   }) {
@@ -465,38 +472,41 @@ class HomeView extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: isPersonaActive ? Colors.white : Colors.grey.shade200,
+          color: isPersonaActive ? Colors.white : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isPersonaActive ? Colors.grey.shade300 : Colors.grey.shade400,
-            width: isPersonaActive ? 1 : 2,
+            width: isPersonaActive ? 1 : 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: isPersonaActive ? Colors.black12 : Colors.black.withOpacity(0.05),
-              blurRadius: isPersonaActive ? 4 : 2,
+              color: isPersonaActive
+                  ? Colors.black.withOpacity(0.08)
+                  : Colors.black.withOpacity(0.04),
+              blurRadius: isPersonaActive ? 6 : 3,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildPersonaImage(
-              persona: persona,
-              isPersonaActive: isPersonaActive,
-              is_SubcribedController: is_SubcribedController,
-              iconSize: iconSize,
-              lockTextSize: lockTextSize,
-              isDesktop: isDesktop,
-              isTablet: isTablet,
+            Expanded(
+              child: _buildPersonaImage(
+                persona: persona,
+                isPersonaActive: isPersonaActive,
+                is_SubcribedController: is_SubcribedController,
+                iconSize: iconSize,
+                lockTextSize: lockTextSize,
+                isDesktop: isDesktop,
+                isTablet: isTablet,
+              ),
             ),
             _buildPersonaTitle(
               title: persona.title ?? 'No Title',
               isPersonaActive: isPersonaActive,
               titleFontSize: titleFontSize,
               cardPadding: cardPadding,
-              verticalPadding: verticalPadding,
             ),
           ],
         ),
@@ -515,37 +525,40 @@ class HomeView extends StatelessWidget {
   }) {
     return ClipRRect(
       borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(10),
-        topRight: Radius.circular(10),
+        topLeft: Radius.circular(11),
+        topRight: Radius.circular(11),
       ),
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: Stack(
-          children: [
-            CachedNetworkImage(
-              imageUrl: "${persona.avatar}",
-              fit: BoxFit.cover,
-              width: double.infinity,
-              placeholder: (context, url) => const Center(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          CachedNetworkImage(
+            imageUrl: "${persona.avatar}",
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              color: Colors.grey.shade200,
+              child: const Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.primarycolor),
                 ),
               ),
-              errorWidget: (context, url, error) => Icon(
-                Icons.broken_image,
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey.shade200,
+              child: Icon(
+                Icons.broken_image_rounded,
                 size: isDesktop ? 48 : (isTablet ? 44 : 40),
-                color: Colors.grey,
+                color: Colors.grey.shade400,
               ),
             ),
-            if (!isPersonaActive)
-              _buildLockOverlay(
-                is_SubcribedController: is_SubcribedController,
-                iconSize: iconSize,
-                lockTextSize: lockTextSize,
-              ),
-          ],
-        ),
+          ),
+          if (!isPersonaActive)
+            _buildLockOverlay(
+              is_SubcribedController: is_SubcribedController,
+              iconSize: iconSize,
+              lockTextSize: lockTextSize,
+            ),
+        ],
       ),
     );
   }
@@ -559,23 +572,23 @@ class HomeView extends StatelessWidget {
     String lockText;
 
     if (is_SubcribedController.canReactivateSubscription) {
-      lockIcon = Icons.refresh;
+      lockIcon = Icons.refresh_rounded;
       lockText = 'Reactivate';
     } else if (is_SubcribedController.isCanceled.value) {
-      lockIcon = Icons.person_outline;
+      lockIcon = Icons.person_outline_rounded;
       lockText = 'Limited';
     } else {
-      lockIcon = Icons.lock;
+      lockIcon = Icons.lock_rounded;
       lockText = 'Subscribe';
     }
 
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.7),
+          color: Colors.black.withOpacity(0.75),
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(10),
-            topRight: Radius.circular(10),
+            topLeft: Radius.circular(11),
+            topRight: Radius.circular(11),
           ),
         ),
         child: Center(
@@ -583,13 +596,14 @@ class HomeView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(lockIcon, color: Colors.white, size: iconSize),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 lockText,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: lockTextSize,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
                 ),
               ),
             ],
@@ -604,20 +618,17 @@ class HomeView extends StatelessWidget {
     required bool isPersonaActive,
     required double titleFontSize,
     required double cardPadding,
-    required double verticalPadding,
   }) {
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: cardPadding,
-        vertical: verticalPadding,
-      ),
+      padding: EdgeInsets.all(cardPadding),
       child: Text(
         title,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: titleFontSize,
           fontWeight: FontWeight.w600,
-          color: isPersonaActive ? Colors.black : Colors.grey.shade600,
+          color: isPersonaActive ? Colors.black87 : Colors.grey.shade600,
+          height: 1.3,
         ),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
@@ -644,23 +655,23 @@ class HomeView extends StatelessWidget {
     String title = 'Access Restricted';
     String message = 'This persona is not available';
     Color backgroundColor = Colors.orange;
-    IconData icon = Icons.lock_outline;
+    IconData icon = Icons.lock_outline_rounded;
 
     if (controller.canReactivateSubscription) {
       title = 'Reactivate Subscription';
       message = 'Reactivate your subscription to access all personas';
       backgroundColor = Colors.blue;
-      icon = Icons.refresh;
+      icon = Icons.refresh_rounded;
     } else if (!controller.isActive.value) {
       title = 'Subscription Required';
       message = 'Subscribe to access all AI personas';
       backgroundColor = AppColors.primarycolor;
-      icon = Icons.star;
+      icon = Icons.star_rounded;
     } else if (controller.isCanceled.value) {
       title = 'Limited Access';
       message = 'Only your selected persona is available after cancellation';
       backgroundColor = Colors.orange;
-      icon = Icons.person_outline;
+      icon = Icons.person_outline_rounded;
     }
 
     Get.snackbar(
@@ -670,7 +681,9 @@ class HomeView extends StatelessWidget {
       backgroundColor: backgroundColor,
       colorText: Colors.white,
       duration: const Duration(seconds: 3),
-      icon: Icon(icon, color: Colors.white),
+      icon: Icon(icon, color: Colors.white, size: 24),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 8,
     );
   }
 }

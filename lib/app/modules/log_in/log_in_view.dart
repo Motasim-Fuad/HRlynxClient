@@ -25,7 +25,6 @@ class _LogInViewState extends State<LogInView> {
   late LogInController controller;
   late GoogleSignUpController googleSignUpController;
   late AppleSignUpController appleSignUpController;
-
   @override
   void initState() {
     super.initState();
@@ -53,7 +52,6 @@ class _LogInViewState extends State<LogInView> {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
-
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
