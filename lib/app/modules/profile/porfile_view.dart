@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/common_widgets/button.dart';
-import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
+import 'package:HRlynx/app/modules/privacy_policy/privacy_policy.dart';
 import 'package:HRlynx/app/modules/change_password/change_password.dart';
 import 'package:HRlynx/app/modules/home/user_isSubcriptionController.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
@@ -32,6 +32,7 @@ class ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('Profile',style: TextStyle(fontWeight: FontWeight.bold),),
         centerTitle: true,

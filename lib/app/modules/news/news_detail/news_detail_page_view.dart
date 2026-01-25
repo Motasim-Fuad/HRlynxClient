@@ -18,6 +18,7 @@ class NewsDetailsView extends StatelessWidget {
     viewModel.initializeArticle(articleId);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: true,
         leading: IconButton(

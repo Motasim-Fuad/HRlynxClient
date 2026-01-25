@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:HRlynx/app/common_widgets/button.dart';
-import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
+import 'package:HRlynx/app/modules/privacy_policy/privacy_policy.dart';
 import 'package:HRlynx/app/common_widgets/text_field.dart';
 import 'package:HRlynx/app/modules/foret_password/forget_password_view.dart';
 import 'package:HRlynx/app/modules/sign_up/sign_up_view.dart';
@@ -53,6 +53,7 @@ class _LogInViewState extends State<LogInView> {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
     return Scaffold(
+      backgroundColor: Colors.white,
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Center(

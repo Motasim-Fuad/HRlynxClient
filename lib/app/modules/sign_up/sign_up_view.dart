@@ -1,5 +1,5 @@
 import 'package:HRlynx/app/common_widgets/button.dart';
-import 'package:HRlynx/app/common_widgets/privacy_policy.dart';
+import 'package:HRlynx/app/modules/privacy_policy/privacy_policy.dart';
 import 'package:HRlynx/app/common_widgets/text_field.dart';
 import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:HRlynx/app/modules/sign_up/sign_up_controller.dart';
@@ -63,6 +63,7 @@ class _SignUpState extends State<SignUp> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Obx(() {
         return Stack(
           children: [

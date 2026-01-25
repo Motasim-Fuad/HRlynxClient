@@ -27,6 +27,7 @@ class NewsView extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: controller.refreshData,
         child: Column(

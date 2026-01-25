@@ -85,7 +85,7 @@ class _NotificationViewState extends State<NotificationView> {
     final notificationService = Get.find<NotificationService>();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Notifications',

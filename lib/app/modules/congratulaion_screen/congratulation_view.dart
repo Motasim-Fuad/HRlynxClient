@@ -22,6 +22,7 @@ class CongratulationView extends StatelessWidget {
     final bodyFontSize = screenWidth * 0.04; // Responsive body text size
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(
         width: double.infinity,
         padding: EdgeInsets.symmetric(

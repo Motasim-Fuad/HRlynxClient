@@ -183,6 +183,7 @@ class TermsOfUse extends StatelessWidget {
     final controller = Get.put(TermsController());
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: true,
         title: const Text(

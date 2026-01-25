@@ -214,6 +214,7 @@ class PrivacyPolicy extends StatelessWidget {
     final controller = Get.put(PrivacyController());
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: true,
         title: const Text(

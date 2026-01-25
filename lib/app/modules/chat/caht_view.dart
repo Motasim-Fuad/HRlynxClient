@@ -68,6 +68,7 @@ class ChatView extends StatelessWidget {
       final session = chatController.session.value;
 
       return Scaffold(
+        backgroundColor: Colors.white,
         body: Column(
           children: [
             const SizedBox(height: 40),

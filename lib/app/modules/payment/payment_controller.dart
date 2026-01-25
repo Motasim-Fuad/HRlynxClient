@@ -1,5 +1,3 @@
-// lib/app/modules/payment/payment_controller.dart
-// ✅ WITH COMPLETE ERROR HANDLING
 
 import 'package:HRlynx/app/api_servies/repository/payment_repository.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
