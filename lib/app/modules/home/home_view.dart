@@ -516,7 +516,9 @@ class HomeView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Image takes flexible space but won't shrink
             Expanded(
+              flex: 4, // Image gets 4 parts
               child: _buildPersonaImage(
                 persona: persona,
                 isPersonaActive: isPersonaActive,
@@ -527,11 +529,15 @@ class HomeView extends StatelessWidget {
                 isTablet: isTablet,
               ),
             ),
-            _buildPersonaTitle(
-              title: persona.title ?? 'No Title',
-              isPersonaActive: isPersonaActive,
-              titleFontSize: titleFontSize,
-              cardPadding: cardPadding,
+            // Text takes minimal fixed space
+            Flexible(
+              flex: 0, // Text gets no flexible space, only its intrinsic size
+              child: _buildPersonaTitle(
+                title: persona.title ?? 'No Title',
+                isPersonaActive: isPersonaActive,
+                titleFontSize: titleFontSize,
+                cardPadding: cardPadding,
+              ),
             ),
           ],
         ),
@@ -657,7 +663,7 @@ class HomeView extends StatelessWidget {
           color: isPersonaActive ? Colors.black87 : Colors.grey.shade600,
           height: 1.3,
         ),
-        maxLines: 2,
+        maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
     );
