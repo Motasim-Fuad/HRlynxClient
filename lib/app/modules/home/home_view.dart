@@ -74,6 +74,7 @@ class HomeView extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final screenHeight = MediaQuery.of(context).size.height;
+              final screenWidth = MediaQuery.of(context).size.width;
               final cardHeight = screenHeight * 0.20;
 
               return Padding(
@@ -103,33 +104,47 @@ class HomeView extends StatelessWidget {
                             colorBlendMode: BlendMode.darken,
                           ),
                         ),
-                        Center(
+                        Positioned.fill(
                           child: Padding(
-                            padding: EdgeInsets.all(isDesktop ? 30 : (isTablet ? 25 : 20)),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Your HR Guidance, Reimagined',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: isDesktop ? 28 : (isTablet ? 24 : 20),
-                                    color: Colors.white,
-                                  ),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.05,
+                              vertical: screenHeight * 0.02,
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: SizedBox(
+                                width: screenWidth * 0.9,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Your HR Guidance, Reimagined',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: screenWidth * 0.055,
+                                        color: Colors.white,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(height: screenHeight * 0.01),
+                                    Text(
+                                      'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter.',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: screenWidth * 0.038,
+                                        color: Colors.white.withOpacity(0.95),
+                                        height: 1.4,
+                                      ),
+                                      maxLines: 3,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: isDesktop ? 16 : (isTablet ? 14 : 12)),
-                                Text(
-                                  'AI HR Assistants modeled after real-world HR professionals—ready to help you lead smarter.',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: isDesktop ? 16 : (isTablet ? 15 : 14),
-                                    color: Colors.white.withOpacity(0.95),
-                                    height: 1.4,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
@@ -155,6 +170,8 @@ class HomeView extends StatelessWidget {
                   fontSize: isDesktop ? 24 : (isTablet ? 22 : 18),
                   color: AppColors.primarycolor,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
@@ -316,6 +333,8 @@ class HomeView extends StatelessWidget {
                 color: Colors.black87,
               ),
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: isDesktop ? 12 : (isTablet ? 10 : 8)),
             Text(
@@ -326,6 +345,8 @@ class HomeView extends StatelessWidget {
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
             ),
             if (errorType != 'SESSION_EXPIRED') ...[
               SizedBox(height: isDesktop ? 32 : (isTablet ? 28 : 24)),
@@ -385,6 +406,8 @@ class HomeView extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: Colors.grey.shade700,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             SizedBox(height: isDesktop ? 12 : (isTablet ? 10 : 8)),
             Text(
@@ -395,6 +418,8 @@ class HomeView extends StatelessWidget {
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -605,6 +630,8 @@ class HomeView extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.5,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

@@ -14,8 +14,9 @@ class UserIsSubcribedController extends GetxController {
   final authRepo = AuthRepository();
   final paymentRepo = PaymentRepository();
 
-  // 🔑 ADMIN EMAIL CONSTANT
+  // 🔑 ADMIN & CLIENT EMAIL CONSTANTS
   static final String ADMIN_EMAIL = dotenv.env['ADMIN_ACCESS_EMAIL'] ?? '';
+  static final String CLIENT_EMAIL = dotenv.env['CLINT_ACCESS_EMAIL'] ?? '';
 
   // ✅ CACHE: Selected persona ID from API
   int? _cachedSelectedPersonaId;
@@ -74,7 +75,7 @@ class UserIsSubcribedController extends GetxController {
       isLoading.value = true;
       print('🔄 Checking subscription (RevenueCat only)...');
 
-      // ✅ Step 1: Check admin
+      // ✅ Step 1: Check admin or client
       await _checkAdminStatus();
       if (isAdminUser.value) {
         _grantAdminAccess();
@@ -196,18 +197,27 @@ class UserIsSubcribedController extends GetxController {
   }
 
   /// ============================================
-  /// 🆕 CHECK ADMIN STATUS
+  /// 🆕 CHECK ADMIN STATUS (ADMIN OR CLIENT)
   /// ============================================
   Future<void> _checkAdminStatus() async {
     try {
       final userEmail = await TokenStorage.getUserEmail();
 
-      if (userEmail != null && userEmail.toLowerCase() == ADMIN_EMAIL.toLowerCase()) {
-        isAdminUser.value = true;
-        print('👑 Admin user identified: $userEmail');
+      if (userEmail != null) {
+        final emailLower = userEmail.toLowerCase();
+
+        // Check both ADMIN_EMAIL and CLIENT_EMAIL
+        if (emailLower == ADMIN_EMAIL.toLowerCase() ||
+            emailLower == CLIENT_EMAIL.toLowerCase()) {
+          isAdminUser.value = true;
+          print('👑 Privileged user identified: $userEmail');
+        } else {
+          isAdminUser.value = false;
+          print('👤 Regular user: $userEmail');
+        }
       } else {
         isAdminUser.value = false;
-        print('👤 Regular user: ${userEmail ?? "unknown"}');
+        print('👤 Regular user: unknown');
       }
     } catch (e) {
       print('❌ Error checking admin status: $e');

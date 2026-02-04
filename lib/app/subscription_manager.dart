@@ -16,6 +16,7 @@ class SubscriptionManager {
 
   static SubscriptionManager get instance => _instance;
   static String get ADMIN_EMAIL => dotenv.env['ADMIN_ACCESS_EMAIL'] ?? '';
+  static String get CLIENT_EMAIL => dotenv.env['CLINT_ACCESS_EMAIL'] ?? '';
 
   /// ✅ OPTIMIZED: Shows loading during entire process
   Future<void> handlePostLoginNavigation() async {
@@ -32,8 +33,8 @@ class SubscriptionManager {
         return;
       }
 
-      // Step 2: Check Admin
-      if (await _isAdminUser()) {
+      // Step 2: Check Admin or Client
+      if (await _isAdminOrClientUser()) {
         LoadingOverlay.updateMessage('Loading dashboard...');
         await Future.delayed(Duration(milliseconds: 300));
         LoadingOverlay.hide();
@@ -96,17 +97,23 @@ class SubscriptionManager {
     }
   }
 
-  Future<bool> _isAdminUser() async {
+  Future<bool> _isAdminOrClientUser() async {
     try {
-      if (ADMIN_EMAIL.isEmpty) return false;
+      if (ADMIN_EMAIL.isEmpty && CLIENT_EMAIL.isEmpty) return false;
 
       final userEmail = await TokenStorage.getUserEmail().timeout(
         Duration(seconds: 2),
         onTimeout: () => null,
       );
 
-      return userEmail != null &&
-          userEmail.toLowerCase() == ADMIN_EMAIL.toLowerCase();
+      if (userEmail == null) return false;
+
+      final emailLower = userEmail.toLowerCase();
+
+      // Check both ADMIN_EMAIL and CLIENT_EMAIL
+      return emailLower == ADMIN_EMAIL.toLowerCase() ||
+          emailLower == CLIENT_EMAIL.toLowerCase();
+
     } catch (e) {
       return false;
     }
