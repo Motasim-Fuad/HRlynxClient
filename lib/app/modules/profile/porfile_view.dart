@@ -36,6 +36,7 @@ class ProfileView extends StatelessWidget {
       appBar: AppBar(
         title: Text('Profile',style: TextStyle(fontWeight: FontWeight.bold),),
         centerTitle: true,
+        backgroundColor: Colors.white,
         actions: [
           GestureDetector(
             child: SvgPicture.asset(AppImages.edit_profile),
