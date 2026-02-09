@@ -31,6 +31,7 @@ class MainScreen extends StatelessWidget {
           onTap: navController.changeTab,
           selectedItemColor: AppColors.primarycolor,
           unselectedItemColor: Color(0xFF8E8E93),
+          backgroundColor: Colors.white,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_rounded),
