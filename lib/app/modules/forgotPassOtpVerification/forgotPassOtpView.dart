@@ -13,7 +13,7 @@ class Forgotpassotpview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text("OTP Verification")),
+      appBar: AppBar(title: const Text("OTP Verification"),backgroundColor: Colors.white,),
       body: LayoutBuilder(
         builder: (context, constraints) {
           // Responsive breakpoints

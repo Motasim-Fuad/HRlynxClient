@@ -14,7 +14,9 @@ class OtpVerificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           // Responsive breakpoints

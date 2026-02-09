@@ -150,6 +150,7 @@ class NewsView extends StatelessWidget {
                   child: DropdownButton<int?>(
                     isExpanded: true,
                     value: controller.selectedCategoryId.value,
+                    dropdownColor: Colors.white,
                     hint: Padding(
                       padding: const EdgeInsets.only(left: 8.0),
                       child: Text('Select a category'),

@@ -217,6 +217,7 @@ class PrivacyPolicy extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         centerTitle: true,
+        backgroundColor: Colors.white,
         title: const Text(
           'Privacy Policy',
           style: TextStyle(

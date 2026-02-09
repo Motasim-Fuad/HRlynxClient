@@ -13,7 +13,7 @@ class ResetPassword extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('Reset Password')),
+      appBar: AppBar(title: const Text('Reset Password'),backgroundColor: Colors.white,),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),

@@ -16,6 +16,7 @@ class UploadDataView extends GetView<UploadDataController> {
       appBar: AppBar(
         title: const Text("Upload Your Data"),
         centerTitle: true,
+        backgroundColor: Colors.white,
       ),
       body: Obx(() {
         if (controller.isFetchingData.value) {

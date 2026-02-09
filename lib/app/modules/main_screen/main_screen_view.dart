@@ -19,6 +19,7 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       // IndexedStack use koro - prottek screen memory te thakbe
       body: Obx(() => IndexedStack(
         index: navController.currentIndex.value,

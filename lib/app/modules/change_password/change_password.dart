@@ -12,6 +12,7 @@ class ChangePassword extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         child: Padding(
