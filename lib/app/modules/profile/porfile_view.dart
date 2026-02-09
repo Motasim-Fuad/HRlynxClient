@@ -436,9 +436,9 @@ class ProfileView extends StatelessWidget {
   void _showDeleteAccountDialog(BuildContext context) {
     showDialog(
       context: context,
-
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
@@ -558,6 +558,7 @@ class ProfileView extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
