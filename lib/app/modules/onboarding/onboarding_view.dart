@@ -1,3 +1,4 @@
+import 'package:HRlynx/app/api_servies/api_Constant.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/common_widgets/button.dart';
 import 'package:HRlynx/app/common_widgets/hr_select.dart';
@@ -117,7 +118,16 @@ class OnboardingView extends StatelessWidget {
                     physics: const BouncingScrollPhysics(),
                     itemBuilder: (context, index) {
                       Data persona = controller.personaList[index];
-                      final image = persona.avatar ?? '';
+                      // final image = persona.avatar ?? '';
+                      // avatar URL টা relative হলে base URL যোগ করো
+                      String image = '';
+                      if (persona.avatar != null && persona.avatar!.isNotEmpty) {
+                        if (persona.avatar!.startsWith('http')) {
+                          image = persona.avatar!; // Already full URL
+                        } else {
+                          image = "${ApiConstants.baseUrl}${persona.avatar!}"; // Relative → Full URL
+                        }
+                      }
 
                       return Obx(
                             () => SelectableTile(

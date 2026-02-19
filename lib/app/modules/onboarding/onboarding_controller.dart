@@ -29,6 +29,10 @@ class HrRoleController extends GetxController {
       final model = OnbordingModel.fromJson(response);
       personaList.value = model.data ?? [];
 
+      for (var p in personaList) {
+        print('🖼️ Avatar URL: ${p.avatar}');
+      }
+
       if (personaList.isEmpty) {
         errorMessage.value = 'No personas available';
       }

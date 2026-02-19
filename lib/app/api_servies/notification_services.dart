@@ -19,7 +19,7 @@ class NotificationService extends GetxController {
   final RxBool isConnected = false.obs;
   final RxString connectionStatus = 'Disconnected'.obs;
 
-  // ✅ ADD THIS: Track notification IDs to prevent duplicates
+  // ✅ Track notification IDs to prevent duplicates
   final Set<int> _notificationIds = {};
 
   bool _isConnecting = false;
@@ -88,6 +88,7 @@ class NotificationService extends GetxController {
       _reconnectTimer?.cancel();
       await _safeDisconnect();
 
+      // ✅ FIXED: Using ApiConstants.wsBaseUrl directly — no port:0 issue
       String wsUrl = _buildWebSocketUrl(token);
       print('🔌 Connecting: $wsUrl');
 
@@ -163,16 +164,9 @@ class NotificationService extends GetxController {
     }
   }
 
+  // ✅ FIXED: Use ApiConstants.wsBaseUrl directly — eliminates port:0 bug
   String _buildWebSocketUrl(String token) {
-    String wsUrl;
-    if (ApiConstants.baseUrl.startsWith('https://')) {
-      wsUrl = ApiConstants.baseUrl.replaceFirst('https://', 'wss://');
-    } else if (ApiConstants.baseUrl.startsWith('http://')) {
-      wsUrl = ApiConstants.baseUrl.replaceFirst('http://', 'ws://');
-    } else {
-      wsUrl = 'wss://${ApiConstants.baseUrl}';
-    }
-    return '$wsUrl/ws/notifications/?token=$token';
+    return '${ApiConstants.wsBaseUrl}/ws/notifications/?token=$token';
   }
 
   void _startHeartbeat() {
@@ -311,7 +305,7 @@ class NotificationService extends GetxController {
     }
   }
 
-  // ✅ FIXED: Handle notification message with deduplication
+  // ✅ Handle notification message with deduplication
   Future<void> _handleNotificationMessage(Map<String, dynamic> message) async {
     try {
       if (!message.containsKey('data')) {
@@ -410,7 +404,7 @@ class NotificationService extends GetxController {
     }
   }
 
-  // ✅ FIXED: Fetch with deduplication
+  // ✅ Fetch with deduplication
   Future<void> fetchAllNotifications() async {
     try {
       final url = "${ApiConstants.baseUrl}/api/notifications/list/";
@@ -432,7 +426,6 @@ class NotificationService extends GetxController {
           try {
             final notification = NotificationModel.fromJson(json);
 
-            // Only add if not duplicate
             if (!_notificationIds.contains(notification.id)) {
               _notificationIds.add(notification.id);
               notifications.add(notification);
@@ -512,14 +505,13 @@ class NotificationService extends GetxController {
     _shouldStayConnected = false;
     _reconnectTimer?.cancel();
     _heartbeatTimer?.cancel();
-    _notificationIds.clear(); // ✅ Clear tracking set
+    _notificationIds.clear();
     notifications.clear();
     disconnectWebSocket();
     super.onClose();
   }
 }
 
-// NotificationModel remains the same
 class NotificationModel {
   final int id;
   final String title;
