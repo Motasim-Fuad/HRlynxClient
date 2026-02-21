@@ -25,7 +25,7 @@ class TypingIndicator extends StatelessWidget {
               CircleAvatar(
                 radius: 16,
                 backgroundImage: session != null && session.persona?.avatar != null
-                    ? CachedNetworkImageProvider("${ApiConstants.baseUrl}${session.persona!.avatar}")
+                    ? CachedNetworkImageProvider("${session.persona!.avatar}")
                     : null,
               ),
               const SizedBox(width: 8),

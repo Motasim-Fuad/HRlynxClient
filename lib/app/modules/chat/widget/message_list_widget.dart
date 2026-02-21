@@ -56,7 +56,7 @@ class MessageListWidget extends StatelessWidget {
                         backgroundImage: session != null &&
                             session.persona?.avatar != null &&
                             session.persona!.avatar!.isNotEmpty
-                            ? CachedNetworkImageProvider("${ApiConstants.baseUrl}${session.persona!.avatar}")
+                            ? CachedNetworkImageProvider("${session.persona!.avatar}")
                             : null,
                         child: session == null ||
                             session.persona?.avatar == null ||
