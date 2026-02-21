@@ -40,7 +40,7 @@ class ChatHeader extends StatelessWidget {
           CircleAvatar(
             radius: MediaQuery.of(context).size.width * 0.08,
             backgroundImage: CachedNetworkImageProvider(
-              "${ApiConstants.baseUrl}${session.persona?.avatar ?? ''}",
+              "${session.persona?.avatar ?? ''}",
             ),
           ),
           SizedBox(width: MediaQuery.of(context).size.width * 0.02),
