@@ -3,6 +3,7 @@ import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/api_servies/webSocketServices.dart';
 import 'package:HRlynx/app/common_widgets/customtooltip.dart';
 import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
+import 'package:HRlynx/app/modules/chat/widget/ai_consent_dialog.dart';
 import 'package:HRlynx/app/modules/chat/widget/ai_guidance_widget.dart';
 import 'package:HRlynx/app/modules/chat/widget/chat_drawer.dart';
 import 'package:HRlynx/app/modules/chat/widget/chat_header.dart';
@@ -63,6 +64,12 @@ class ChatView extends StatelessWidget {
       voiceService = Get.put(VoiceService(), permanent: true);
       print('🎵 Created new global VoiceService');
     }
+
+    // ADD THIS 👇 — shows only first time, never again
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AiConsentDialog.showIfNeeded(context);
+    });
+
 
     return Obx(() {
       final session = chatController.session.value;
