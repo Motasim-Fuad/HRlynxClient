@@ -3,6 +3,7 @@ import 'package:HRlynx/app/modules/chat/widget/voice_message_widget.dart';
 import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../api_servies/api_Constant.dart';
@@ -148,9 +149,36 @@ class MessageListWidget extends StatelessWidget {
           color: isMe ? Colors.blue[100] : Colors.grey[300],
           borderRadius: BorderRadius.circular(12),
         ),
-        child: SelectableText(
+        /*child: SelectableText(
           message.content ?? '',
           style: const TextStyle(fontSize: 15),
+        ),*/
+        child: MarkdownBody(
+          data: message.content ?? '',
+          selectable: true,
+          styleSheet: MarkdownStyleSheet(
+            p: const TextStyle(fontSize: 15, height: 1.4),
+            strong: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: isMe ? Colors.blue[900] : Colors.black87,
+            ),
+            em: const TextStyle(fontStyle: FontStyle.italic, fontSize: 15),
+            h1: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            h2: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            h3: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            listBullet: const TextStyle(fontSize: 15),
+            blockquoteDecoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(4),
+              border: Border(left: BorderSide(color: Colors.grey, width: 3)),
+            ),
+            code: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 13,
+              backgroundColor: Color(0xFFEEEEEE),
+            ),
+          ),
         ),
       );
     }

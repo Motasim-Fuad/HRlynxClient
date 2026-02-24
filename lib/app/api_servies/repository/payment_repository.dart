@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:HRlynx/app/api_servies/api_Constant.dart';
 import 'package:HRlynx/app/api_servies/neteork_api_services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 class SubscriptionPlan {
@@ -74,9 +75,9 @@ class PaymentRepository {
 
   String _getRevenueCatKey() {
     if (Platform.isIOS) {
-      return "appl_DVYOGtnCsySsMcoKkRTVYpJlQZw";
+      return dotenv.env['IOS_REVENUECAT_KEY'] ?? '';
     } else {
-      return "goog_fHaUFeIYngJgHloZDbONohOyWSM";
+      return dotenv.env['ANDROID_REVENUECAT_KEY'] ?? '';
     }
   }
 

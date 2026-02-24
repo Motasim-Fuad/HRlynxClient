@@ -840,7 +840,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
         alignment: WrapAlignment.center,
         children: [
           GestureDetector(
-            onTap: () => _launchUrl('https://www.hrlynx.ai/terms-conditions/'),
+            onTap: () => _launchUrl('https://api.hrlynx.ai/terms-conditions/'),
             child: Text(
               'Terms of Use',
               style: TextStyle(
@@ -861,7 +861,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
             ),
           ),
           GestureDetector(
-            onTap: () => _launchUrl('https://www.hrlynx.ai/privacy-policy/'),
+            onTap: () => _launchUrl('https://api.hrlynx.ai/privacy-policy/'),
             child: Text(
               'Privacy Policy.',
               style: TextStyle(
