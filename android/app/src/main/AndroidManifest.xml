@@ -4,7 +4,6 @@
     <!-- ✅ Permissions -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:ignore="ScopedStorage"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -17,21 +16,6 @@
     <!-- ✅ Push Notification Permissions - ADDED -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
-
-<!--    &lt;!&ndash; ✅ Google Pay permissions &ndash;&gt;-->
-<!--    <uses-permission android:name="android.permission.NFC" />-->
-<!--    <uses-permission android:name="android.permission.USE_FINGERPRINT" />-->
-<!--    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />-->
-<!--    <uses-permission android:name="com.android.vending.BILLING" />-->
-
-<!--    &lt;!&ndash; ✅ Hardware features for Google Pay &ndash;&gt;-->
-<!--    <uses-feature-->
-<!--        android:name="android.hardware.nfc"-->
-<!--        android:required="false" />-->
-<!--    <uses-feature-->
-<!--        android:name="android.hardware.nfc.hce"-->
-<!--        android:required="false" />-->
 
     <application
         android:label="HRlynx"
