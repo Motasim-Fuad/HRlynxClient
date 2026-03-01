@@ -1,4 +1,6 @@
+
 import 'package:HRlynx/app/modules/chat/voice_service_controller.dart';
+import 'package:HRlynx/app/modules/chat/widget/ai_consent_dialog.dart';
 import 'package:HRlynx/app/modules/chat/widget/voice_recording_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -20,10 +22,13 @@ class ChatInputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final consentController = Get.find<ConsentController>();
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Obx(() {
         final isLimitReached = chatController.isSessionLimitReached.value;
+        final hasConsented = consentController.hasConsented.value; // ✅
 
         // Show voice recording widget when recording
         if (voiceService.isRecording.value) {
@@ -33,7 +38,7 @@ class ChatInputWidget extends StatelessWidget {
               await voiceService.cancelRecording();
             },
             onSend: () async {
-              if (!isLimitReached) {
+              if (!isLimitReached && hasConsented) {
                 await chatController.sendVoiceMessage(sessionId);
               }
             },
@@ -90,7 +95,39 @@ class ChatInputWidget extends StatelessWidget {
           );
         }
 
-        // Show normal input row when not at limit
+        // ✅ Consent not given — show locked input UI
+        if (!hasConsented) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.lock_outline, color: Colors.red, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    "Please agree to the AI Chat Disclosure to start chatting.",
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => AiConsentDialog.showIfNeeded(context),
+                  child: const Text("View"),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Normal input row
         return Row(
           children: [
             Expanded(
@@ -98,15 +135,12 @@ class ChatInputWidget extends StatelessWidget {
                 controller: textController,
                 enabled: !isLimitReached,
                 decoration: InputDecoration(
-                  hintText: isLimitReached
-                      ? "Session limit reached"
-                      : "Type a message...",
+                  hintText: "Type a message...",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                  filled: isLimitReached,
-                  fillColor: isLimitReached ? Colors.grey.shade100 : null,
+                  contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                 ),
                 onTap: () {
                   if (isLimitReached) {
@@ -119,26 +153,20 @@ class ChatInputWidget extends StatelessWidget {
 
             // Voice button
             IconButton(
-              onPressed: isLimitReached ? null : () async {
+              onPressed: () async {
                 final started = await voiceService.startRecording();
                 if (!started) {
                   Get.snackbar("Error", "Could not start recording");
                 }
               },
-              icon: Icon(
-                Icons.mic,
-                color: isLimitReached ? Colors.grey : null,
-              ),
-              tooltip: isLimitReached ? "Session limit reached" : "Record voice message",
+              icon: const Icon(Icons.mic),
+              tooltip: "Record voice message",
             ),
 
             // Send button
             IconButton(
-              icon: Icon(
-                Icons.send,
-                color: isLimitReached ? Colors.grey : null,
-              ),
-              onPressed: isLimitReached ? null : () {
+              icon: const Icon(Icons.send),
+              onPressed: () {
                 final text = textController.text.trim();
                 if (text.isNotEmpty) {
                   chatController.send(text);
@@ -147,7 +175,7 @@ class ChatInputWidget extends StatelessWidget {
                   chatController.isFirstTime.value = false;
                 }
               },
-              tooltip: isLimitReached ? "Session limit reached" : "Send message",
+              tooltip: "Send message",
             ),
           ],
         );
@@ -155,3 +183,21 @@ class ChatInputWidget extends StatelessWidget {
     );
   }
 }
+//```
+//
+//---
+//
+//## How it flows
+//```
+//App opens ChatView
+//└─> ConsentController loads SharedPrefs
+//└─> hasConsented = false → input shows locked UI 🔒
+//└─> AiConsentDialog.showIfNeeded() triggers dialog
+//
+//User clicks "Cancel"
+//└─> Dialog closes, hasConsented stays false → still locked 🔒
+//
+//User clicks "Agree & Continue"
+//└─> consentController.giveConsent() called
+//└─> hasConsented.value = true (reactive!)
+//└─> Obx rebuilds → normal input appears instantly ✅

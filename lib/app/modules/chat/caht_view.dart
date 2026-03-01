@@ -55,6 +55,10 @@ class ChatView extends StatelessWidget {
     final tooltipCtrl = Get.put(ChatTooltipController());
     final profileController = Get.put(ProfileController());
 
+    final consentController = Get.isRegistered<ConsentController>()
+        ? Get.find<ConsentController>()
+        : Get.put(ConsentController(), permanent: true);
+
     // FIXED: Use global VoiceService instance instead of creating new one
     VoiceService voiceService;
     if (Get.isRegistered<VoiceService>()) {
@@ -69,6 +73,8 @@ class ChatView extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AiConsentDialog.showIfNeeded(context);
     });
+
+
 
 
     return Obx(() {

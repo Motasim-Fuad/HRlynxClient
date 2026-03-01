@@ -314,7 +314,8 @@ class PaymentController extends GetxController {
       await TokenStorage.saveSubscriptionCheckDone(true);
 
       try {
-        final subController = Get.find<UserIsSubcribedController>();
+        //final subController = Get.find<UserIsSubcribedController>();
+        final subController = Get.put(UserIsSubcribedController());
         await subController.checkAndUpdateSubscriptionStatus();
       } catch (e) {
         print('⚠️ Could not refresh subscription controller: $e');
@@ -387,7 +388,7 @@ class PaymentController extends GetxController {
         await TokenStorage.saveSubscriptionCheckDone(true);
 
         try {
-          final subController = Get.find<UserIsSubcribedController>();
+          final subController = Get.put(UserIsSubcribedController());
           await subController.checkAndUpdateSubscriptionStatus();
           print('✅ Subscription controller updated');
         } catch (e) {

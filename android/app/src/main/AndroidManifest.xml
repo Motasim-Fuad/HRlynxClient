@@ -19,19 +19,19 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
 
-    <!-- ✅ Google Pay permissions -->
-    <uses-permission android:name="android.permission.NFC" />
-    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
-    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-    <uses-permission android:name="com.android.vending.BILLING" />
+<!--    &lt;!&ndash; ✅ Google Pay permissions &ndash;&gt;-->
+<!--    <uses-permission android:name="android.permission.NFC" />-->
+<!--    <uses-permission android:name="android.permission.USE_FINGERPRINT" />-->
+<!--    <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />-->
+<!--    <uses-permission android:name="com.android.vending.BILLING" />-->
 
-    <!-- ✅ Hardware features for Google Pay -->
-    <uses-feature
-        android:name="android.hardware.nfc"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.nfc.hce"
-        android:required="false" />
+<!--    &lt;!&ndash; ✅ Hardware features for Google Pay &ndash;&gt;-->
+<!--    <uses-feature-->
+<!--        android:name="android.hardware.nfc"-->
+<!--        android:required="false" />-->
+<!--    <uses-feature-->
+<!--        android:name="android.hardware.nfc.hce"-->
+<!--        android:required="false" />-->
 
     <application
         android:label="HRlynx"

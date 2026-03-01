@@ -35,6 +35,8 @@ class ChatAllAiPersona extends GetxController {
 
       // Check if persona is accessible before starting chat
       final subController = Get.find<UserIsSubcribedController>();
+     // await subController.checkAndUpdateSubscriptionStatus(); // ← এটা add করো
+      // ✅ শুধু access check করুন, full reload নয়
       final isAccessible = await subController.isPersonaAccessible(personaId);
 
       if (!isAccessible) {

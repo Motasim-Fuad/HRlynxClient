@@ -43,7 +43,7 @@ class UserIsSubcribedController extends GetxController {
 
   PaymentController? get paymentController {
     try {
-      return Get.find<PaymentController>();
+      return Get.put(PaymentController());
     } catch (e) {
       print('⚠️ PaymentController not found: $e');
       return null;

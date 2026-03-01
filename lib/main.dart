@@ -188,8 +188,9 @@ class MyApp extends StatelessWidget {
       onInit: () {
         try {
           Get.put(NotificationService());
+          Get.put(PaymentController(), permanent: true); // ✅ এটা add করো
         } catch (e) {
-          print('⚠️ NotificationService error: $e');
+          print('⚠️ Init error: $e');
         }
       },
       title: 'HRlynx',

@@ -1,17 +1,17 @@
-import 'package:HRlynx/app/common_widgets/button.dart';
+
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiConsentDialog {
   static const String _consentKey = 'ai_chat_consent_given';
 
-  // Call this in ChatView initState or onInit
   static Future<void> showIfNeeded(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final alreadyConsented = prefs.getBool(_consentKey) ?? false;
 
-    if (alreadyConsented) return; // ✅ Already agreed — skip
+    if (alreadyConsented) return;
 
     await showDialog(
       context: context,
@@ -23,7 +23,7 @@ class AiConsentDialog {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: const Text(
-         "HRlynx uses secure API to generate Al-powered responses. When users submit chat prompts,message content is transmitted securely solely to generate a response within the app. No data is sold or used for advertising.",
+          "HRlynx uses OpenAI, Inc. to generate AI-powered responses.\n\nWhen you submit a chat message:\n• Your message is transmitted securely to OpenAI for processing\n• It is used solely to generate a response within HRlynx\n• It is not sold or used for advertising\n\nBy continuing, you consent to this processing as described in our Privacy Policy.",
           style: TextStyle(fontSize: 14, height: 1.5),
         ),
         actions: [
@@ -31,7 +31,6 @@ class AiConsentDialog {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
-
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primarycolor,
@@ -40,14 +39,44 @@ class AiConsentDialog {
               ),
             ),
             onPressed: () async {
-              await prefs.setBool(_consentKey, true);
+              // ✅ Update ConsentController reactively
+              final consentCtrl = Get.find<ConsentController>();
+              await consentCtrl.giveConsent();
               Navigator.of(context).pop();
             },
-            child: const Text('Agree & Continue',
-                style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Agree & Continue',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
+  }
+}
+
+
+
+
+class ConsentController extends GetxController {
+  static const String _consentKey = 'ai_chat_consent_given';
+
+  final hasConsented = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadConsent();
+  }
+
+  Future<void> _loadConsent() async {
+    final prefs = await SharedPreferences.getInstance();
+    hasConsented.value = prefs.getBool(_consentKey) ?? false;
+  }
+
+  Future<void> giveConsent() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_consentKey, true);
+    hasConsented.value = true;
   }
 }
