@@ -72,18 +72,31 @@ dev_dependencies:
   flutter_native_splash: ^2.4.6
 
 
+#flutter_launcher_icons:
+#  android: true
+#  ios: true
+#
+#  # Android adaptive
+#  adaptive_icon_background: "#ffffff"  # তোমার primary color
+#  adaptive_icon_foreground: "assets/images/android_app_logo.png"
+#  adaptive_icon_background_dark: "#ffffff"
+#  image_path_android: "assets/images/hrlynx_splashopeninglogo.png"
+#
+#  # iOS regular
+#  image_path_ios: "assets/images/hrlynx_logo.png"  # 1024x1024 with padding
+#  remove_alpha_ios: true
+#  min_sdk_android: 21
 flutter_launcher_icons:
   android: true
   ios: true
 
-  # Android adaptive
-  adaptive_icon_background: "#ffffff"  # তোমার primary color
-  adaptive_icon_foreground: "assets/images/android_app_logo.png"
+  # ✅ Adaptive (white background baked in foreground)
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/hrlynx_splashopeninglogo.png"  # white bg baked
   adaptive_icon_background_dark: "#ffffff"
-  image_path_android: "assets/images/hrlynx_splashopeninglogo.png"
 
-  # iOS regular
-  image_path_ios: "assets/images/hrlynx_logo.png"  # 1024x1024 with padding
+  image_path_android: "assets/images/hrlynx_splashopeninglogo.png"  # ✅ same image
+  image_path_ios: "assets/images/hrlynx_logo.png"
   remove_alpha_ios: true
   min_sdk_android: 21
 
