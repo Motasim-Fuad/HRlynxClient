@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "907467608466-au8d6pts9a6c730rgn2fd70easikehah.apps.googleusercontent.com",
+          "client_id": "907467608466-i2lkdrrqo8g3nt48nu1es7fr8ij25l9h.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.lynxova.hrlnyx",
-            "certificate_hash": "9409a5609e8107c02c5bcbf764b31651e5e2f03c"
+            "certificate_hash": "2c4e728d6e8bc4cae9e23a008ad39c10608466ac"
           }
         },
         {
