@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.8+8
+version: 1.0.13+13
 
 environment:
   sdk: ^3.8.1
@@ -79,6 +79,7 @@ flutter_launcher_icons:
   # Android adaptive
   adaptive_icon_background: "#ffffff"  # তোমার primary color
   adaptive_icon_foreground: "assets/images/android_app_logo.png"
+  adaptive_icon_background_dark: "#ffffff"
   image_path_android: "assets/images/hrlynx_splashopeninglogo.png"
 
   # iOS regular
@@ -86,14 +87,32 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   min_sdk_android: 21
 
+#flutter_native_splash:
+#  color: "#ffffff"
+#  color_dark: "#ffffff"
+#  image_dark: assets/images/hrlynx_splashopeninglogo.png
+#  image: assets/images/hrlynx_splashopeninglogo.png
+#  android: true
+#  ios: true
+#  fullscreen: true  # ✅ full screen splash
+
 flutter_native_splash:
   color: "#ffffff"
-  image: assets/images/hrlynx_splashopeninglogo.png
+  color_dark: "#ffffff"
+  image: assets/images/native_splash.png
+  image_dark: assets/images/native_splash.png
   android: true
   ios: true
-  fullscreen: true  # ✅ full screen splash
+  fullscreen: true
 
-
+  # ✅ এই block টা add করো — Android 12+ এর জন্য
+  android_12:
+    color: "#ffffff"
+    color_dark: "#ffffff"
+    image: assets/images/native_splash.png
+    image_dark: assets/images/native_splash.png
+    icon_background_color: "#ffffff"
+    icon_background_color_dark: "#ffffff"
 
 #dev_dependencies:
 #  flutter_test:
