@@ -11,26 +11,19 @@ import 'package:HRlynx/app/api_servies/firebase_message.dart';
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/user_controller.dart';
 import 'package:HRlynx/app/subscription_manager.dart';
-import 'package:HRlynx/app/common_widgets/loading_overlay.dart';
 import '../../api_servies/repository/auth_repo.dart';
 import '../../api_servies/token.dart';
 
 class GoogleSignUpController extends GetxController {
-  // ─── Dependencies ─────────────────────────────────────────────
   final _userController = Get.put(UserController());
   final _authRepo        = AuthRepository();
 
-  // ─── State ────────────────────────────────────────────────────
   final isLoading = false.obs;
   final isChecked = false.obs;
   final formKey   = GlobalKey<FormState>();
 
   static const _iosClientId =
       '907467608466-9c7kk86ghtfqrvou3hpk3m45uj3sg07v.apps.googleusercontent.com';
-
-  // ─────────────────────────────────────────────────────────────
-  //  PUBLIC API
-  // ─────────────────────────────────────────────────────────────
 
   void toggleCheckbox(bool? value) => isChecked.value = value ?? false;
 
@@ -39,30 +32,27 @@ class GoogleSignUpController extends GetxController {
 
     try {
       isLoading.value = true;
-      LoadingOverlay.show(message: 'Connecting to Google...');
 
-      // Step 1: Google sign-in ──────────────────────────────────
+      // Step 1: Google sign-in
       final googleUser = await _getGoogleUser();
       if (googleUser == null) return;
 
-      // Step 2: Firebase auth ───────────────────────────────────
-      LoadingOverlay.updateMessage('Authenticating...');
+      // Step 2: Firebase auth
       final userCredential = await _firebaseSignIn(googleUser);
       if (userCredential == null) return;
 
       final user = userCredential.user;
       if (!_isValidUser(user)) return;
 
-      // Step 3: Persona fetch ───────────────────────────────────
-      LoadingOverlay.updateMessage('Creating your account...');
+      // Step 3: Persona fetch
       final personaId = await TokenStorage.getSelectedPersonaId();
       if (personaId == null) {
-        _hideAndSnack(
-            'Error', 'No persona selected. Please complete onboarding first.');
+        _showSnack('Error',
+            'No persona selected. Please complete onboarding first.');
         return;
       }
 
-      // Step 4: Backend sign-up + persona set (sequential – order matters) ──
+      // Step 4: Backend sign-up (with retry)
       final success = await _withRetry(
             () => _authRepo.SocialSignUpAndSetPersona(
           email:    user!.email!,
@@ -74,24 +64,19 @@ class GoogleSignUpController extends GetxController {
       );
 
       if (success != true) {
-        _hideAndSnack('Error', 'Failed to complete sign-in. Please try again.');
+        _showSnack('Error', 'Failed to complete sign-in. Please try again.');
         return;
       }
 
-      // Step 5: Post-login ──────────────────────────────────────
+      // Step 5: Post-login
       _initializeFirebaseServicesAsync();
-
-      LoadingOverlay.updateMessage('Setting up profile...');
       await _authRepo.setParsonaType({'persona': personaId});
 
-      // SubscriptionManager owns LoadingOverlay from here ───────
       await SubscriptionManager.instance.handlePostLoginNavigation();
 
     } on FirebaseAuthException catch (e) {
-      _hideOverlay();
       _handleFirebaseError(e);
     } catch (e, st) {
-      _hideOverlay();
       _handleGeneralError(e);
       FirebaseCrashlytics.instance
           .recordError(e, st, reason: 'handleGoogleSignUp');
@@ -99,10 +84,6 @@ class GoogleSignUpController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // ─────────────────────────────────────────────────────────────
-  //  PRIVATE HELPERS
-  // ─────────────────────────────────────────────────────────────
 
   bool _guardTerms() {
     if (isChecked.value) return true;
@@ -120,12 +101,11 @@ class GoogleSignUpController extends GetxController {
         scopes:   ['email', 'profile'],
         clientId: Platform.isIOS ? _iosClientId : null,
       );
-      await googleSignIn.signOut(); // force account picker
+      await googleSignIn.signOut();
       final account = await googleSignIn.signIn();
-      if (account == null) _hideOverlay(); // user cancelled
+      if (account == null) isLoading.value = false; // user cancelled
       return account;
     } catch (e) {
-      _hideOverlay();
       _handleGeneralError(e);
       return null;
     }
@@ -136,7 +116,7 @@ class GoogleSignUpController extends GetxController {
     try {
       final auth = await googleUser.authentication;
       if (auth.accessToken == null || auth.idToken == null) {
-        _hideAndSnack('Error', 'Failed to get authentication tokens.');
+        _showSnack('Error', 'Failed to get authentication tokens.');
         return null;
       }
       return await FirebaseAuth.instance.signInWithCredential(
@@ -148,7 +128,6 @@ class GoogleSignUpController extends GetxController {
     } on FirebaseAuthException {
       rethrow;
     } catch (e) {
-      _hideOverlay();
       _handleGeneralError(e);
       return null;
     }
@@ -156,11 +135,10 @@ class GoogleSignUpController extends GetxController {
 
   bool _isValidUser(User? user) {
     if (user != null && user.email != null) return true;
-    _hideAndSnack('Error', 'Google sign-in failed: No user data.');
+    _showSnack('Error', 'Google sign-in failed: No user data.');
     return false;
   }
 
-  // ── Retry with exponential back-off ──────────────────────────
   Future<T?> _withRetry<T>(
       Future<T> Function() fn, {
         int maxAttempts = 3,
@@ -178,7 +156,6 @@ class GoogleSignUpController extends GetxController {
     return null;
   }
 
-  // ── Firebase (fire-and-forget) ────────────────────────────────
   void _initializeFirebaseServicesAsync() {
     Future.microtask(() async {
       try {
@@ -187,29 +164,23 @@ class GoogleSignUpController extends GetxController {
         }
         await NotificationService.instance.enableConnection();
         await FirebaseMeg().sendFCMTokenAfterLogin();
-        debugPrint('✅ Firebase services initialised');
       } catch (e) {
         debugPrint('⚠️ Firebase services error: $e');
       }
     });
   }
 
-  // ── Overlay helpers ───────────────────────────────────────────
-  void _hideOverlay() => LoadingOverlay.hide();
-
-  void _hideAndSnack(String title, String message) {
-    _hideOverlay();
+  void _showSnack(String title, String message, {Color color = Colors.red}) {
+    isLoading.value = false;
     Get.snackbar(
       title, message,
       snackPosition:   SnackPosition.TOP,
-      backgroundColor: Colors.red,
+      backgroundColor: color,
       colorText:       Colors.white,
       duration:        const Duration(seconds: 4),
     );
-    isLoading.value = false;
   }
 
-  // ── Error handlers ────────────────────────────────────────────
   void _handleFirebaseError(FirebaseAuthException e) {
     final msg = switch (e.code) {
       'network-request-failed'                   =>
@@ -222,26 +193,17 @@ class GoogleSignUpController extends GetxController {
       'An account already exists with this email.',
       _ => e.message ?? 'Authentication failed.',
     };
-    Get.snackbar(
-      'Error', msg,
-      snackPosition:   SnackPosition.TOP,
-      backgroundColor: Colors.red,
-      colorText:       Colors.white,
-      duration:        const Duration(seconds: 4),
-    );
+    _showSnack('Error', msg);
   }
 
   void _handleGeneralError(dynamic e) {
     final isConfig = e.toString().contains('ApiException: 10');
-    Get.snackbar(
+    _showSnack(
       isConfig ? 'Configuration Error' : 'Error',
       isConfig
           ? 'Google Sign-In is not properly configured. Please contact support.'
           : 'Something went wrong. Please try again.',
-      snackPosition:   SnackPosition.TOP,
-      backgroundColor: isConfig ? Colors.orange : Colors.red,
-      colorText:       Colors.white,
-      duration:        const Duration(seconds: 5),
+      color: isConfig ? Colors.orange : Colors.red,
     );
   }
 }

@@ -10,7 +10,6 @@ import 'package:HRlynx/app/modules/payment/payment_controller.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
 import 'package:HRlynx/app/modules/payment/subcription_view.dart';
-import 'package:HRlynx/app/common_widgets/loading_overlay.dart';
 
 class SubscriptionManager {
   // ─── Singleton ────────────────────────────────────────────────
@@ -37,61 +36,54 @@ class SubscriptionManager {
 
   Future<void> handlePostLoginNavigation() async {
     try {
-      LoadingOverlay.show(message: 'Setting up your account...');
-
-      // Step 1: User ID ─────────────────────────────────────────
+      // Step 1: User ID
       final userId = await _getUserIdSafely();
       if (userId == null) {
-        return _finishWith(_navigateToSubscriptionScreen,
-            reason: 'userId null');
+        debugPrint('✅ Navigation: userId null → subscription screen');
+        _navigateToSubscriptionScreen();
+        return;
       }
 
-      // Step 2: Admin / demo bypass ─────────────────────────────
+      // Step 2: Admin / demo bypass
       if (await _isAdminOrClientUser()) {
-        LoadingOverlay.updateMessage('Loading dashboard...');
-        return _finishWith(_navigateToMainScreen, reason: 'admin/client');
+        debugPrint('✅ Navigation: admin/client → main screen');
+        _navigateToMainScreen();
+        return;
       }
 
-      // Step 3: Boot RevenueCat ─────────────────────────────────
-      LoadingOverlay.updateMessage('Initializing subscription...');
+      // Step 3: Boot RevenueCat
       final controllerReady = await _ensurePaymentControllerReady(userId);
       if (!controllerReady) {
         final cached = await _getCachedSubscriptionState();
-        return _finishWith(
-          cached ? _navigateToMainScreen : _navigateToSubscriptionScreen,
-          reason: 'revenueCat not ready, cached=$cached',
-        );
+        debugPrint('✅ Navigation: revenueCat not ready, cached=$cached');
+        cached ? _navigateToMainScreen() : _navigateToSubscriptionScreen();
+        return;
       }
 
-      // Step 4: Restore + fetch parallel ────────────────────────
-      LoadingOverlay.updateMessage('Checking your subscription...');
+      // Step 4: Restore + fetch parallel
       await _restorePurchasesAndSync();
 
-      // Step 5: Check entitlements ──────────────────────────────
+      // Step 5: Check entitlements
       final hasActive = await _checkRevenueCatSubscription();
       if (hasActive) {
-        LoadingOverlay.updateMessage('Loading your workspace...');
         await TokenStorage.saveSubscriptionCheckDone(true);
-        return _finishWith(_navigateToMainScreen,
-            reason: 'active subscription');
+        debugPrint('✅ Navigation: active subscription → main screen');
+        _navigateToMainScreen();
+        return;
       }
 
-      // Step 6: No subscription ─────────────────────────────────
+      // Step 6: No subscription
       await _recordFirstTimeUserIfNeeded();
-      return _finishWith(_navigateToSubscriptionScreen,
-          reason: 'no active subscription');
+      debugPrint('✅ Navigation: no subscription → subscription screen');
+      _navigateToSubscriptionScreen();
 
     } catch (e, st) {
       debugPrint('❌ POST-LOGIN ERROR: $e\n$st');
-      await FirebaseCrashlytics.instance.recordError(
-        e, st, reason: 'handlePostLoginNavigation',
-      );
+      FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'handlePostLoginNavigation');
       // Fallback: never kick a subscriber to the paywall
       final cached = await _getCachedSubscriptionState();
-      return _finishWith(
-        cached ? _navigateToMainScreen : _navigateToSubscriptionScreen,
-        reason: 'exception – cached=$cached',
-      );
+      cached ? _navigateToMainScreen() : _navigateToSubscriptionScreen();
     }
   }
 
@@ -99,14 +91,7 @@ class SubscriptionManager {
   //  PRIVATE HELPERS
   // ─────────────────────────────────────────────────────────────
 
-  /// Single exit point – hides overlay then navigates on next frame.
-  void _finishWith(VoidCallback navigate, {required String reason}) {
-    debugPrint('✅ Navigation: $reason');
-    LoadingOverlay.hide();
-    WidgetsBinding.instance.addPostFrameCallback((_) => navigate());
-  }
-
-  // ── Retry helper (exponential back-off) ───────────────────────
+  // ── Retry helper ─────────────────────────────────────────────
   Future<T?> _withRetry<T>(
       Future<T> Function() fn, {
         int maxAttempts = 3,
@@ -118,7 +103,6 @@ class SubscriptionManager {
       } catch (e) {
         debugPrint('⚠️ [$tag] attempt ${i + 1} failed: $e');
         if (i == maxAttempts - 1) rethrow;
-        // 1 s → 2 s → 4 s
         await Future.delayed(Duration(seconds: pow(2, i).toInt()));
       }
     }
@@ -168,7 +152,7 @@ class SubscriptionManager {
         return true;
       }
 
-      // Reactive wait with dispose guard
+      // Reactive wait
       final completer = Completer<void>();
       Worker? worker;
       worker = ever(controller.isRevenueCatAvailable, (bool val) {
@@ -210,7 +194,6 @@ class SubscriptionManager {
           restoreOk = false;
           return null;
         }),
-
         _withRetry(
               () => controller.getCustomerInfo().timeout(_kCustomerInfoTimeout),
           maxAttempts: 2,
@@ -221,7 +204,6 @@ class SubscriptionManager {
         }),
       ]);
 
-      // Final retry if customer-info still failed
       if (!infoOk) {
         debugPrint('⚠️ CustomerInfo failed – last retry...');
         await controller
@@ -232,7 +214,6 @@ class SubscriptionManager {
 
       debugPrint('✅ Sync done – restore=$restoreOk, info=$infoOk');
     } catch (e) {
-      // Non-fatal – continue to subscription check
       debugPrint('⚠️ _restorePurchasesAndSync error: $e');
     }
   }
@@ -262,7 +243,7 @@ class SubscriptionManager {
     }
   }
 
-  // ── Cached state (offline / timeout fallback) ─────────────────
+  // ── Cached state fallback ─────────────────────────────────────
   Future<bool> _getCachedSubscriptionState() async {
     try {
       final done = await TokenStorage.getSubscriptionCheckDone()
@@ -273,7 +254,7 @@ class SubscriptionManager {
     }
   }
 
-  // ── First-time user bookkeeping ───────────────────────────────
+  // ── First-time user ───────────────────────────────────────────
   Future<void> _recordFirstTimeUserIfNeeded() async {
     try {
       if (await _getCachedSubscriptionState()) return;
@@ -295,11 +276,18 @@ class SubscriptionManager {
     }
   }
 
-  // ── Navigation ────────────────────────────────────────────────
-  void _navigateToSubscriptionScreen() =>
+  // ── Navigation — addPostFrameCallback avoids any overlay clash ─
+  void _navigateToSubscriptionScreen() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.offAll(() => SubscriptionScreen());
-  void _navigateToMainScreen() =>
+    });
+  }
+
+  void _navigateToMainScreen() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.offAll(() => MainScreen());
+    });
+  }
 
   // ─────────────────────────────────────────────────────────────
   //  PUBLIC UTILITY
