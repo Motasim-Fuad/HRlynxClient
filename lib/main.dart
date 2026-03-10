@@ -1,7 +1,9 @@
-// lib/main.dart - PRODUCTION READY (NO ERRORS)
+// lib/main.dart - FINAL PRODUCTION
 
 import 'dart:io';
 import 'dart:async';
+import 'dart:ui';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,169 +17,177 @@ import 'app/api_servies/notification_services.dart';
 import 'app/api_servies/token.dart';
 import 'app/modules/payment/payment_controller.dart';
 
-void main() async {
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
-
-    print('🚀 ========================================');
-    print('🚀 APP STARTING - PRODUCTION MODE');
-    print('🚀 ========================================\n');
-
-    try {
-      await _configureUI();
-      await _initializeFirebase();
-      await _initializeRevenueCat();
-      await _initializeFCM();
-
-      if (Platform.isIOS) {
-        _requestIOSPermissionsAsync();
-      }
-
-      print('\n✅ ========================================');
-      print('✅ ALL SYSTEMS READY');
-      print('✅ ========================================\n');
-
-    } catch (e, stackTrace) {
-      print('❌ INIT ERROR: $e');
-      print('Stack: $stackTrace');
-    }
-
-    runApp(const MyApp());
-
-  }, (error, stack) {
-    print('❌ UNCAUGHT ERROR: $error');
-    print('Stack: $stack');
-  });
+// ─── Background FCM handler (must be top-level) ───────────────
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('📩 Background message: ${message.messageId}');
 }
 
-Future<void> _configureUI() async {
+// ─────────────────────────────────────────────────────────────
+//  ENTRY POINT
+// ─────────────────────────────────────────────────────────────
+
+void main() {
+  // ✅ runZonedGuarded আগে, ensureInitialized ভেতরে
+  runZonedGuarded(
+        () async {
+      WidgetsFlutterBinding.ensureInitialized(); // ← এখানে move করো
+
+      await _loadEnv();
+      await _initializeFirebase();
+      _setupCrashlytics();
+
+      await Future.wait([
+        _configureUI(),
+        _initializeRevenueCat(),
+        _initializeFCM(),
+      ]);
+
+      if (Platform.isIOS) _requestIOSPermissionsAsync();
+
+      debugPrint('✅ All systems ready');
+      runApp(const MyApp());
+    },
+        (error, stack) {
+      debugPrint('❌ UNCAUGHT ERROR: $error');
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    },
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+//  INIT HELPERS
+// ─────────────────────────────────────────────────────────────
+
+Future<void> _loadEnv() async {
   try {
-    print('🎨 Configuring UI...');
-
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.white,
-      statusBarIconBrightness: Brightness.dark,
-    ));
-
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    print('✅ UI configured');
+    await dotenv.load(fileName: '.env')
+        .timeout(const Duration(seconds: 5));
+    debugPrint('✅ .env loaded');
   } catch (e) {
-    print('⚠️ UI error: $e');
+    debugPrint('⚠️ .env error: $e');
   }
 }
 
 Future<void> _initializeFirebase() async {
-  int attempts = 0;
-  const maxAttempts = 3;
-
-  while (attempts < maxAttempts) {
+  for (int i = 0; i < 3; i++) {
     try {
-      print('🔥 Firebase (attempt ${attempts + 1}/$maxAttempts)...');
+      await Firebase.initializeApp()
+          .timeout(const Duration(seconds: 15));
 
-      await Firebase.initializeApp().timeout(
-        Duration(seconds: 15),
-        onTimeout: () => throw TimeoutException('Firebase timeout'),
-      );
+      // Register background handler
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
 
-      print('✅ Firebase initialized');
+      debugPrint('✅ Firebase initialized');
       return;
-
     } catch (e) {
-      attempts++;
-      print('❌ Firebase attempt $attempts failed: $e');
-
-      if (attempts >= maxAttempts) {
-        print('⚠️ Firebase failed - app will continue');
-        return;
-      }
-
-      await Future.delayed(Duration(seconds: 2));
+      debugPrint('⚠️ Firebase attempt ${i + 1} failed: $e');
+      if (i < 2) await Future.delayed(const Duration(seconds: 2));
     }
+  }
+  debugPrint('⚠️ Firebase failed after 3 attempts – continuing');
+}
+
+void _setupCrashlytics() {
+  try {
+    // Flutter framework errors
+    FlutterError.onError =
+        FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+    // Async / platform errors
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+
+    debugPrint('✅ Crashlytics ready');
+  } catch (e) {
+    debugPrint('⚠️ Crashlytics setup error: $e');
+  }
+}
+
+Future<void> _configureUI() async {
+  try {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor:        Colors.white,
+      statusBarIconBrightness: Brightness.dark,
+    ));
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    debugPrint('✅ UI configured');
+  } catch (e) {
+    debugPrint('⚠️ UI error: $e');
   }
 }
 
 Future<void> _initializeRevenueCat() async {
   try {
-    print('💳 RevenueCat...');
-
     await Purchases.setLogLevel(LogLevel.debug);
 
-    await dotenv.load(fileName: ".env").timeout(
-      Duration(seconds: 5),
-      onTimeout: () => throw TimeoutException('.env timeout'),
-    );
-
-    String apiKey = Platform.isIOS
-        ? (dotenv.env['IOS_REVENUECAT_KEY'] ?? '')
+    final apiKey = Platform.isIOS
+        ? (dotenv.env['IOS_REVENUECAT_KEY']     ?? '')
         : (dotenv.env['ANDROID_REVENUECAT_KEY'] ?? '');
 
-    if (apiKey.isEmpty) {
-      throw Exception('RevenueCat key not found');
-    }
+    if (apiKey.isEmpty) throw Exception('RevenueCat key not found in .env');
 
-    await Purchases.configure(PurchasesConfiguration(apiKey)).timeout(
-      Duration(seconds: 10),
-      onTimeout: () => throw TimeoutException('RevenueCat timeout'),
-    );
+    await Purchases.configure(PurchasesConfiguration(apiKey))
+        .timeout(const Duration(seconds: 10));
 
-    print('✅ RevenueCat initialized');
-
+    debugPrint('✅ RevenueCat initialized');
   } catch (e) {
-    print('⚠️ RevenueCat error: $e');
+    debugPrint('⚠️ RevenueCat error: $e');
+    FirebaseCrashlytics.instance
+        .recordError(e, StackTrace.current, reason: '_initializeRevenueCat');
   }
 }
 
 Future<void> _initializeFCM() async {
   try {
-    print('📱 FCM...');
-
-    await FirebaseMeg().initFCM().timeout(
-      Duration(seconds: 8),
-      onTimeout: () => throw TimeoutException('FCM timeout'),
-    );
-
-    print('✅ FCM initialized');
-
+    await FirebaseMeg().initFCM()
+        .timeout(const Duration(seconds: 8));
+    debugPrint('✅ FCM initialized');
   } catch (e) {
-    print('⚠️ FCM error: $e');
+    debugPrint('⚠️ FCM error: $e');
   }
 }
 
 void _requestIOSPermissionsAsync() {
   Future.microtask(() async {
     try {
-      print('🔐 iOS permissions (background)...');
+      final settings = await FirebaseMessaging.instance
+          .requestPermission(alert: true, badge: true, sound: true)
+          .timeout(const Duration(seconds: 30));
 
-      final settings = await FirebaseMessaging.instance.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      ).timeout(Duration(seconds: 30));
+      debugPrint('✅ Permission: ${settings.authorizationStatus}');
 
-      print('✅ Permission: ${settings.authorizationStatus}');
+      final isAllowed =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+              settings.authorizationStatus == AuthorizationStatus.provisional;
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional) {
+      if (!isAllowed) return;
 
-        for (int i = 0; i < 5; i++) {
-          final apnsToken = await FirebaseMessaging.instance.getAPNSToken();
-          if (apnsToken != null) {
-            print('✅ APNs: $apnsToken');
-            break;
-          }
-          await Future.delayed(Duration(seconds: 2));
+      // APNs token – retry up to 5 times
+      for (int i = 0; i < 5; i++) {
+        final token = await FirebaseMessaging.instance.getAPNSToken();
+        if (token != null) {
+          debugPrint('✅ APNs token received');
+          return;
         }
+        await Future.delayed(const Duration(seconds: 2));
       }
-
     } catch (e) {
-      print('⚠️ iOS permission error: $e');
+      debugPrint('⚠️ iOS permission error: $e');
     }
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+//  APP ROOT
+// ─────────────────────────────────────────────────────────────
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -185,59 +195,64 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      onInit: () {
-        try {
-          Get.put(NotificationService());
-          Get.put(PaymentController(), permanent: true); // ✅ এটা add করো
-        } catch (e) {
-          print('⚠️ Init error: $e');
-        }
-      },
-      title: 'HRlynx',
+      title:                    'HRlynx',
       debugShowCheckedModeBanner: false,
-      home: const SafeInitScreen(),
-      builder: (context, widget) {
-        ErrorWidget.builder = (details) {
-          return Scaffold(
-            body: Center(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: Colors.red),
-                    SizedBox(height: 20),
-                    Text('Something went wrong', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
-                    Text('Please restart', style: TextStyle(fontSize: 14, color: Colors.grey)),
-                  ],
-                ),
+      home:                     const _SafeInitScreen(),
+      builder: (context, child) {
+        // Global error UI
+        ErrorWidget.builder = (details) => Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Something went wrong',
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Please restart the app',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
+                ],
               ),
             ),
-          );
-        };
-        return widget!;
+          ),
+        );
+        return child!;
       },
     );
   }
 }
 
-class SafeInitScreen extends StatefulWidget {
-  const SafeInitScreen({super.key});
+// ─────────────────────────────────────────────────────────────
+//  SAFE INIT SCREEN  (splash-time initialisation)
+// ─────────────────────────────────────────────────────────────
+
+class _SafeInitScreen extends StatefulWidget {
+  const _SafeInitScreen();
 
   @override
-  State<SafeInitScreen> createState() => _SafeInitScreenState();
+  State<_SafeInitScreen> createState() => _SafeInitScreenState();
 }
 
-class _SafeInitScreenState extends State<SafeInitScreen> with WidgetsBindingObserver {
-  bool _isInitializing = true;
-  String _statusMessage = 'Initializing...';
+class _SafeInitScreenState extends State<_SafeInitScreen>
+    with WidgetsBindingObserver {
 
+  bool   _showRetry = false;
+  String _status    = 'Loading...';
+
+  // ── Lifecycle ──────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _safeInitialize();
+    _initialize();
   }
 
   @override
@@ -246,84 +261,75 @@ class _SafeInitScreenState extends State<SafeInitScreen> with WidgetsBindingObse
     super.dispose();
   }
 
-  Future<void> _safeInitialize() async {
-    try {
-      print('🎬 Starting navigation...');
-
-      await Future.delayed(Duration(milliseconds: 300));
-
-      setState(() {
-        _statusMessage = 'Loading...';
-      });
-
-      await SplashService().checkLoginStatus().timeout(
-        Duration(seconds: 10),
-        onTimeout: () {
-          print('⚠️ Login check timeout');
-          throw TimeoutException('Login check timeout');
-        },
-      );
-
-      print('✅ Navigation complete');
-
-    } catch (e, stackTrace) {
-      print('❌ Init error: $e');
-      print('Stack: $stackTrace');
-
-      setState(() {
-        _statusMessage = 'Loading...';
-      });
-
-      await Future.delayed(Duration(milliseconds: 500));
-
-      try {
-        // Import your SplashScreen here
-        // Get.offAll(() => SplashScreen());
-      } catch (navError) {
-        print('❌ Navigation failed: $navError');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isInitializing = false;
-        });
-      }
-    }
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      print('📱 App resumed');
-      _checkPendingPurchase();
+    if (state == AppLifecycleState.resumed) _onAppResumed();
+  }
+
+  // ── Init ───────────────────────────────────────────────────
+  Future<void> _initialize() async {
+    if (mounted) setState(() { _showRetry = false; _status = 'Loading...'; });
+
+    try {
+      // Small delay so the first frame paints before heavy work
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      // Init NotificationService early (non-blocking)
+      _initNotificationsAsync();
+
+      await SplashService().checkLoginStatus().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw TimeoutException('Login check timed out'),
+      );
+
+    } catch (e, st) {
+      debugPrint('❌ Init error: $e');
+      FirebaseCrashlytics.instance
+          .recordError(e, st, reason: '_SafeInitScreen._initialize');
+
+      if (mounted) setState(() { _showRetry = true; _status = 'Loading...'; });
     }
   }
 
-  Future<void> _checkPendingPurchase() async {
-    try {
-      final token = await TokenStorage.getLoginAccessToken().timeout(
-        Duration(seconds: 3),
-      );
+  // ── Notifications (fire-and-forget) ───────────────────────
+  void _initNotificationsAsync() {
+    Future.microtask(() async {
+      try {
+        if (!Get.isRegistered<NotificationService>()) {
+          Get.put(NotificationService());
+        }
+      } catch (e) {
+        debugPrint('⚠️ Notification init error: $e');
+      }
+    });
+  }
 
+  // ── App resume: check subscription silently ────────────────
+  Future<void> _onAppResumed() async {
+    try {
+      final token = await TokenStorage.getLoginAccessToken()
+          .timeout(const Duration(seconds: 3));
       if (token == null) return;
 
-      if (Get.isRegistered<PaymentController>()) {
-        final controller = Get.find<PaymentController>();
-        await controller.getCustomerInfo().timeout(Duration(seconds: 5));
+      if (!Get.isRegistered<PaymentController>()) return;
 
-        if (controller.hasActiveSubscription) {
-          print('✅ Active subscription found');
-          final flag = await TokenStorage.getSubscriptionCheckDone();
-          if (flag != true) {
-            await TokenStorage.saveSubscriptionCheckDone(true);
-          }
+      final controller = Get.find<PaymentController>();
+      await controller.getCustomerInfo()
+          .timeout(const Duration(seconds: 5));
+
+      if (controller.hasActiveSubscription) {
+        final flag = await TokenStorage.getSubscriptionCheckDone();
+        if (flag != true) {
+          await TokenStorage.saveSubscriptionCheckDone(true);
+          debugPrint('✅ Subscription flag synced on resume');
         }
       }
     } catch (e) {
-      print('⚠️ Purchase check error: $e');
+      debugPrint('⚠️ Resume check error: $e');
     }
   }
 
+  // ── UI ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -332,34 +338,29 @@ class _SafeInitScreenState extends State<SafeInitScreen> with WidgetsBindingObse
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SizedBox(
-              width: 50,
-              height: 50,
+            const SizedBox(
+              width:  48,
+              height: 48,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text(
-              _statusMessage,
+              _status,
               style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[700],
+                fontSize:   16,
+                color:      Colors.grey[700],
                 fontWeight: FontWeight.w500,
               ),
             ),
-            if (!_isInitializing) ...[
-              SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _isInitializing = true;
-                    _statusMessage = 'Retrying...';
-                  });
-                  _safeInitialize();
-                },
-                child: Text('Retry'),
+            if (_showRetry) ...[
+              const SizedBox(height: 24),
+              TextButton.icon(
+                onPressed: _initialize,
+                icon:  const Icon(Icons.refresh),
+                label: const Text('Retry'),
               ),
             ],
           ],

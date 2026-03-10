@@ -1,8 +1,11 @@
-// lib/app/subscription_manager.dart - OPTIMIZED WITH LOADING
+// lib/app/subscription_manager.dart - FINAL PRODUCTION
 
 import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:HRlynx/app/modules/payment/payment_controller.dart';
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
@@ -10,238 +13,304 @@ import 'package:HRlynx/app/modules/payment/subcription_view.dart';
 import 'package:HRlynx/app/common_widgets/loading_overlay.dart';
 
 class SubscriptionManager {
+  // ─── Singleton ────────────────────────────────────────────────
   static final SubscriptionManager _instance = SubscriptionManager._internal();
   factory SubscriptionManager() => _instance;
   SubscriptionManager._internal();
-
   static SubscriptionManager get instance => _instance;
-  static String get ADMIN_EMAIL => dotenv.env['ADMIN_ACCESS_EMAIL'] ?? '';
-  static String get CLIENT_EMAIL => dotenv.env['CLINT_ACCESS_EMAIL'] ?? '';
 
-  /// ✅ OPTIMIZED: Shows loading during entire process
+  // ─── Config ───────────────────────────────────────────────────
+  static String get _adminEmail  => dotenv.env['ADMIN_ACCESS_EMAIL'] ?? '';
+  static String get _clientEmail => dotenv.env['CLINT_ACCESS_EMAIL'] ?? '';
+
+  // ─── Timeouts ─────────────────────────────────────────────────
+  static const _kRevenueCatReadyTimeout = Duration(seconds: 5);
+  static const _kRestoreTimeout         = Duration(seconds: 10);
+  static const _kCustomerInfoTimeout    = Duration(seconds: 8);
+  static const _kRetryTimeout           = Duration(seconds: 5);
+  static const _kUserIdTimeout          = Duration(seconds: 3);
+  static const _kEmailTimeout           = Duration(seconds: 2);
+
+  // ─────────────────────────────────────────────────────────────
+  //  PUBLIC ENTRY POINT
+  // ─────────────────────────────────────────────────────────────
+
   Future<void> handlePostLoginNavigation() async {
     try {
       LoadingOverlay.show(message: 'Setting up your account...');
 
-      print('\n🔐 POST-LOGIN NAVIGATION\n');
-
-      // Step 1: Get User ID
+      // Step 1: User ID ─────────────────────────────────────────
       final userId = await _getUserIdSafely();
       if (userId == null) {
-        LoadingOverlay.hide();
-        _navigateToSubscriptionScreen();
-        return;
+        return _finishWith(_navigateToSubscriptionScreen,
+            reason: 'userId null');
       }
 
-      // Step 2: Check Admin or Client
+      // Step 2: Admin / demo bypass ─────────────────────────────
       if (await _isAdminOrClientUser()) {
         LoadingOverlay.updateMessage('Loading dashboard...');
-        await Future.delayed(Duration(milliseconds: 300));
-        LoadingOverlay.hide();
-        _navigateToMainScreen();
-        return;
+        return _finishWith(_navigateToMainScreen, reason: 'admin/client');
       }
 
-      // Step 3: Setup Payment Controller
+      // Step 3: Boot RevenueCat ─────────────────────────────────
       LoadingOverlay.updateMessage('Initializing subscription...');
       final controllerReady = await _ensurePaymentControllerReady(userId);
       if (!controllerReady) {
-        LoadingOverlay.hide();
-        _navigateToSubscriptionScreen();
-        return;
+        final cached = await _getCachedSubscriptionState();
+        return _finishWith(
+          cached ? _navigateToMainScreen : _navigateToSubscriptionScreen,
+          reason: 'revenueCat not ready, cached=$cached',
+        );
       }
 
-      // Step 4: Restore Purchases
+      // Step 4: Restore + fetch parallel ────────────────────────
       LoadingOverlay.updateMessage('Checking your subscription...');
       await _restorePurchasesAndSync();
 
-      // Step 5: Check Subscription
-      final hasActiveSubscription = await _checkRevenueCatSubscription();
-
-      if (hasActiveSubscription) {
+      // Step 5: Check entitlements ──────────────────────────────
+      final hasActive = await _checkRevenueCatSubscription();
+      if (hasActive) {
         LoadingOverlay.updateMessage('Loading your workspace...');
         await TokenStorage.saveSubscriptionCheckDone(true);
-        await Future.delayed(Duration(milliseconds: 300));
-        LoadingOverlay.hide();
-        _navigateToMainScreen();
-        return;
+        return _finishWith(_navigateToMainScreen,
+            reason: 'active subscription');
       }
 
-      // Step 6: Navigate to Subscription
-      await _isFirstTimeUser();
-      LoadingOverlay.hide();
-      _navigateToSubscriptionScreen();
+      // Step 6: No subscription ─────────────────────────────────
+      await _recordFirstTimeUserIfNeeded();
+      return _finishWith(_navigateToSubscriptionScreen,
+          reason: 'no active subscription');
 
-      print('✅ POST-LOGIN COMPLETE\n');
-
-    } catch (e, stackTrace) {
-      print('❌ POST-LOGIN ERROR: $e\n$stackTrace');
-      LoadingOverlay.hide();
-      _navigateToSubscriptionScreen();
+    } catch (e, st) {
+      debugPrint('❌ POST-LOGIN ERROR: $e\n$st');
+      await FirebaseCrashlytics.instance.recordError(
+        e, st, reason: 'handlePostLoginNavigation',
+      );
+      // Fallback: never kick a subscriber to the paywall
+      final cached = await _getCachedSubscriptionState();
+      return _finishWith(
+        cached ? _navigateToMainScreen : _navigateToSubscriptionScreen,
+        reason: 'exception – cached=$cached',
+      );
     }
   }
 
+  // ─────────────────────────────────────────────────────────────
+  //  PRIVATE HELPERS
+  // ─────────────────────────────────────────────────────────────
+
+  /// Single exit point – hides overlay then navigates on next frame.
+  void _finishWith(VoidCallback navigate, {required String reason}) {
+    debugPrint('✅ Navigation: $reason');
+    LoadingOverlay.hide();
+    WidgetsBinding.instance.addPostFrameCallback((_) => navigate());
+  }
+
+  // ── Retry helper (exponential back-off) ───────────────────────
+  Future<T?> _withRetry<T>(
+      Future<T> Function() fn, {
+        int maxAttempts = 3,
+        String tag = '',
+      }) async {
+    for (int i = 0; i < maxAttempts; i++) {
+      try {
+        return await fn();
+      } catch (e) {
+        debugPrint('⚠️ [$tag] attempt ${i + 1} failed: $e');
+        if (i == maxAttempts - 1) rethrow;
+        // 1 s → 2 s → 4 s
+        await Future.delayed(Duration(seconds: pow(2, i).toInt()));
+      }
+    }
+    return null;
+  }
+
+  // ── User ID ───────────────────────────────────────────────────
   Future<int?> _getUserIdSafely() async {
     try {
-      final userId = await TokenStorage.getUserId().timeout(
-        Duration(seconds: 3),
-        onTimeout: () => null,
-      );
-
-      if (userId == null || userId <= 0) return null;
-      return userId;
-
-    } catch (e) {
-      print('❌ User ID error: $e');
+      final id = await TokenStorage.getUserId()
+          .timeout(_kUserIdTimeout, onTimeout: () => null);
+      return (id != null && id > 0) ? id : null;
+    } catch (_) {
       return null;
     }
   }
 
+  // ── Admin / client check ──────────────────────────────────────
   Future<bool> _isAdminOrClientUser() async {
+    if (_adminEmail.isEmpty && _clientEmail.isEmpty) return false;
     try {
-      if (ADMIN_EMAIL.isEmpty && CLIENT_EMAIL.isEmpty) return false;
-
-      final userEmail = await TokenStorage.getUserEmail().timeout(
-        Duration(seconds: 2),
-        onTimeout: () => null,
-      );
-
-      if (userEmail == null) return false;
-
-      final emailLower = userEmail.toLowerCase();
-
-      // Check both ADMIN_EMAIL and CLIENT_EMAIL
-      return emailLower == ADMIN_EMAIL.toLowerCase() ||
-          emailLower == CLIENT_EMAIL.toLowerCase();
-
-    } catch (e) {
+      final email = await TokenStorage.getUserEmail()
+          .timeout(_kEmailTimeout, onTimeout: () => null);
+      if (email == null) return false;
+      final lower = email.toLowerCase();
+      return lower == _adminEmail.toLowerCase() ||
+          lower == _clientEmail.toLowerCase();
+    } catch (_) {
       return false;
     }
   }
 
+  // ── RevenueCat boot ───────────────────────────────────────────
   Future<bool> _ensurePaymentControllerReady(int userId) async {
     try {
-      // Clean up existing
       if (Get.isRegistered<PaymentController>()) {
         Get.delete<PaymentController>(force: true);
-        await Future.delayed(Duration(milliseconds: 50));
+        await Future.delayed(const Duration(milliseconds: 50));
       }
 
-      // Create new
       Get.put(PaymentController(userId: userId));
       final controller = Get.find<PaymentController>();
 
-      // Wait for RevenueCat
-      int attempts = 0;
-      while (!controller.isRevenueCatAvailable.value && attempts < 40) {
-        await Future.delayed(Duration(milliseconds: 100));
-        attempts++;
+      // Fast path
+      if (controller.isRevenueCatAvailable.value &&
+          controller.isRevenueCatUserLoggedIn.value) {
+        return true;
       }
+
+      // Reactive wait with dispose guard
+      final completer = Completer<void>();
+      Worker? worker;
+      worker = ever(controller.isRevenueCatAvailable, (bool val) {
+        if (val && !completer.isCompleted) {
+          completer.complete();
+          worker?.dispose();
+        }
+      });
+
+      await completer.future.timeout(
+        _kRevenueCatReadyTimeout,
+        onTimeout: () => worker?.dispose(),
+      );
 
       return controller.isRevenueCatAvailable.value &&
           controller.isRevenueCatUserLoggedIn.value;
-
-    } catch (e) {
-      print('❌ Controller error: $e');
+    } catch (e, st) {
+      debugPrint('❌ PaymentController boot error: $e');
+      FirebaseCrashlytics.instance
+          .recordError(e, st, reason: '_ensurePaymentControllerReady');
       return false;
     }
   }
 
+  // ── Restore + customer-info (parallel, with retry) ────────────
   Future<void> _restorePurchasesAndSync() async {
     try {
       final controller = Get.find<PaymentController>();
 
-      await controller.restorePurchases().timeout(
-        Duration(seconds: 10),
-        onTimeout: () {},
-      );
+      bool restoreOk = false;
+      bool infoOk    = false;
 
-      await Future.delayed(Duration(milliseconds: 800));
+      await Future.wait([
+        _withRetry(
+              () => controller.restorePurchases().timeout(_kRestoreTimeout),
+          maxAttempts: 2,
+          tag: 'restorePurchases',
+        ).then((_) => restoreOk = true).catchError((_) {
+          restoreOk = false;
+          return null;
+        }),
 
-      await controller.getCustomerInfo().timeout(
-        Duration(seconds: 8),
-        onTimeout: () {},
-      );
+        _withRetry(
+              () => controller.getCustomerInfo().timeout(_kCustomerInfoTimeout),
+          maxAttempts: 2,
+          tag: 'getCustomerInfo',
+        ).then((_) => infoOk = true).catchError((_) {
+          infoOk = false;
+          return null;
+        }),
+      ]);
 
+      // Final retry if customer-info still failed
+      if (!infoOk) {
+        debugPrint('⚠️ CustomerInfo failed – last retry...');
+        await controller
+            .getCustomerInfo()
+            .timeout(_kRetryTimeout)
+            .catchError((_) => null);
+      }
+
+      debugPrint('✅ Sync done – restore=$restoreOk, info=$infoOk');
     } catch (e) {
-      print('⚠️ Restore error: $e');
+      // Non-fatal – continue to subscription check
+      debugPrint('⚠️ _restorePurchasesAndSync error: $e');
     }
   }
 
-  Future<bool> _isFirstTimeUser() async {
-    try {
-      final checkDone = await TokenStorage.getSubscriptionCheckDone().timeout(
-        Duration(seconds: 2),
-        onTimeout: () => null,
-      );
-
-      if (checkDone == true) return false;
-
-      try {
-        final controller = Get.find<PaymentController>();
-        final customerInfo = controller.customerInfo.value;
-
-        if (customerInfo != null) {
-          final hasHistory =
-              customerInfo.allPurchasedProductIdentifiers.isNotEmpty ||
-                  customerInfo.nonSubscriptionTransactions.isNotEmpty ||
-                  customerInfo.entitlements.all.isNotEmpty;
-
-          if (hasHistory) {
-            await TokenStorage.saveSubscriptionCheckDone(true);
-            return false;
-          }
-        }
-      } catch (e) {}
-
-      return true;
-    } catch (e) {
-      return true;
-    }
-  }
-
+  // ── Subscription check ────────────────────────────────────────
   Future<bool> _checkRevenueCatSubscription() async {
     try {
       final controller = Get.find<PaymentController>();
 
-      try {
-        await controller.getCustomerInfo().timeout(
-          Duration(seconds: 8),
-          onTimeout: () {},
-        );
-      } catch (e) {}
+      await controller
+          .getCustomerInfo()
+          .timeout(_kCustomerInfoTimeout)
+          .catchError((_) => null);
 
-      final customerInfo = controller.customerInfo.value;
-      if (customerInfo == null) return false;
+      final info = controller.customerInfo.value;
+      if (info == null) {
+        debugPrint('⚠️ CustomerInfo null – using cache');
+        return _getCachedSubscriptionState();
+      }
 
-      return customerInfo.entitlements.active.isNotEmpty;
-
+      final active = info.entitlements.active.isNotEmpty;
+      debugPrint('📋 Entitlements active=$active');
+      return active;
     } catch (e) {
+      debugPrint('❌ _checkRevenueCatSubscription: $e');
+      return _getCachedSubscriptionState();
+    }
+  }
+
+  // ── Cached state (offline / timeout fallback) ─────────────────
+  Future<bool> _getCachedSubscriptionState() async {
+    try {
+      final done = await TokenStorage.getSubscriptionCheckDone()
+          .timeout(const Duration(seconds: 2), onTimeout: () => null);
+      return done == true;
+    } catch (_) {
       return false;
     }
   }
 
-  void _navigateToSubscriptionScreen() {
-    Future.delayed(Duration(milliseconds: 100), () {
+  // ── First-time user bookkeeping ───────────────────────────────
+  Future<void> _recordFirstTimeUserIfNeeded() async {
+    try {
+      if (await _getCachedSubscriptionState()) return;
+      try {
+        final controller = Get.find<PaymentController>();
+        final info       = controller.customerInfo.value;
+        if (info != null) {
+          final hasPurchaseHistory =
+              info.allPurchasedProductIdentifiers.isNotEmpty ||
+                  info.nonSubscriptionTransactions.isNotEmpty ||
+                  info.entitlements.all.isNotEmpty;
+          if (hasPurchaseHistory) {
+            await TokenStorage.saveSubscriptionCheckDone(true);
+          }
+        }
+      } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ _recordFirstTimeUserIfNeeded: $e');
+    }
+  }
+
+  // ── Navigation ────────────────────────────────────────────────
+  void _navigateToSubscriptionScreen() =>
       Get.offAll(() => SubscriptionScreen());
-    });
-  }
-
-  void _navigateToMainScreen() {
-    Future.delayed(Duration(milliseconds: 100), () {
+  void _navigateToMainScreen() =>
       Get.offAll(() => MainScreen());
-    });
-  }
 
-  static Future<void> markSubscriptionScreenShown() async {
+  // ─────────────────────────────────────────────────────────────
+  //  PUBLIC UTILITY
+  // ─────────────────────────────────────────────────────────────
+
+  static Future<void> markSubscriptionActive() async {
     try {
       await TokenStorage.saveSubscriptionCheckDone(true);
-      final verified = await TokenStorage.verifySubscriptionFlagSaved(true);
-      if (verified) {
-        print('✅ Subscription marked');
-      }
+      debugPrint('✅ Subscription marked active');
     } catch (e) {
-      print('❌ Mark error: $e');
+      debugPrint('❌ markSubscriptionActive: $e');
     }
   }
 }
