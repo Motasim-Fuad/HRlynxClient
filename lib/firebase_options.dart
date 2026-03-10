@@ -89,4 +89,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'hrlynx-b9477.firebasestorage.app',
     measurementId: 'G-76170BG77P',
   );
+
 }

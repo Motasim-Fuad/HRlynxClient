@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "907467608466-i2lkdrrqo8g3nt48nu1es7fr8ij25l9h.apps.googleusercontent.com",
+          "client_id": "907467608466-jp8vv14r6pvfuab173heqv5626dgqgdc.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.lynxova.hrlnyx",
-            "certificate_hash": "2c4e728d6e8bc4cae9e23a008ad39c10608466ac"
+            "certificate_hash": "69abd0bf7f7ca9f7c3ece51bf07d18b09b3bca03"
           }
         },
         {
@@ -39,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "907467608466-9c7kk86ghtfqrvou3hpk3m45uj3sg07v.apps.googleusercontent.com",
+              "client_id": "907467608466-1otrqqbqplp45e8su92jeoa9iat795p0.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.lynxova.hrlnyx"
+                "bundle_id": "com.bdCalling.hr"
               }
             }
           ]
