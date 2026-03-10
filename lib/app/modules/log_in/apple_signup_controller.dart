@@ -74,7 +74,7 @@ class AppleSignUpController extends GetxController {
       _initializeFirebaseServicesAsync();
       _enableBiometricAsync(user!.email!);
       await _authRepo.setParsonaType({'persona': personaId});
-
+      Get.snackbar("Success", "SingIn Successful",backgroundColor: Colors.white,snackPosition: SnackPosition.TOP);
       await SubscriptionManager.instance.handlePostLoginNavigation();
 
     } on SignInWithAppleAuthorizationException catch (e) {

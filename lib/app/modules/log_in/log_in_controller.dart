@@ -92,7 +92,7 @@ class LogInController extends GetxController {
 
       // Step 4: Set persona
       await _authRepo.setParsonaType({'persona': personaId});
-
+      Get.snackbar("Success", "SingIn Successful",backgroundColor: Colors.white,snackPosition: SnackPosition.TOP);
       // Step 5: Navigate — isLoading will be false'd in finally
       await SubscriptionManager.instance.handlePostLoginNavigation();
 

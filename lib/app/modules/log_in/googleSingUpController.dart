@@ -72,6 +72,8 @@ class GoogleSignUpController extends GetxController {
       _initializeFirebaseServicesAsync();
       await _authRepo.setParsonaType({'persona': personaId});
 
+      Get.snackbar("Success", "SingIn Successful",backgroundColor: Colors.white,snackPosition: SnackPosition.TOP);
+
       await SubscriptionManager.instance.handlePostLoginNavigation();
 
     } on FirebaseAuthException catch (e) {
