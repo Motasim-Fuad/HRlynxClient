@@ -4,12 +4,12 @@ import '../chat_controller.dart';
 
 class SuggestionsWidget extends StatelessWidget {
   final ChatController chatController;
-  final TextEditingController textController;
+
+  // ✅ textController parameter সরানো — chatController.textController ব্যবহার হয়
 
   const SuggestionsWidget({
     super.key,
     required this.chatController,
-    required this.textController,
   });
 
   @override
@@ -18,7 +18,7 @@ class SuggestionsWidget extends StatelessWidget {
       if ((chatController.isFirstTime.value || chatController.showSuggestions.value) &&
           chatController.suggestions.isNotEmpty) {
         return Container(
-          alignment: AlignmentDirectional(-0.8, 1),
+          alignment: const AlignmentDirectional(-0.8, 1),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,16 +26,13 @@ class SuggestionsWidget extends StatelessWidget {
               children: chatController.suggestions.map((suggestion) {
                 return GestureDetector(
                   onTap: () {
-                    textController.text = suggestion;
-                    chatController.showSuggestions.value = false;
-                    chatController.isFirstTime.value = false; // Mark as not first time anymore
-                    textController.selection = TextSelection.fromPosition(
-                      TextPosition(offset: textController.text.length),
-                    );
+                    // ✅ chatController.onSuggestionTap — internally uses textController
+                    chatController.onSuggestionTap(suggestion);
                   },
                   child: Container(
                     margin: const EdgeInsets.symmetric(vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(8),

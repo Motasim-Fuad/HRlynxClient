@@ -15,7 +15,6 @@ import 'package:HRlynx/app/modules/profile/profile_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 import '../main_screen/main_screen_view.dart';
 import 'chat_controller.dart';
 
@@ -25,7 +24,7 @@ class ChatView extends StatelessWidget {
   final WebSocketService webSocketService;
   final String controllerTag;
 
-  ChatView({
+  const ChatView({
     super.key,
     required this.sessionId,
     required this.token,
@@ -33,13 +32,9 @@ class ChatView extends StatelessWidget {
     required this.controllerTag,
   });
 
-  final TextEditingController textController = TextEditingController();
-
   @override
   Widget build(BuildContext context) {
-    // Add safety check for controller existence
     if (!Get.isRegistered<ChatController>(tag: controllerTag)) {
-      print('Initializing new ChatController with tag: $controllerTag');
       Get.put(
         ChatController(
           wsService: webSocketService,
@@ -51,15 +46,14 @@ class ChatView extends StatelessWidget {
       );
     }
 
-    final chatController = Get.find<ChatController>(tag: controllerTag);
-    final tooltipCtrl = Get.put(ChatTooltipController());
+    final chatController    = Get.find<ChatController>(tag: controllerTag);
+    final tooltipCtrl       = Get.put(ChatTooltipController());
     final profileController = Get.put(ProfileController());
 
     final consentController = Get.isRegistered<ConsentController>()
         ? Get.find<ConsentController>()
         : Get.put(ConsentController(), permanent: true);
 
-    // FIXED: Use global VoiceService instance instead of creating new one
     VoiceService voiceService;
     if (Get.isRegistered<VoiceService>()) {
       voiceService = Get.find<VoiceService>();
@@ -69,72 +63,55 @@ class ChatView extends StatelessWidget {
       print('🎵 Created new global VoiceService');
     }
 
-    // ADD THIS 👇 — shows only first time, never again
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AiConsentDialog.showIfNeeded(context);
     });
-
-
-
 
     return Obx(() {
       final session = chatController.session.value;
 
       return Scaffold(
         backgroundColor: Colors.white,
-        body: Column(
-          children: [
-            const SizedBox(height: 40),
-
-            // Chat Header
-            ChatHeader(
-              session: session,
-              onBackPressed: () => Get.off(MainScreen()),
-            ),
-
-            // AI Guidance Widget
-            AIGuidanceWidget(tooltipCtrl: tooltipCtrl),
-
-            // Loading suggestions indicator
-            if (chatController.isLoadingSuggestions.value)
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Center(child: CircularProgressIndicator()),
+        body: SafeArea(
+          child: Column(
+            children: [
+              ChatHeader(
+                session: session,
+                onBackPressed: () => Get.off(MainScreen()),
               ),
 
-            // Messages List
-            MessageListWidget(
-              chatController: chatController,
-              session: session,
-              voiceService: voiceService,
-              profileController:profileController,
-            ),
+              AIGuidanceWidget(tooltipCtrl: tooltipCtrl),
 
-            // Typing Indicator
-            TypingIndicator(
-              chatController: chatController,
-              session: session,
-            ),
+              if (chatController.isLoadingSuggestions.value)
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
 
-            // Suggestions Widget
-            SuggestionsWidget(
-              chatController: chatController,
-              textController: textController,
-            ),
+              MessageListWidget(
+                chatController: chatController,
+                session: session,
+                voiceService: voiceService,
+                profileController: profileController,
+              ),
 
-            const Divider(height: 1),
+              TypingIndicator(
+                chatController: chatController,
+                session: session,
+              ),
 
-            // Chat Input Widget
-            ChatInputWidget(
-              chatController: chatController,
-              voiceService: voiceService,
-              textController: textController,
-              sessionId: sessionId,
-            ),
-          ],
+              SuggestionsWidget(
+                chatController: chatController,
+              ),
+
+              ChatInputWidget(
+                chatController: chatController,
+                voiceService: voiceService,
+                sessionId: sessionId,
+              ),
+            ],
+          ),
         ),
-
-        // Chat Drawer
         endDrawer: ChatDrawer(
           chatController: chatController,
           sessionId: sessionId,
@@ -149,60 +126,45 @@ class ChatView extends StatelessWidget {
 
   Future<void> deleteHistory(int sessionId) async {
     try {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
+      Get.dialog(const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false);
       final result = await AuthRepository().deleteHistory(sessionId);
-      Get.back(); // Close loading dialog
-
-      if (result != null && result['success'] == true) {
-        Get.snackbar("Deleted", "Session has been deleted successfully",
-            snackPosition: SnackPosition.BOTTOM);
-      } else {
-        Get.snackbar("Error", "Failed to delete session",
-            snackPosition: SnackPosition.BOTTOM);
-      }
+      Get.back();
+      Get.snackbar(
+        result != null && result['success'] == true ? "Deleted" : "Error",
+        result != null && result['success'] == true
+            ? "Session has been deleted successfully"
+            : "Failed to delete session",
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } catch (e) {
       Get.back();
-      Get.snackbar("Error", "An error occurred while deleting: $e",
+      Get.snackbar("Error", "An error occurred: $e",
           snackPosition: SnackPosition.BOTTOM);
-      print("Delete error: $e");
     }
   }
 
   Future<void> createNewChatSession() async {
-    final chatController = Get.find<ChatController>(tag: controllerTag);
+    final chatController   = Get.find<ChatController>(tag: controllerTag);
     final currentPersonaId = chatController.personaId;
 
     try {
-      // Close drawer first
       Get.back();
+      Get.dialog(const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false);
 
-      // Show loading indicator
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
-      // Create new session
       final newSessionId = await AuthRepository().createSession(currentPersonaId);
 
       if (newSessionId != null) {
-        // Save the new session ID
         await TokenStorage.savePersonaSessionId(currentPersonaId, newSessionId);
-
-        final token = await TokenStorage.getLoginAccessToken() ?? '';
-
-        // Create new WebSocket service and controller tag
+        final tkn          = await TokenStorage.getLoginAccessToken() ?? '';
         final newWebSocket = WebSocketService();
-        final newControllerTag = 'chat-$newSessionId-${DateTime.now().millisecondsSinceEpoch}';
+        final newTag = 'chat-$newSessionId-${DateTime.now().millisecondsSinceEpoch}';
 
-        // Connect WebSocket
-        await newWebSocket.connect(newSessionId, token, personaId: currentPersonaId);
+        // ✅ নতুন session — limit reset করো connect এর আগে
+        newWebSocket.resetForNewSession();
+        await newWebSocket.connect(newSessionId, tkn, personaId: currentPersonaId);
 
-        // Create new controller
         final newController = ChatController(
           wsService: newWebSocket,
           sessionId: newSessionId,
@@ -210,27 +172,19 @@ class ChatView extends StatelessWidget {
           isNewSession: true,
         );
         newController.isFirstTime.value = true;
+        Get.put(newController, tag: newTag, permanent: true);
 
-        // Put the new controller in GetX
-        Get.put(newController, tag: newControllerTag, permanent: true);
-
-        // Close loading dialog
         Get.back();
-
-        // Navigate to new chat view
         Get.offAll(() => ChatView(
           sessionId: newSessionId,
-          token: token,
+          token: tkn,
           webSocketService: newWebSocket,
-          controllerTag: newControllerTag,
+          controllerTag: newTag,
         ));
 
-        // FIXED: Don't delete VoiceService, just cleanup old ChatController
         Future.delayed(const Duration(seconds: 1), () {
           if (Get.isRegistered<ChatController>(tag: controllerTag)) {
-            final oldController = Get.find<ChatController>(tag: controllerTag);
-            oldController.onClose();
-            Get.delete<ChatController>(tag: controllerTag);
+            Get.delete<ChatController>(tag: controllerTag, force: true);
           }
         });
       } else {
@@ -246,57 +200,41 @@ class ChatView extends StatelessWidget {
 
   Future<void> loadSession(String newSessionId) async {
     try {
-      final chatController = Get.find<ChatController>(tag: controllerTag);
+      final chatController   = Get.find<ChatController>(tag: controllerTag);
       final currentPersonaId = chatController.personaId;
-      final token = await TokenStorage.getLoginAccessToken() ?? '';
+      final tkn              = await TokenStorage.getLoginAccessToken() ?? '';
 
-      // Close drawer first
       Get.back();
+      Get.dialog(const Center(child: CircularProgressIndicator()),
+          barrierDismissible: false);
 
-      // Show loading indicator
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
-      // Save the new session ID
       await TokenStorage.savePersonaSessionId(currentPersonaId, newSessionId);
-
-      // Create new WebSocket service and controller tag
       final newWebSocket = WebSocketService();
-      final newControllerTag = 'chat-$newSessionId-${DateTime.now().millisecondsSinceEpoch}';
+      final newTag = 'chat-$newSessionId-${DateTime.now().millisecondsSinceEpoch}';
 
-      // Connect WebSocket
-      await newWebSocket.connect(newSessionId, token, personaId: currentPersonaId);
+      // ✅ নতুন session load — limit reset করো connect এর আগে
+      newWebSocket.resetForNewSession();
+      await newWebSocket.connect(newSessionId, tkn, personaId: currentPersonaId);
 
-      // Create new controller
       final newController = ChatController(
         wsService: newWebSocket,
         sessionId: newSessionId,
         personaId: currentPersonaId,
-        isNewSession: false, // This is an existing session
+        isNewSession: false,
       );
+      Get.put(newController, tag: newTag, permanent: true);
 
-      // Put the new controller in GetX
-      Get.put(newController, tag: newControllerTag, permanent: true);
-
-      // Close loading dialog
       Get.back();
-
-      // Navigate to chat view
       Get.offAll(() => ChatView(
         sessionId: newSessionId,
-        token: token,
+        token: tkn,
         webSocketService: newWebSocket,
-        controllerTag: newControllerTag,
+        controllerTag: newTag,
       ));
 
-      // FIXED: Don't delete VoiceService, just cleanup old ChatController
       Future.delayed(const Duration(seconds: 1), () {
         if (Get.isRegistered<ChatController>(tag: controllerTag)) {
-          final oldController = Get.find<ChatController>(tag: controllerTag);
-          oldController.onClose();
-          Get.delete<ChatController>(tag: controllerTag);
+          Get.delete<ChatController>(tag: controllerTag, force: true);
         }
       });
     } catch (e) {

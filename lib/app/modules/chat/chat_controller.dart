@@ -11,10 +11,11 @@ import '../../model/chat/sessionHistoryModel.dart';
 import '../../model/chat/session_chat_model.dart';
 import '../../model/chat/suggesions_Model.dart';
 
-class ChatController extends GetxController with GetTickerProviderStateMixin{
+class ChatController extends GetxController with GetTickerProviderStateMixin {
   final WebSocketService wsService;
   final String sessionId;
   final int personaId;
+
   var isTyping = false.obs;
   var messages = <Messages>[].obs;
   var session = Rxn<Session>();
@@ -28,15 +29,18 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
   final bool isNewSession;
   var sessionHistory = <SessionHistory>[].obs;
 
-  static const int MESSAGE_LIMIT = 50;
+  final TextEditingController textController = TextEditingController();
 
-  // Add this getter to access MESSAGE_LIMIT from instances
-  int get messageLimit => MESSAGE_LIMIT;
-  var userMessageCount = 0.obs;
-  var isSessionLimitReached = false.obs;
-  var showLimitWarning = false.obs;
-
-
+  // ─── Token Limit System ────────────────────────────────────────
+  var tokenLimitInfo      = Rxn<Map<String, dynamic>>();
+  var isTokenLimitReached = false.obs;
+  var showNearLimitBanner = false.obs;
+  var tokenUsagePercent   = 0.0.obs;
+  var tokensRemaining     = 0.obs;
+  var tokensTotal         = 20000.obs;
+  var limitBannerTitle    = ''.obs;
+  var limitBannerMessage  = ''.obs;
+  // ────────────────────────────────────────────────────────────────
 
   final ScrollController scrollController = ScrollController();
 
@@ -50,454 +54,399 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
   @override
   void onInit() {
     super.onInit();
-
-    // Initialize animation controller
     historyAnimationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
     );
-    print('🔄 Initializing ChatController for persona: $personaId, session: $sessionId');
+
+    // ✅ WebSocketService থেকে limit state sync করো
+    // Hot reload এ controller নতুন হলেও wsService এর state নেয়
+    if (wsService.isLimitReached) {
+      isTokenLimitReached.value = true;
+      showNearLimitBanner.value = false;
+      limitBannerMessage.value =
+      "Daily AI limit reached. Try again tomorrow or upgrade your plan.";
+      print('♻️ Limit state synced from WebSocketService');
+    }
+
     fetchSessionDetails();
     fetchSuggestions(personaId);
-    // Setup WebSocket stream listener with proper error handling
     _setupWebSocketListener();
   }
 
-
-// Add this method to your ChatController
-  Future<void> reloadHistory() async {
+  @override
+  void onClose() {
+    print('🧹 ChatController close — persona: $personaId, session: $sessionId');
+    _streamSubscription?.cancel();
+    _streamSubscription = null;
+    wsService.disconnect().catchError((e) => print('❌ WS disconnect: $e'));
+    historyAnimationController.dispose();
     try {
-      // Force refresh the history by calling the API again
-      final response = await AuthRepository().fetchPersonaChatHistory(personaId);
+      if (scrollController.hasClients) scrollController.dispose();
+    } catch (e) {
+      print('❌ ScrollController dispose error: $e');
+    }
+    super.onClose();
+  }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // TOKEN LIMIT
+  // ─────────────────────────────────────────────────────────────────────────
+
+  void _handleTokenLimitInfo(Map<String, dynamic> status) {
+    tokenLimitInfo.value = status;
+
+    final daily     = status['daily_limits'];
+    final usage     = status['usage_today'];
+    final remaining = status['remaining'];
+
+    if (daily == null || usage == null || remaining == null) return;
+
+    final int    total = daily['tokens']     ?? 20000;
+    final int    used  = usage['tokens']     ?? 0;
+    final int    left  = remaining['tokens'] ?? 0;
+
+    // ✅ Clamp করা হয়েছে — 175% বা 200% দেখাবে না, max 1.0
+    final double pct = (total > 0 ? (used / total) : 0.0).clamp(0.0, 1.0);
+
+    tokensTotal.value       = total;
+    tokensRemaining.value   = left;
+    tokenUsagePercent.value = pct;
+
+    print('📊 Token: $used/$total  (${(pct * 100).toStringAsFixed(1)}%)');
+
+    // ─── 🔴 100% LIMIT ────────────────────────────────────────────
+    if (status['limit_reached'] == true || left <= 0) {
+      isTokenLimitReached.value = true;
+      showNearLimitBanner.value = false;
+
+      // Backend message — না থাকলে fallback
+      final backendMsg = status['message']?.toString().trim() ?? '';
+      limitBannerMessage.value = backendMsg.isNotEmpty
+          ? backendMsg
+          : "Daily AI limit reached. Try again tomorrow or upgrade your plan.";
+    }
+
+    // ─── 🟡 90% WARNING ───────────────────────────────────────────
+    else if (pct >= 0.90) {
+      showNearLimitBanner.value = true;
+      isTokenLimitReached.value = false;
+
+      // ✅ Custom frontend message — 19k/20k দেখাবে না
+      limitBannerMessage.value =
+      "You're approaching your daily AI limit. Upgrade to continue without interruption.";
+    }
+
+    // ─── ✅ Normal ─────────────────────────────────────────────────
+    else {
+      showNearLimitBanner.value = false;
+      isTokenLimitReached.value = false;
+    }
+  }
+
+  bool get isFreeUser {
+    final plan = (tokenLimitInfo.value?['plan'] ?? '').toLowerCase();
+    return plan.contains('free') || plan.contains('no subscription');
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // SEND — limit থাকলে block করো
+  // ─────────────────────────────────────────────────────────────────────────
+
+  void send(String msg) {
+    // 🔒 Hard block — limit reached হলে message যাবে না
+    if (isTokenLimitReached.value) {
+      print('🚫 Send blocked — token limit reached');
+      return;
+    }
+
+    showSuggestions.value = false;
+    messages.add(Messages(
+      id: null,
+      content: msg,
+      isUser: true,
+      createdAt: DateTime.now().toIso8601String(),
+    ));
+    update();
+    messages.refresh();
+    WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
+
+    if (!wsService.isConnected) {
+      _attemptReconnect().then((_) {
+        if (wsService.isConnected) {
+          wsService.sendMessage(msg);
+        } else {
+          Get.snackbar('Connection Error', 'Unable to send message.',
+              backgroundColor: Colors.red, colorText: Colors.white);
+        }
+      });
+    } else {
+      wsService.sendMessage(msg);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // VOICE
+  // ─────────────────────────────────────────────────────────────────────────
+
+  Future<void> sendVoiceMessage(String sessionId) async {
+    // 🔒 Voice message ও block
+    if (isTokenLimitReached.value) {
+      print('🚫 Voice blocked — token limit reached');
+      return;
+    }
+
+    final voiceService = Get.find<VoiceService>();
+    try {
+      final response = await voiceService.stopRecordingAndSendToChat(sessionId);
       if (response != null && response['success'] == true) {
-        // You can process the response here if needed
-        print('History reloaded successfully');
+        final data = response['data'];
+        int? messageId;
+        if (data['message_id'] != null) {
+          messageId = data['message_id'] is String
+              ? int.tryParse(data['message_id'])
+              : data['message_id'] as int?;
+        }
+        messages.add(Messages(
+          id: messageId,
+          content: data['transcript'],
+          isUser: true,
+          createdAt: DateTime.now().toIso8601String(),
+          messageType: 'voice',
+          voice_file_url: data['voice_url'],
+          transcript: data['transcript'],
+        ));
+        update();
+        messages.refresh();
+        WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
+        if (wsService.isConnected && data['transcript'] != null) {
+          wsService.sendMessage(data['transcript']);
+        }
       } else {
-        print('Failed to reload history');
+        Get.snackbar('Error', 'Failed to send voice message');
       }
     } catch (e) {
-      print('Error reloading history: $e');
+      print('❌ Voice error: $e');
+      Get.snackbar('Error', 'Error: $e');
     }
   }
 
-  // Add method to refresh session history
-  Future<void> refreshSessionHistory() async {
-    try {
-      final response = await AuthRepository().fetchPersonaChatHistory(personaId);
-      if (response != null && response['success'] == true) {
-        final sessions = (response['sessions'] as List)
-            .map((e) => SessionHistory.fromJson(e))
-            .toList();
-        sessionHistory.assignAll(sessions);
-      }
-    } catch (e) {
-      print('Error refreshing session history: $e');
-    }
-  }
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // WEBSOCKET
+  // ─────────────────────────────────────────────────────────────────────────
 
   void _setupWebSocketListener() {
-    // Cancel any existing subscription
     _streamSubscription?.cancel();
-
-    // Wait a bit to ensure WebSocket is connected
     Future.delayed(const Duration(milliseconds: 500), () {
       _streamSubscription = wsService.stream.listen(
-            (event) {
-          _handleWebSocketMessage(event);
-        },
-        onError: (error) {
-          print('❌ WebSocket stream error: $error');
-          _handleConnectionError();
-        },
-        onDone: () {
-          print('✅ WebSocket stream closed');
-          _handleConnectionClosed();
-        },
+        _handleWebSocketMessage,
+        onError: (e) { print('❌ WS error: $e'); _handleConnectionError(); },
+        onDone:  () { print('✅ WS closed'); isTyping.value = false; },
       );
-
-      print('📡 WebSocket stream listener setup complete');
+      print('📡 WS listener ready');
     });
   }
 
-  // Add this method to your ChatController class
-// Place it after _handleWebSocketMessage method
-
   void _handleWebSocketMessage(dynamic event) {
     try {
-      print('🔍 Processing WebSocket event: $event');
-
-      // Handle both string and already parsed JSON
       Map<String, dynamic> data;
       if (event is String) {
         data = jsonDecode(event);
       } else if (event is Map<String, dynamic>) {
         data = event;
       } else {
-        print('❌ Unexpected event type: ${event.runtimeType}');
         return;
       }
 
-      print('📋 Parsed data: $data');
-
-      // Handle different message types
       switch (data['type']) {
         case 'connection':
-          print('✅ WebSocket connection confirmed: ${data['message']}');
+          print('✅ WS connected: ${data['message']}');
           break;
 
         case 'error':
-          print('❌ WebSocket error received: ${data['message']}');
           _handleWebSocketError(data['message'] ?? 'Unknown error');
           break;
 
         case 'typing':
-          isTyping.value = (data['is_typing'] == true);
-          print('⌨️ Typing status: ${isTyping.value}');
+          isTyping.value = data['is_typing'] == true;
           break;
 
         case 'chat_message':
         case 'message':
-        // Check if it's a voice message
-          final messageType = data['message_type'] ?? 'text';
-          if (messageType == 'voice') {
-            _handleIncomingVoiceMessage(data);
-          } else {
-            _handleIncomingMessage(data);
+          (data['message_type'] ?? 'text') == 'voice'
+              ? _handleIncomingVoiceMessage(data)
+              : _handleIncomingMessage(data);
+          break;
+
+        case 'limit_reached':
+          isTyping.value = false;
+          final limitInfo = data['limit_info'];
+          if (limitInfo != null) {
+            // ✅ Backend message directly set করো
+            final msg = limitInfo['message']?.toString().trim() ?? '';
+            limitBannerMessage.value = msg.isNotEmpty
+                ? msg
+                : "Daily AI limit reached. Try again tomorrow or upgrade your plan.";
+
+            final status = limitInfo['status'];
+            if (status != null) {
+              _handleTokenLimitInfo(Map<String, dynamic>.from(status));
+            } else {
+              isTokenLimitReached.value = true;
+              showNearLimitBanner.value = false;
+            }
           }
+          print('🚫 Limit reached: ${limitBannerMessage.value}');
+          break;
+
+        case 'pong':
+          print('💓 Pong');
           break;
 
         default:
-          print('❓ Unknown message type: ${data['type']}');
+          print('❓ Unknown type: ${data['type']}');
       }
     } catch (e) {
-      print("❌ Error parsing websocket event: $e");
-      print("❌ Raw event: $event");
+      print('❌ WS parse error: $e');
     }
-  }
-
-// NEW METHOD: Handle WebSocket errors with specific 429 handling
-  void _handleWebSocketError(String errorMessage) {
-    String title = "Connection Error";
-    String message = errorMessage;
-    Color backgroundColor = Colors.red;
-    Duration duration = Duration(seconds: 4);
-
-    // Check for 429 or quota exceeded errors
-    if (errorMessage.contains('429') ||
-        errorMessage.contains('quota') ||
-        errorMessage.contains('exceeded') ||
-        errorMessage.contains('insufficient_quota') ||
-        errorMessage.contains('Error code: 429')) {
-
-      title = "🚫 AI Usage Limit Reached";
-      message = "You've exceeded your AI usage quota. Please check your subscription plan or contact support to upgrade.";
-      backgroundColor = Colors.orange.shade700;
-      duration = Duration(seconds: 6);
-
-      // Also disable typing to prevent further messages
-      isTyping.value = false;
-
-    } else if (errorMessage.contains('401') || errorMessage.contains('unauthorized')) {
-      title = "Authentication Error";
-      message = "Your session has expired. Please login again.";
-
-    } else if (errorMessage.contains('500') || errorMessage.contains('server')) {
-      title = "Server Error";
-      message = "Server is experiencing issues. Please try again later.";
-
-    } else if (errorMessage.contains('timeout') || errorMessage.contains('connection')) {
-      title = "Connection Error";
-      message = "Connection lost. Please check your internet and try again.";
-    }
-
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: backgroundColor,
-      colorText: Colors.white,
-      duration: duration,
-      snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
-      borderRadius: 8,
-      icon: Icon(
-        title.contains('Limit') ? Icons.warning_rounded : Icons.error_outline,
-        color: Colors.white,
-      ),
-    );
   }
 
   void _handleIncomingMessage(Map<String, dynamic> data) {
     try {
-      // Stop typing indicator
       isTyping.value = false;
 
-      // Extract message content with multiple fallbacks
-      String content = '';
-      if (data.containsKey('content') && data['content'] != null) {
-        content = data['content'].toString();
-      } else if (data.containsKey('message') && data['message'] != null) {
-        content = data['message'].toString();
+      if (data['limit_info'] != null) {
+        _handleTokenLimitInfo(Map<String, dynamic>.from(data['limit_info']));
       }
 
-      if (content.isEmpty) {
-        print('❌ No content found in message data: $data');
-        return;
-      }
+      final String content =
+          data['content']?.toString() ?? data['message']?.toString() ?? '';
+      if (content.isEmpty) return;
 
-      // Fix: Convert string message_id to int
-      int? messageId;
-      final rawMessageId = data['message_id'] ?? data['id'];
-      if (rawMessageId != null) {
-        if (rawMessageId is String) {
-          messageId = int.tryParse(rawMessageId);
-        } else if (rawMessageId is int) {
-          messageId = rawMessageId;
-        }
-      }
+      final raw = data['message_id'] ?? data['id'];
+      final int? messageId =
+      raw == null ? null : (raw is String ? int.tryParse(raw) : raw as int?);
 
-      final timestamp = data['timestamp'] ?? data['created_at'] ?? DateTime.now().toIso8601String();
-
-      print('💬 Adding new AI message (${content.length} chars): ${content.substring(0, content.length > 50 ? 50 : content.length)}...');
-
-      // Create new message object
-      final newMessage = Messages(
-        id: messageId, // Now properly converted to int?
+      messages.add(Messages(
+        id: messageId,
         content: content,
         isUser: false,
-        createdAt: timestamp,
-      );
-
-      // Add to messages list and force update
-      messages.add(newMessage);
-      print('📝 Message added to UI. Total messages: ${messages.length}');
-
-      // Force UI refresh
-      update(); // This triggers GetX rebuild
-      messages.refresh(); // This also triggers observable update
-
-      // Scroll to bottom after UI update
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToBottom();
-      });
-
+        createdAt: data['timestamp'] ??
+            data['created_at'] ??
+            DateTime.now().toIso8601String(),
+      ));
+      print('📝 AI message added. Total: ${messages.length}');
+      update();
+      messages.refresh();
+      WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
     } catch (e) {
-      print('❌ Error handling incoming message: $e');
-      print('❌ Message data: $data');
+      print('❌ Incoming message error: $e');
     }
   }
 
+  void _handleIncomingVoiceMessage(Map<String, dynamic> data) {
+    try {
+      isTyping.value = false;
+      if (data['limit_info'] != null) {
+        _handleTokenLimitInfo(Map<String, dynamic>.from(data['limit_info']));
+      }
 
-  void _updateUserMessageCount() {
-    userMessageCount.value = messages.where((msg) => msg.isUser == true).length;
-    isSessionLimitReached.value = userMessageCount.value >= MESSAGE_LIMIT;
+      if ((data['message_type'] ?? '') == 'voice') {
+        final raw = data['message_id'] ?? data['id'];
+        final int? messageId =
+        raw == null ? null : (raw is String ? int.tryParse(raw) : raw as int?);
 
-    // Show warning when approaching limit (at 18 messages)
-    if (userMessageCount.value >= 18 && userMessageCount.value < MESSAGE_LIMIT) {
-      showLimitWarning.value = true;
+        messages.add(Messages(
+          id: messageId,
+          content: data['transcript'] ?? data['content'],
+          isUser: false,
+          createdAt: data['timestamp'] ??
+              data['created_at'] ??
+              DateTime.now().toIso8601String(),
+          messageType: 'voice',
+          voice_file_url: data['voice_url'],
+          transcript: data['transcript'],
+        ));
+        update();
+        messages.refresh();
+        WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
+      } else {
+        _handleIncomingMessage(data);
+      }
+    } catch (e) {
+      print('❌ Incoming voice error: $e');
+    }
+  }
+
+  void _handleWebSocketError(String errorMessage) {
+    Color  bg    = Colors.red;
+    String title = 'Connection Error';
+    String msg   = errorMessage;
+
+    if (errorMessage.contains('429') || errorMessage.contains('quota') ||
+        errorMessage.contains('exceeded') || errorMessage.contains('insufficient_quota')) {
+      title = '🚫 AI Usage Limit Reached';
+      msg   = "You've exceeded your AI usage quota.";
+      bg    = Colors.orange.shade700;
+      isTyping.value = false;
+    } else if (errorMessage.contains('401')) {
+      title = 'Authentication Error';
+      msg   = 'Your session has expired. Please login again.';
+    } else if (errorMessage.contains('500')) {
+      title = 'Server Error';
+      msg   = 'Server is experiencing issues. Please try again later.';
     }
 
-    print('📊 User messages: ${userMessageCount.value}/$MESSAGE_LIMIT');
-    print('🚫 Limit reached: ${isSessionLimitReached.value}');
+    Get.snackbar(title, msg,
+        backgroundColor: bg,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 4),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8);
   }
-
-
-  void showLimitReachedDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: Text('Session Limit Reached'),
-        content: Text('You have reached the maximum of $MESSAGE_LIMIT messages for this session. Please create a new session to continue chatting.'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('OK'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              // You can add navigation to new session here if needed
-            },
-            child: Text('Create New Session'),
-          ),
-        ],
-      ),
-      barrierDismissible: false,
-    );
-  }
-
-  void showWarningDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: Text('Approaching Session Limit'),
-        content: Text('You have ${MESSAGE_LIMIT - userMessageCount.value} messages remaining in this session.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Get.back();
-              showLimitWarning.value = false;
-            },
-            child: Text('Continue'),
-          ),
-        ],
-      ),
-    );
-  }
-
 
   void _handleConnectionError() {
     isTyping.value = false;
-    // Try to reconnect after a delay
     Future.delayed(const Duration(seconds: 3), () {
-      if (!wsService.isConnected) {
-        _attemptReconnect();
-      }
+      if (!wsService.isConnected) _attemptReconnect();
     });
   }
 
-  void _handleConnectionClosed() {
-    isTyping.value = false;
-  }
-
-  int? get sessionIdAsInt {
-    if (sessionId is int) return sessionId as int;
-    if (sessionId is String) return int.tryParse(sessionId as String);
-    return null;
-  }
-
-
-  // Simple solution specifically for your use case
-  Future<void> fetchSessionDetails() async {
+  Future<void> _attemptReconnect() async {
     try {
-      final sessionIdInt = sessionIdAsInt;
-      if (sessionIdInt == null) {
-        print("❌ Invalid session ID: cannot convert '$sessionId' to integer");
-        return;
+      final token = await TokenStorage.getLoginAccessToken();
+      if (token != null) {
+        await wsService.connect(sessionId, token, personaId: personaId);
+        _setupWebSocketListener();
+        print('🔄 Reconnected');
       }
-
-      print("📋 Fetching session details for ID: $sessionIdInt");
-      final response = await AuthRepository().fetchSessionsDetails(sessionIdInt);
-      final model = SessonChatHistoryModel.fromJson(response);
-      session.value = model.session;
-
-      // Clear existing messages
-      messages.clear();
-
-      if (model.messages != null && model.messages!.isNotEmpty) {
-        // Your existing message processing logic here...
-        // (keeping your duplicate removal logic)
-
-        List<Messages> sortedMessages = List.from(model.messages!);
-        sortedMessages.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
-
-        List<Messages> filteredMessages = [];
-        Set<String> processedContents = <String>{};
-
-        for (int i = 0; i < sortedMessages.length; i++) {
-          final currentMessage = sortedMessages[i];
-          final content = currentMessage.content?.trim() ?? '';
-
-          if (content.isEmpty) {
-            filteredMessages.add(currentMessage);
-            continue;
-          }
-
-          if (processedContents.contains(content)) {
-            continue;
-          }
-
-          List<Messages> duplicateMessages = [currentMessage];
-
-          for (int j = i + 1; j < math.min(i + 6, sortedMessages.length); j++) {
-            final nextMessage = sortedMessages[j];
-            if (nextMessage.content?.trim() == content) {
-              duplicateMessages.add(nextMessage);
-            }
-          }
-
-          if (duplicateMessages.length > 1) {
-            Messages? voiceMessage;
-            Messages? textMessage;
-
-            for (var msg in duplicateMessages) {
-              if (_isVoiceMessage(msg)) {
-                voiceMessage = msg;
-              } else {
-                textMessage = msg;
-              }
-            }
-
-            Messages selectedMessage;
-            if (voiceMessage != null) {
-              selectedMessage = Messages(
-                id: voiceMessage.id,
-                content: voiceMessage.content,
-                isUser: voiceMessage.isUser,
-                createdAt: voiceMessage.createdAt,
-                messageType: voiceMessage.messageType ?? 'voice',
-                hasVoice: voiceMessage.hasVoice ?? true,
-                voice_file_url: voiceMessage.voice_file_url,
-                transcript: voiceMessage.transcript ?? voiceMessage.content,
-              );
-            } else {
-              selectedMessage = textMessage!;
-            }
-
-            filteredMessages.add(selectedMessage);
-          } else {
-            filteredMessages.add(currentMessage);
-          }
-
-          processedContents.add(content);
-        }
-
-        messages.assignAll(filteredMessages);
-
-        // Update message count after loading messages
-        _updateUserMessageCount();
-      }
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToBottom();
-      });
     } catch (e) {
-      print("❌ Failed to fetch session details: $e");
+      print('❌ Reconnect failed: $e');
     }
   }
 
-// Helper method to check if message is voice
-  bool _isVoiceMessage(Messages message) {
-    return message.messageType == 'voice' ||
-        message.hasVoice == true ||
-        (message.voice_file_url != null && message.voice_file_url!.isNotEmpty);
-  }
+  // ─────────────────────────────────────────────────────────────────────────
+  // SUGGESTIONS
+  // ─────────────────────────────────────────────────────────────────────────
+
   Future<void> fetchSuggestions(int personaId) async {
     try {
-      // Only fetch suggestions for new sessions
-      if (!isNewSession) {
-        showSuggestions.value = false;
-        return;
-      }
-
+      if (!isNewSession) { showSuggestions.value = false; return; }
       isLoadingSuggestions.value = true;
       final response = await AuthRepository().AiSuggestions(personaId);
-
       if (response != null) {
         final model = SuggesionsModel.fromJson(response);
-
         if (model.success) {
           suggestions.assignAll(model.suggestions);
           showSuggestions.value = suggestions.isNotEmpty;
-        } else {
-          suggestions.clear();
-          showSuggestions.value = false;
+          return;
         }
-      } else {
-        suggestions.clear();
-        showSuggestions.value = false;
       }
+      suggestions.clear();
+      showSuggestions.value = false;
     } catch (e) {
-      print('❌ Failed to fetch suggestions: $e');
+      print('❌ Suggestions error: $e');
       suggestions.clear();
       showSuggestions.value = false;
     } finally {
@@ -505,87 +454,102 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
     }
   }
 
-  void onSuggestionTap(String suggestion, TextEditingController textController) {
+  void onSuggestionTap(String suggestion) {
     textController.text = suggestion;
+    textController.selection =
+        TextSelection.fromPosition(TextPosition(offset: suggestion.length));
     showSuggestions.value = false;
+    isFirstTime.value = false;
   }
 
-  void send(String msg) {
-    // Check if limit is reached
-    if (isSessionLimitReached.value) {
-      showLimitReachedDialog(); // Remove underscore
-      return;
-    }
+  // ─────────────────────────────────────────────────────────────────────────
+  // SESSION DETAILS
+  // ─────────────────────────────────────────────────────────────────────────
 
-    showSuggestions.value = false;
-
-    // Add user message to UI immediately for better UX
-    final userMessage = Messages(
-      id: null,
-      content: msg,
-      isUser: true,
-      createdAt: DateTime.now().toIso8601String(),
-    );
-
-    messages.add(userMessage);
-    print('📤 Added user message to UI: $msg');
-
-    // Update message count after adding user message
-    _updateUserMessageCount();
-
-    // Show warning if approaching limit
-    if (showLimitWarning.value) {
-      showWarningDialog(); // Remove underscore
-    }
-
-    // Force UI update
-    update();
-    messages.refresh();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      scrollToBottom();
-    });
-
-    // Check WebSocket connection before sending
-    if (!wsService.isConnected) {
-      print('❌ WebSocket not connected, attempting to reconnect...');
-
-      _attemptReconnect().then((_) {
-        if (wsService.isConnected) {
-          wsService.sendMessage(msg);
-          print('📤 Message sent after reconnection: $msg');
-        } else {
-          Get.snackbar(
-            "Connection Error",
-            "Unable to send message. Please try again.",
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
-        }
-      });
-    } else {
-      wsService.sendMessage(msg);
-      print('📤 Message sent: $msg');
-    }
-  }
-
-
-  Future<void> _attemptReconnect() async {
+  Future<void> fetchSessionDetails() async {
     try {
-      print('🔄 Attempting to reconnect WebSocket...');
-      final token = await TokenStorage.getLoginAccessToken();
-      if (token != null) {
-        await wsService.connect(sessionId, token, personaId: personaId);
+      final sessionIdInt = sessionIdAsInt;
+      if (sessionIdInt == null) {
+        print("❌ Invalid session ID: '$sessionId'");
+        return;
+      }
 
-        // Re-setup the stream listener after reconnection
-        _setupWebSocketListener();
+      final response = await AuthRepository().fetchSessionsDetails(sessionIdInt);
+      final model    = SessonChatHistoryModel.fromJson(response);
+      session.value  = model.session;
+      messages.clear();
 
-        print('🔄 Reconnected to WebSocket');
+      if (model.messages != null && model.messages!.isNotEmpty) {
+        List<Messages> sorted = List.from(model.messages!);
+        sorted.sort((a, b) => (a.id ?? 0).compareTo(b.id ?? 0));
+
+        List<Messages> filtered = [];
+        Set<String>    seen     = {};
+
+        for (int i = 0; i < sorted.length; i++) {
+          final msg     = sorted[i];
+          final content = msg.content?.trim() ?? '';
+          if (content.isEmpty) { filtered.add(msg); continue; }
+          if (seen.contains(content)) continue;
+
+          List<Messages> dupes = [msg];
+          for (int j = i + 1; j < math.min(i + 6, sorted.length); j++) {
+            if (sorted[j].content?.trim() == content) dupes.add(sorted[j]);
+          }
+
+          if (dupes.length > 1) {
+            final voice = dupes.firstWhereOrNull(_isVoiceMessage);
+            final text  = dupes.firstWhereOrNull((m) => !_isVoiceMessage(m));
+            if (voice != null) {
+              filtered.add(Messages(
+                id: voice.id, content: voice.content, isUser: voice.isUser,
+                createdAt: voice.createdAt, messageType: 'voice', hasVoice: true,
+                voice_file_url: voice.voice_file_url,
+                transcript: voice.transcript ?? voice.content,
+              ));
+            } else if (text != null) {
+              filtered.add(text);
+            }
+          } else {
+            filtered.add(msg);
+          }
+          seen.add(content);
+        }
+        messages.assignAll(filtered);
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
+    } catch (e) {
+      print("❌ fetchSessionDetails error: $e");
+    }
+  }
+
+  Future<void> reloadHistory() async {
+    try {
+      final r = await AuthRepository().fetchPersonaChatHistory(personaId);
+      print(r != null && r['success'] == true ? 'History reloaded' : 'Failed to reload');
+    } catch (e) {
+      print('Error reloading history: $e');
+    }
+  }
+
+  Future<void> refreshSessionHistory() async {
+    try {
+      final r = await AuthRepository().fetchPersonaChatHistory(personaId);
+      if (r != null && r['success'] == true) {
+        sessionHistory.assignAll(
+            (r['sessions'] as List).map((e) => SessionHistory.fromJson(e)).toList());
       }
     } catch (e) {
-      print('❌ Reconnection failed: $e');
+      print('Error refreshing session history: $e');
     }
   }
+
+  int? get sessionIdAsInt => int.tryParse(sessionId.toString());
+
+  bool _isVoiceMessage(Messages m) =>
+      m.messageType == 'voice' ||
+          m.hasVoice == true ||
+          (m.voice_file_url != null && m.voice_file_url!.isNotEmpty);
 
   void scrollToBottom() {
     if (scrollController.hasClients) {
@@ -596,162 +560,6 @@ class ChatController extends GetxController with GetTickerProviderStateMixin{
       );
     }
   }
-  // Add these methods to your existing ChatController class
 
-  // Modified sendVoiceMessage method with limit check
-  Future<void> sendVoiceMessage(String sessionId) async {
-    // Check if limit is reached
-    if (isSessionLimitReached.value) {
-      showLimitReachedDialog(); // Remove underscore
-      return;
-    }
-
-    final voiceService = Get.find<VoiceService>();
-
-    try {
-      final response = await voiceService.stopRecordingAndSendToChat(sessionId);
-
-      if (response != null && response['success'] == true) {
-        final data = response['data'];
-
-        // Fix: Convert string message_id to int
-        int? messageId;
-        if (data['message_id'] != null) {
-          if (data['message_id'] is String) {
-            messageId = int.tryParse(data['message_id']);
-          } else if (data['message_id'] is int) {
-            messageId = data['message_id'];
-          }
-        }
-
-        // Add voice message to UI
-        final voiceMessage = Messages(
-          id: messageId,
-          content: data['transcript'],
-          isUser: true,
-          createdAt: DateTime.now().toIso8601String(),
-          messageType: 'voice',
-          voice_file_url: data['voice_url'],
-          transcript: data['transcript'],
-        );
-
-        messages.add(voiceMessage);
-        print('🎤 Added voice message to UI');
-
-        // Update message count after adding voice message
-        _updateUserMessageCount();
-
-        // Show warning if approaching limit
-        if (showLimitWarning.value) {
-          showWarningDialog(); // Remove underscore
-        }
-
-        // Force UI update
-        update();
-        messages.refresh();
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          scrollToBottom();
-        });
-
-        // Send the transcript to WebSocket to get AI response
-        if (wsService.isConnected && data['transcript'] != null) {
-          wsService.sendMessage(data['transcript']);
-          print('📤 Sent transcript to AI: ${data['transcript']}');
-        }
-
-        // Get.snackbar("Success", "Voice message sent successfully");
-        print("Voice message sent successfully");
-      } else {
-        Get.snackbar("Error", "Failed to send voice message");
-      }
-    } catch (e) {
-      print('❌ Error sending voice message: $e');
-      Get.snackbar("Error", "Error sending voice message: $e");
-    }
-  }
-
-// Replace your _handleIncomingVoiceMessage method with this:
-
-  void _handleIncomingVoiceMessage(Map<String, dynamic> data) {
-    try {
-      // Stop typing indicator
-      isTyping.value = false;
-
-      final messageType = data['message_type'] ?? 'text';
-
-      if (messageType == 'voice') {
-        // Fix: Convert string message_id to int
-        int? messageId;
-        final rawMessageId = data['message_id'] ?? data['id'];
-        if (rawMessageId != null) {
-          if (rawMessageId is String) {
-            messageId = int.tryParse(rawMessageId);
-          } else if (rawMessageId is int) {
-            messageId = rawMessageId;
-          }
-        }
-
-        // Handle voice message
-        final voiceMessage = Messages(
-          id: messageId,
-          content: data['transcript'] ?? data['content'],
-          isUser: false,
-          createdAt: data['timestamp'] ?? data['created_at'] ?? DateTime.now().toIso8601String(),
-          messageType: 'voice', // This will make isVoice return true
-          voice_file_url: data['voice_url'],
-          transcript: data['transcript'],
-        );
-
-        messages.add(voiceMessage);
-        print('🎤 Added incoming voice message to UI');
-      } else {
-        // Handle regular text message (your existing logic)
-        _handleIncomingMessage(data);
-        return; // Early return to avoid duplicate UI updates
-      }
-
-      // Force UI update
-      update();
-      messages.refresh();
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToBottom();
-      });
-
-    } catch (e) {
-      print('❌ Error handling incoming voice message: $e');
-    }
-  }
-
-  @override
-  void onClose() {
-    print('🧹 Cleaning up ChatController for persona: $personaId, session: $sessionId');
-
-    // Cancel stream subscription first
-    _streamSubscription?.cancel();
-    _streamSubscription = null;
-
-    // Disconnect WebSocket - don't await in onClose as it's void
-    wsService.disconnect().catchError((e) {
-      print('❌ Error disconnecting WebSocket in onClose: $e');
-    });
-
-    // Dispose scroll controller if it hasn't been disposed yet
-
-    historyAnimationController.dispose();
-    try {
-      if (scrollController.hasClients) {
-        scrollController.dispose();
-      }
-    } catch (e) {
-      print('❌ ScrollController already disposed or error disposing: $e');
-    }
-
-    super.onClose();
-  }
-
-  void navigateToOldSession() {
-    // Implementation for navigating to old session
-  }
+  void navigateToOldSession() {}
 }

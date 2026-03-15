@@ -7,17 +7,30 @@ import 'package:get/get.dart';
 class WebSocketService {
   WebSocketChannel? _channel;
   Stream? _broadcastStream;
-  String? _currentSessionId; // Store session ID for sending messages
+  String? _currentSessionId;
   int? personaId;
 
   final RxBool _isConnected = false.obs;
 
+  // ✅ WebSocketService নিজেই limit track করবে
+  // Controller নতুন হলেও এটা থাকবে
+  bool _isLimitReached = false;
+
   bool get isConnected => _isConnected.value;
+  bool get isLimitReached => _isLimitReached;
+
+  // ✅ শুধু নতুন session বানানোর সময় call করো
+  // reconnect বা hot reload এ call করবে না — limit state preserve থাকবে
+  void resetForNewSession() {
+    _isLimitReached = false;
+    print('🔄 WS: Limit reset for new session');
+  }
 
   Future<void> connect(String sessionId, String token, {int? personaId}) async {
-
     this.personaId = personaId;
-    // First disconnect any existing connection
+
+    // ❌ এখানে reset নেই — hot reload এ limit state নষ্ট হবে না
+
     await disconnect();
 
     try {
@@ -27,25 +40,37 @@ class WebSocketService {
       print('🔌 Connecting to WebSocket: $uri');
 
       _channel = WebSocketChannel.connect(uri);
-      _currentSessionId = sessionId; // Store session ID
+      _currentSessionId = sessionId;
 
-      // Create broadcast stream BEFORE setting connected status
       _broadcastStream = _channel!.stream.asBroadcastStream();
 
-      // Set up stream listeners
       _broadcastStream!.listen(
             (event) {
           print('📥 Incoming: $event');
 
-          // Try to parse the event to check if it's a connection confirmation
           try {
             final data = jsonDecode(event);
+
             if (data['type'] == 'connection') {
               _isConnected.value = true;
               print('✅ WebSocket Connection Confirmed');
             }
+
+            // ✅ limit_reached event — WebSocket level এ track করো
+            if (data['type'] == 'limit_reached') {
+              _isLimitReached = true;
+              print('🚫 WS: Limit reached flag set');
+            }
+
+            // ✅ message event-এও limit_info check করো
+            if (data['limit_info'] != null &&
+                data['limit_info']['limit_reached'] == true) {
+              _isLimitReached = true;
+              print('🚫 WS: Limit reached via message limit_info');
+            }
+
           } catch (e) {
-            // Not JSON or different format, that's okay
+            // Not JSON, that's okay
           }
         },
         onError: (err) {
@@ -56,13 +81,11 @@ class WebSocketService {
           print('✅ WebSocket stream closed');
           _isConnected.value = false;
         },
-        cancelOnError: false, // Don't cancel on error, keep trying
+        cancelOnError: false,
       );
 
-      // Wait a bit for connection to establish
       await Future.delayed(const Duration(milliseconds: 1000));
 
-      // If we haven't received a connection confirmation, assume connected
       if (!_isConnected.value) {
         _isConnected.value = true;
         print('✅ WebSocket Connected (assumed)');
@@ -76,9 +99,14 @@ class WebSocketService {
   }
 
   void sendMessage(String msg) {
+    // ✅ WebSocket level এ block — Controller নতুন হলেও কাজ করবে
+    if (_isLimitReached) {
+      print('🚫 WS: Message blocked — limit reached');
+      return;
+    }
+
     if (_channel != null && _isConnected.value && _currentSessionId != null) {
       try {
-        // Create the correct JSON format that your server expects
         final messageData = {
           "type": "message",
           "message": msg,
@@ -117,7 +145,6 @@ class WebSocketService {
     }
   }
 
-  // This is the key fix - return the broadcast stream properly
   Stream get stream {
     if (_broadcastStream != null) {
       return _broadcastStream!;

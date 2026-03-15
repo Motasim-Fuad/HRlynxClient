@@ -10,19 +10,21 @@ class NewsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final NewsController controller = Get.put(NewsController());
+    // ✅ isRegistered check — controller আগে থেকে থাকলে নতুন বানাবে না
+    // এটাই crash এর fix: navigate করলে পুরনো disposed controller reuse হতো
+    final NewsController controller = Get.isRegistered<NewsController>()
+        ? Get.find<NewsController>()
+        : Get.put(NewsController());
+
     final size = MediaQuery.of(context).size;
 
-    String _extractDontMissContent(String summary) {
+    String extractDontMissContent(String summary) {
       int startIndex = summary.indexOf('Don\'t Miss This:');
       if (startIndex == -1) return summary;
-
       int contentStart = summary.indexOf('\n', startIndex);
       if (contentStart == -1) contentStart = startIndex + 'Don\'t Miss This:'.length;
-
       int contentEnd = summary.indexOf('**', contentStart);
       if (contentEnd == -1) contentEnd = summary.length;
-
       return summary.substring(contentStart, contentEnd).trim();
     }
 
@@ -32,9 +34,9 @@ class NewsView extends StatelessWidget {
         onRefresh: controller.refreshData,
         child: Column(
           children: [
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            /// Header Card ///
+            /// Header Card
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
               child: Container(
@@ -100,27 +102,27 @@ class NewsView extends StatelessWidget {
               child: Container(
                 height: 45,
                 decoration: BoxDecoration(
-                  border: Border.all(width: 1, color: Color(0xFFB0C3C2)),
+                  border: Border.all(width: 1, color: const Color(0xFFB0C3C2)),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: TextFormField(
                   controller: controller.searchController,
                   decoration: InputDecoration(
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    prefixIcon: Icon(Icons.search),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
+                    prefixIcon: const Icon(Icons.search),
                     hintText: 'Search News',
                     suffixIcon: Obx(() =>
                     controller.searchText.value.isNotEmpty
                         ? IconButton(
-                      icon: Icon(Icons.clear),
+                      icon: const Icon(Icons.clear),
                       onPressed: () {
                         controller.searchController.clear();
                         controller.loadArticles(refresh: true);
                       },
                     )
-                        : SizedBox.shrink(),
-                    ),
+                        : const SizedBox.shrink()),
                   ),
                   onChanged: (value) {
                     if (value.isEmpty) {
@@ -134,7 +136,7 @@ class NewsView extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Category Dropdown
             Padding(
@@ -143,7 +145,8 @@ class NewsView extends StatelessWidget {
                 height: 45,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  border: Border.all(width: 1, color: Color(0xFFB0C3C2)),
+                  border: Border.all(
+                      width: 1, color: const Color(0xFFB0C3C2)),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -151,66 +154,70 @@ class NewsView extends StatelessWidget {
                     isExpanded: true,
                     value: controller.selectedCategoryId.value,
                     dropdownColor: Colors.white,
-                    hint: Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
+                    hint: const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
                       child: Text('Select a category'),
                     ),
                     items: [
-                      DropdownMenuItem<int?>(
+                      const DropdownMenuItem<int?>(
                         value: null,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
+                          padding: EdgeInsets.only(left: 8.0),
                           child: Text('All Categories'),
                         ),
                       ),
-                      ...controller.categories.map<DropdownMenuItem<int?>>(
-                            (category) {
-                          final isLocked = category['is_subscription_required'] == true;
-                          final categoryId = category['id'] as int;
-
-                          return DropdownMenuItem<int?>(
-                            value: categoryId,
-                            child: GestureDetector(
-                              onTap: isLocked ? () {
-                                Navigator.of(context).pop();
-                                Future.delayed(Duration(milliseconds: 100), () {
-                                  Get.snackbar(
-                                    'Subscription Required',
-                                    'Please subscribe to access this category',
-                                    snackPosition: SnackPosition.TOP,
-                                    backgroundColor: AppColors.primarycolor,
-                                    colorText: Colors.white,
-                                    duration: Duration(seconds: 3),
-                                    margin: EdgeInsets.all(16),
-                                  );
-                                });
-                              } : null,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        category['name'] ?? '',
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: isLocked ? Colors.grey : Colors.black,
-                                        ),
+                      ...controller.categories
+                          .map<DropdownMenuItem<int?>>((category) {
+                        final isLocked =
+                            category['is_subscription_required'] == true;
+                        final categoryId = category['id'] as int;
+                        return DropdownMenuItem<int?>(
+                          value: categoryId,
+                          child: GestureDetector(
+                            onTap: isLocked
+                                ? () {
+                              Navigator.of(context).pop();
+                              Future.delayed(
+                                  const Duration(milliseconds: 100),
+                                      () {
+                                    Get.snackbar(
+                                      'Subscription Required',
+                                      'Please subscribe to access this category',
+                                      snackPosition: SnackPosition.TOP,
+                                      backgroundColor:
+                                      AppColors.primarycolor,
+                                      colorText: Colors.white,
+                                      duration:
+                                      const Duration(seconds: 3),
+                                      margin: const EdgeInsets.all(16),
+                                    );
+                                  });
+                            }
+                                : null,
+                            child: Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      category['name'] ?? '',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: isLocked
+                                            ? Colors.grey
+                                            : Colors.black,
                                       ),
                                     ),
-                                    if (isLocked)
-                                      Icon(
-                                        Icons.lock,
-                                        size: 16,
-                                        color: Colors.grey,
-                                      ),
-                                  ],
-                                ),
+                                  ),
+                                  if (isLocked)
+                                    const Icon(Icons.lock,
+                                        size: 16, color: Colors.grey),
+                                ],
                               ),
                             ),
-                          );
-                        },
-                      ).toList(),
+                          ),
+                        );
+                      }).toList(),
                     ],
                     onChanged: (value) {
                       if (value == null) {
@@ -220,9 +227,9 @@ class NewsView extends StatelessWidget {
                               (cat) => cat['id'] == value,
                           orElse: () => null,
                         );
-
                         if (category != null) {
-                          final isLocked = category['is_subscription_required'] == true;
+                          final isLocked =
+                              category['is_subscription_required'] == true;
                           if (!isLocked) {
                             controller.filterByCategory(value);
                           }
@@ -234,21 +241,19 @@ class NewsView extends StatelessWidget {
               )),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            // ✅ UPDATED: Articles List with Error Handling
+            // Articles List
             Expanded(
               child: Obx(() {
-                // ✅ Show loading
-                if (controller.isLoading.value && controller.articles.isEmpty) {
+                if (controller.isLoading.value &&
+                    controller.articles.isEmpty) {
                   return Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.primarycolor,
-                    ),
+                        color: AppColors.primarycolor),
                   );
                 }
 
-                // ✅ Show error states
                 if (controller.hasError.value) {
                   return _buildErrorWidget(
                     errorType: controller.errorMessage.value,
@@ -256,32 +261,31 @@ class NewsView extends StatelessWidget {
                   );
                 }
 
-                // ✅ Show empty state
                 if (controller.articles.isEmpty) {
                   return _buildEmptyState();
                 }
 
-                // ✅ Show articles list
                 return NotificationListener<ScrollNotification>(
                   onNotification: (ScrollNotification scrollInfo) {
                     if (!controller.isLoadingMore.value &&
                         controller.hasNextPage.value &&
-                        scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                        scrollInfo.metrics.pixels ==
+                            scrollInfo.metrics.maxScrollExtent) {
                       controller.loadMoreArticles();
                     }
                     return false;
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: controller.articles.length + (controller.hasNextPage.value ? 1 : 0),
+                    itemCount: controller.articles.length +
+                        (controller.hasNextPage.value ? 1 : 0),
                     itemBuilder: (BuildContext context, int index) {
                       if (index == controller.articles.length) {
                         return Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Center(
                             child: CircularProgressIndicator(
-                              color: AppColors.primarycolor,
-                            ),
+                                color: AppColors.primarycolor),
                           ),
                         );
                       }
@@ -292,29 +296,36 @@ class NewsView extends StatelessWidget {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Tags
                           if (tags.isNotEmpty)
-                            Container(
+                            SizedBox(
                               width: double.infinity,
                               child: Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: tags.take(2).map<Widget>((tag) {
-                                  final isSelected = controller.selectedTag.value?['id'] == tag['id'];
-                                  final tagName = tag['name']?.toString() ?? '';
+                                  final isSelected =
+                                      controller.selectedTag.value?['id'] ==
+                                          tag['id'];
+                                  final tagName =
+                                      tag['name']?.toString() ?? '';
                                   final capitalizedTagName = tagName.isNotEmpty
                                       ? tagName.toUpperCase()
                                       : '';
-
                                   return GestureDetector(
                                     onTap: () => controller.filterByTag(tag),
                                     child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16),
-                                        color: isSelected ? AppColors.primarycolor : Colors.white,
+                                        borderRadius:
+                                        BorderRadius.circular(16),
+                                        color: isSelected
+                                            ? AppColors.primarycolor
+                                            : Colors.white,
                                         border: Border.all(
-                                          color: isSelected ? AppColors.primarycolor : Color(0xFFE6ECEB),
+                                          color: isSelected
+                                              ? AppColors.primarycolor
+                                              : const Color(0xFFE6ECEB),
                                           width: 1,
                                         ),
                                       ),
@@ -323,7 +334,9 @@ class NewsView extends StatelessWidget {
                                         style: TextStyle(
                                           fontWeight: FontWeight.w500,
                                           fontSize: 12,
-                                          color: isSelected ? Colors.white : Color(0xFF050505),
+                                          color: isSelected
+                                              ? Colors.white
+                                              : const Color(0xFF050505),
                                         ),
                                       ),
                                     ),
@@ -332,15 +345,13 @@ class NewsView extends StatelessWidget {
                               ),
                             ),
 
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
 
-                          // Article Content
                           GestureDetector(
                             onTap: () {
                               if (article['id'] != null) {
                                 Get.to(
-                                  NewsDetailsView(articleId: article['id']),
-                                );
+                                    NewsDetailsView(articleId: article['id']));
                               } else {
                                 Get.snackbar('Error', 'Article ID missing');
                               }
@@ -349,7 +360,6 @@ class NewsView extends StatelessWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Article Image
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: article['main_image_url'] != null
@@ -358,16 +368,19 @@ class NewsView extends StatelessWidget {
                                       height: 100,
                                       width: 80,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
                                         return Container(
                                           height: 100,
                                           width: 80,
                                           decoration: BoxDecoration(
                                             color: Colors.grey[300],
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius:
+                                            BorderRadius.circular(8),
                                           ),
                                           child: Image(
-                                            image: AssetImage(AppImages.default_news_img),
+                                            image: AssetImage(
+                                                AppImages.default_news_img),
                                             fit: BoxFit.cover,
                                           ),
                                         );
@@ -378,25 +391,22 @@ class NewsView extends StatelessWidget {
                                       width: 80,
                                       decoration: BoxDecoration(
                                         color: Colors.grey[300],
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius:
+                                        BorderRadius.circular(8),
                                       ),
-                                      child: Icon(
-                                        Icons.article,
-                                        color: Colors.grey[600],
-                                      ),
+                                      child: Icon(Icons.article,
+                                          color: Colors.grey[600]),
                                     ),
                                   ),
-
-                                  SizedBox(width: 12),
-
-                                  // Article Text
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           article['ai_title'] ?? '',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontWeight: FontWeight.w500,
                                             fontSize: 16,
                                             color: Color(0xFF1B1E28),
@@ -404,10 +414,11 @@ class NewsView extends StatelessWidget {
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        SizedBox(height: 8),
+                                        const SizedBox(height: 8),
                                         Text(
-                                          _extractDontMissContent(article['ai_summary'] ?? ''),
-                                          style: TextStyle(
+                                          extractDontMissContent(
+                                              article['ai_summary'] ?? ''),
+                                          style: const TextStyle(
                                             fontWeight: FontWeight.w400,
                                             fontSize: 14,
                                             color: Color(0xFF7D848D),
@@ -423,18 +434,18 @@ class NewsView extends StatelessWidget {
                             ),
                           ),
 
-                          SizedBox(height: 10),
-                          Divider(height: 1, color: Color(0xffE6ECEB)),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 10),
+                          const Divider(height: 1, color: Color(0xffE6ECEB)),
+                          const SizedBox(height: 8),
 
-                          // Time
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Flexible(
                                 child: Text(
-                                  controller.formatPublishedDate(article['published_date']),
-                                  style: TextStyle(
+                                  controller.formatPublishedDate(
+                                      article['published_date']),
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.w400,
                                     fontSize: 12,
                                     color: Color(0xff7D848D),
@@ -445,7 +456,7 @@ class NewsView extends StatelessWidget {
                             ],
                           ),
 
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                         ],
                       );
                     },
@@ -459,7 +470,6 @@ class NewsView extends StatelessWidget {
     );
   }
 
-  /// ✅ NEW: Error Widget
   Widget _buildErrorWidget({
     required String errorType,
     required VoidCallback onRetry,
@@ -501,44 +511,31 @@ class NewsView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: iconColor,
-            ),
-            SizedBox(height: 20),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 12),
-            Text(
-              message,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Icon(icon, size: 64, color: iconColor),
+            const SizedBox(height: 20),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            Text(message,
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                textAlign: TextAlign.center),
             if (errorType != 'SESSION_EXPIRED') ...[
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: Icon(Icons.refresh),
-                label: Text('Retry'),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primarycolor,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  textStyle: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 24, vertical: 12),
+                  textStyle: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -548,35 +545,23 @@ class NewsView extends StatelessWidget {
     );
   }
 
-  /// ✅ NEW: Empty State Widget
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.article_outlined,
-            size: 64,
-            color: Colors.grey,
-          ),
-          SizedBox(height: 16),
-          Text(
-            'No Articles Found',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'There are no articles available at the moment',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          const Icon(Icons.article_outlined, size: 64, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text('No Articles Found',
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade700)),
+          const SizedBox(height: 8),
+          Text('There are no articles available at the moment',
+              style:
+              TextStyle(fontSize: 14, color: Colors.grey.shade500),
+              textAlign: TextAlign.center),
         ],
       ),
     );
