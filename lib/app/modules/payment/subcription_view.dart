@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:HRlynx/app/api_servies/token.dart';
 import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
 import 'package:HRlynx/app/modules/payment/payment_controller.dart';
@@ -811,18 +813,24 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  Widget _buildSubscriptionDisclosure(double width, double height,
-      bool isSmall) {
+  Widget _buildSubscriptionDisclosure(double width, double height, bool isSmall) {
+    final String subscriptionText = Platform.isIOS
+        ? 'Payment will be charged to your Apple ID at confirmation of purchase. '
+        'Subscription automatically renews unless canceled at least 24 hours before the end of the current period. '
+        'Your account will be charged for renewal within 24 hours prior to the end of the current period. '
+        'You can manage and cancel your subscription by going to your account settings in the App Store after purchase.'
+        : 'Payment will be charged to your Google Play account at confirmation of purchase. '
+        'Subscription automatically renews unless canceled at least 24 hours before the end of the current period. '
+        'Your account will be charged for renewal within 24 hours prior to the end of the current period. '
+        'You can manage and cancel your subscription by going to your account settings in Google Play after purchase.';
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: width * 0.06,
         vertical: height * 0.01,
       ),
       child: Text(
-        'Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. '
-            'Subscription automatically renews unless canceled at least 24 hours before the end of the current period. '
-            'Your account will be charged for renewal within 24 hours prior to the end of the current period. '
-            'You can manage and cancel your subscription by going to your account settings in the App Store or Google Play after purchase.',
+        subscriptionText,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: isSmall ? width * 0.023 : width * 0.025,
