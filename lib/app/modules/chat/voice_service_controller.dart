@@ -16,7 +16,6 @@ class VoiceService extends GetxController {
   final AudioRecorder _recorder = AudioRecorder();
   final AudioPlayer _player = AudioPlayer();
 
-  // Observable variables
   var isRecording = false.obs;
   var isProcessing = false.obs;
   var isPlaying = false.obs;
@@ -33,7 +32,6 @@ class VoiceService extends GetxController {
   StreamSubscription? _playerDurationSubscription;
   StreamSubscription? _playerCompleteSubscription;
 
-  // Cache for downloaded audio files
   final Map<String, String> _audioCache = {};
 
   @override
@@ -47,20 +45,20 @@ class VoiceService extends GetxController {
     try {
       await _player.setVolume(1.0);
       await _player.setPlayerMode(PlayerMode.mediaPlayer);
-      print('🎵 Audio player configured successfully');
+      print('Audio player configured successfully');
     } catch (e) {
-      print('⚠️ Error configuring audio player: $e');
+      print('Error configuring audio player: $e');
     }
   }
 
   void _setupAudioPlayerListeners() {
     _playerCompleteSubscription = _player.onPlayerComplete.listen((_) {
-      print('🎵 Audio playback completed');
+      print('Audio playback completed');
       _resetPlaybackState();
     });
 
     _playerStateSubscription = _player.onPlayerStateChanged.listen((state) {
-      print('🎵 Player state changed: $state');
+      print('Player state changed: $state');
 
       switch (state) {
         case PlayerState.completed:
@@ -85,7 +83,6 @@ class VoiceService extends GetxController {
         playbackProgress.value = position.inMilliseconds / totalDuration.value.inMilliseconds;
       }
 
-      // Auto-stop when reaching end
       if (totalDuration.value.inMilliseconds > 0 &&
           position.inMilliseconds >= totalDuration.value.inMilliseconds - 200) {
         Future.delayed(Duration(milliseconds: 100), () {
@@ -98,18 +95,17 @@ class VoiceService extends GetxController {
 
     _playerDurationSubscription = _player.onDurationChanged.listen((duration) {
       totalDuration.value = duration;
-      print('🎵 Audio duration: ${duration.inSeconds} seconds');
+      print('Audio duration: ${duration.inSeconds} seconds');
     });
   }
 
   void _resetPlaybackState() {
-    print('🎵 Resetting playback state');
+    print('Resetting playback state');
     isPlaying.value = false;
     currentPlayingUrl.value = '';
     playbackPosition.value = Duration.zero;
     playbackProgress.value = 0.0;
 
-    // Keep total duration for a moment to show completion
     Future.delayed(Duration(milliseconds: 500), () {
       if (!isPlaying.value) {
         totalDuration.value = Duration.zero;
@@ -117,21 +113,17 @@ class VoiceService extends GetxController {
     });
   }
 
-  // Main method for playing voice messages (Messenger-style)
   Future<void> playVoiceMessage(String voiceUrl) async {
     try {
-      print('🎵 Playing voice message: $voiceUrl');
+      print('Playing voice message: $voiceUrl');
 
-      // Stop any currently playing audio first
       if (isPlaying.value) {
         await stopPlayback();
         await Future.delayed(Duration(milliseconds: 100));
       }
 
-      // Set current playing URL
       currentPlayingUrl.value = voiceUrl;
 
-      // Use cached file if available, otherwise download
       String? localPath = _audioCache[voiceUrl];
 
       if (localPath == null || !File(localPath).existsSync()) {
@@ -148,38 +140,38 @@ class VoiceService extends GetxController {
       }
 
     } catch (e) {
-      print('❌ Error playing voice message: $e');
+      print('Error playing voice message: $e');
       _handlePlaybackError();
     }
   }
 
   Future<void> pauseVoiceMessage() async {
     try {
-      print('🎵 Pausing playback');
+      print('Pausing playback');
       await _player.pause();
     } catch (e) {
-      print('❌ Error pausing playback: $e');
+      print('Error pausing playback: $e');
       _handlePlaybackError();
     }
   }
 
   Future<void> resumeVoiceMessage() async {
     try {
-      print('🎵 Resuming playback');
+      print('Resuming playback');
       await _player.resume();
     } catch (e) {
-      print('❌ Error resuming playback: $e');
+      print('Error resuming playback: $e');
       _handlePlaybackError();
     }
   }
 
   Future<void> stopPlayback() async {
     try {
-      print('🎵 Stopping playback');
+      print('Stopping playback');
       await _player.stop();
       _resetPlaybackState();
     } catch (e) {
-      print('❌ Error stopping playback: $e');
+      print('Error stopping playback: $e');
       _resetPlaybackState();
     }
   }
@@ -191,7 +183,7 @@ class VoiceService extends GetxController {
         downloadUrl = '${ApiConstants.baseUrl}$voiceUrl';
       }
 
-      print('🎵 Downloading: $downloadUrl');
+      print('Downloading: $downloadUrl');
 
       final token = await TokenStorage.getLoginAccessToken();
       final headers = <String, String>{};
@@ -212,14 +204,14 @@ class VoiceService extends GetxController {
         final file = File(localPath);
         await file.writeAsBytes(response.bodyBytes);
 
-        print('🎵 Downloaded to: $localPath (${response.bodyBytes.length} bytes)');
+        print('Downloaded to: $localPath (${response.bodyBytes.length} bytes)');
         return localPath;
       } else {
         throw Exception('Download failed: ${response.statusCode}');
       }
 
     } catch (e) {
-      print('❌ Download error: $e');
+      print('Download error: $e');
       return null;
     }
   }
@@ -233,18 +225,17 @@ class VoiceService extends GetxController {
 
       }
 
-      print('🎵 Playing from: $localPath');
+      print('Playing from: $localPath');
       await _player.play(DeviceFileSource(localPath));
-      // here is my error
-      print(' my voice local Playing from: $localPath');
+      print('my voice local Playing from: $localPath');
     } catch (e) {
-      print('❌ Play from local file error: $e');
+      print('Play from local file error: $e');
       throw e;
     }
   }
 
   void _handlePlaybackError() {
-    print('🎵 Handling playback error');
+    print('Handling playback error');
     _resetPlaybackState();
 
   }
@@ -254,29 +245,26 @@ class VoiceService extends GetxController {
   }
 
 
-
+  // Uses AudioRecorder permission, which is most reliable on iOS.
   Future<bool> _checkPermission() async {
     try {
-      print("🎤 Checking native iOS permission only...");
+      print("Checking native iOS permission only...");
 
-      // শুধুমাত্র AudioRecorder এর নিজের permission check করবো
-      // কারণ iOS এ এটাই সবচেয়ে reliable
       bool hasPermission = await _recorder.hasPermission();
-      print("🎤 Native recorder permission: $hasPermission");
+      print("Native recorder permission: $hasPermission");
 
       if (hasPermission) {
-        print("✅ Native permission granted, ready to record");
+        print("Native permission granted, ready to record");
         return true;
       } else {
-        print("❌ Native permission denied");
+        print("Native permission denied");
 
-        // যদি permission না থাকে, user কে manual settings এ যেতে বলবো
         _showManualPermissionDialog();
         return false;
       }
 
     } catch (e) {
-      print("🎤 Error checking permission: $e");
+      print("Error checking permission: $e");
       return false;
     }
   }
@@ -307,7 +295,6 @@ class VoiceService extends GetxController {
           ElevatedButton(
             onPressed: () {
               Get.back();
-              // iOS Settings এ নিয়ে যাবে
               openAppSettings();
             },
             style: ElevatedButton.styleFrom(
@@ -325,13 +312,12 @@ class VoiceService extends GetxController {
 
   Future<bool> startRecording() async {
     try {
-      print("🎤 Starting recording (iOS native only)...");
+      print("Starting recording (iOS native only)...");
 
-      // শুধু native permission check
       bool hasPermission = await _recorder.hasPermission();
 
       if (!hasPermission) {
-        print("🎤 No native permission");
+        print("No native permission");
 
         Get.snackbar(
           "Permission Required",
@@ -348,7 +334,6 @@ class VoiceService extends GetxController {
         return false;
       }
 
-      // Recording setup
       final directory = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       _recordingPath = '${directory.path}/voice_message_$timestamp.wav';
@@ -365,33 +350,28 @@ class VoiceService extends GetxController {
         throw Exception("Recording path is null");
       }
 
-      print("🎤 Starting recording to: $recordingPath");
+      print("Starting recording to: $recordingPath");
 
-      // Start recording
       await _recorder.start(config, path: recordingPath);
 
-      // Update state
       isRecording.value = true;
       recordingDuration.value = 0;
 
-      // Duration timer
       _recordingTimer = Timer.periodic(Duration(seconds: 1), (timer) {
         recordingDuration.value++;
       });
 
-      print("✅ Recording started successfully");
+      print("Recording started successfully");
 
       return true;
 
     } catch (e) {
-      print('❌ Recording error: $e');
+      print('Recording error: $e');
 
-      // Reset state
       isRecording.value = false;
       recordingDuration.value = 0;
       _recordingTimer?.cancel();
 
-      // Show error
       Get.snackbar(
         "Recording Failed",
         "Could not start recording. Check microphone permission.",
@@ -403,7 +383,6 @@ class VoiceService extends GetxController {
       return false;
     }
   }
-
 
 
   Future<Map<String, dynamic>?> stopRecordingAndSendToChat(String sessionId) async {
@@ -427,7 +406,7 @@ class VoiceService extends GetxController {
       return response;
 
     } catch (e) {
-      print('❌ Error stopping recording: $e');
+      print('Error stopping recording: $e');
       isProcessing.value = false;
       return null;
     }
@@ -468,7 +447,7 @@ class VoiceService extends GetxController {
       return null;
 
     } catch (e) {
-      print('❌ Error sending voice to backend: $e');
+      print('Error sending voice to backend: $e');
       return null;
     }
   }
@@ -487,11 +466,10 @@ class VoiceService extends GetxController {
         }
       }
     } catch (e) {
-      print('❌ Error canceling recording: $e');
+      print('Error canceling recording: $e');
     }
   }
 
-  // Utility methods
   String formatDuration(int seconds) {
     final minutes = seconds ~/ 60;
     final remainingSeconds = seconds % 60;
@@ -504,12 +482,11 @@ class VoiceService extends GetxController {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  // Clean up cache periodically
   void clearAudioCache() {
     _audioCache.forEach((url, path) {
       final file = File(path);
       if (file.existsSync()) {
-        file.delete().catchError((e) => print('⚠️ Cache cleanup error: $e'));
+        file.delete().catchError((e) => print('Cache cleanup error: $e'));
       }
     });
     _audioCache.clear();

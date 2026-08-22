@@ -1,10 +1,8 @@
 import 'package:HRlynx/app/api_servies/notification_services.dart';
-import 'package:HRlynx/app/modules/profile/logoutHelper.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'notification_view.dart';
 
-// Notification Badge Widget for AppBar
 class NotificationBadge extends StatelessWidget {
   final Color? iconColor;
   final double iconSize;
@@ -17,7 +15,6 @@ class NotificationBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Make sure notification service is registered
     if (!Get.isRegistered<NotificationService>()) {
       return IconButton(
         onPressed: () => Get.to(() => const NotificationView()),
@@ -74,7 +71,6 @@ class NotificationBadge extends StatelessWidget {
   }
 }
 
-// Notification Bell Widget for Dashboard
 class NotificationBell extends StatelessWidget {
   final double size;
   final Color? color;
@@ -172,7 +168,6 @@ class NotificationBell extends StatelessWidget {
   }
 }
 
-// Connection Status Widget
 class ConnectionStatusWidget extends StatelessWidget {
   const ConnectionStatusWidget({Key? key}) : super(key: key);
 
@@ -226,62 +221,5 @@ class ConnectionStatusWidget extends StatelessWidget {
         ],
       ),
     ));
-  }
-}
-
-// Example usage in your main screen:
-class MainScreenExample extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your App'),
-        actions: [
-          // Add notification badge to app bar
-          const NotificationBadge(),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Connection status at top
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ConnectionStatusWidget(),
-              ],
-            ),
-          ),
-
-          // Your main content here
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Your Main Content'),
-                  const SizedBox(height: 20),
-
-                  // Notification bell widget
-                  const NotificationBell(),
-
-                  const SizedBox(height: 20),
-
-                  // Logout button example
-                  ElevatedButton(
-                    onPressed: () {
-                      Get.find<LogoutController>().logout();
-                    },
-                    child: const Text('Logout'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

@@ -19,7 +19,6 @@ class SecondSplash extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Fixed image at top
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -34,13 +33,11 @@ class SecondSplash extends StatelessWidget {
               ),
             ),
 
-            // Scrollable content area
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Column(
                   children: [
-                    // Headings
                     Text(
                       'Get News with AI-powered HR QuickScan™',
                       textAlign: TextAlign.center,
@@ -53,7 +50,6 @@ class SecondSplash extends StatelessWidget {
 
                     SizedBox(height: h * 0.01),
 
-                    // Description
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: w * 0.08),
                       child: Text(
@@ -69,7 +65,6 @@ class SecondSplash extends StatelessWidget {
 
                     SizedBox(height: h * 0.015),
 
-                    // Subheading
                     Text(
                       'Catch-up on Important HR Topics',
                       textAlign: TextAlign.center,
@@ -82,7 +77,6 @@ class SecondSplash extends StatelessWidget {
 
                     SizedBox(height: h * 0.01),
 
-                    // Bullet points
                     Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 400),
@@ -105,12 +99,10 @@ class SecondSplash extends StatelessWidget {
               ),
             ),
 
-            // Fixed bottom section (indicators + button)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  // Page indicators
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(4, (index) {
@@ -132,7 +124,6 @@ class SecondSplash extends StatelessWidget {
 
                   SizedBox(height: h * 0.03),
 
-                  // Button
                   Button(
                     title: 'Next',
                     onTap: () {

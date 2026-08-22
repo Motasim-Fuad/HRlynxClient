@@ -1,5 +1,3 @@
-// lib/app/api_servies/notification_services.dart - FIXED WITH DEDUPLICATION
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -19,7 +17,6 @@ class NotificationService extends GetxController {
   final RxBool isConnected = false.obs;
   final RxString connectionStatus = 'Disconnected'.obs;
 
-  // ✅ Track notification IDs to prevent duplicates
   final Set<int> _notificationIds = {};
 
   bool _isConnecting = false;
@@ -53,14 +50,14 @@ class NotificationService extends GetxController {
         connectionStatus.value = 'No token';
       }
     } catch (e) {
-      print('⚠️ Init error: $e');
+      print('Init error: $e');
       connectionStatus.value = 'Init failed';
     }
   }
 
   Future<void> connectWebSocket() async {
     if (_isConnecting) {
-      print('🔄 Already connecting');
+      print('Already connecting');
       return;
     }
 
@@ -71,14 +68,14 @@ class NotificationService extends GetxController {
       );
 
       if (token == null || token.isEmpty) {
-        print('❌ No token');
+        print('No token');
         _shouldStayConnected = false;
         connectionStatus.value = 'Auth required';
         return;
       }
 
       if (!_shouldStayConnected) {
-        print('🛑 Not staying connected');
+        print('Not staying connected');
         connectionStatus.value = 'Disabled';
         return;
       }
@@ -88,9 +85,8 @@ class NotificationService extends GetxController {
       _reconnectTimer?.cancel();
       await _safeDisconnect();
 
-      // ✅ FIXED: Using ApiConstants.wsBaseUrl directly — no port:0 issue
       String wsUrl = _buildWebSocketUrl(token);
-      print('🔌 Connecting: $wsUrl');
+      print('Connecting: $wsUrl');
 
       _channel = WebSocketChannel.connect(
         Uri.parse(wsUrl),
@@ -99,7 +95,7 @@ class NotificationService extends GetxController {
 
       Timer? timeout = Timer(Duration(seconds: 15), () {
         if (!isConnected.value) {
-          print('❌ Connection timeout');
+          print('Connection timeout');
           connectionStatus.value = 'Timeout';
           _channel?.sink.close();
           _isConnecting = false;
@@ -112,19 +108,19 @@ class NotificationService extends GetxController {
       _streamSubscription = _channel!.stream.listen(
             (data) {
           timeout?.cancel();
-          print('📨 Data: $data');
+          print('Data: $data');
           _handleWebSocketMessage(data);
           _reconnectAttempts = 0;
 
           if (!isConnected.value) {
             isConnected.value = true;
             connectionStatus.value = 'Connected';
-            print('✅ Connected');
+            print('Connected');
           }
         },
         onError: (error) {
           timeout?.cancel();
-          print('❌ WS Error: $error');
+          print('WS Error: $error');
           isConnected.value = false;
           connectionStatus.value = 'Error';
           _isConnecting = false;
@@ -135,7 +131,7 @@ class NotificationService extends GetxController {
         },
         onDone: () {
           timeout?.cancel();
-          print('🔌 Closed');
+          print('Closed');
           isConnected.value = false;
           connectionStatus.value = 'Disconnected';
           _isConnecting = false;
@@ -150,10 +146,10 @@ class NotificationService extends GetxController {
       connectionStatus.value = 'Connected';
       _reconnectAttempts = 0;
       _isConnecting = false;
-      print('✅ WS Connected');
+      print('WS Connected');
 
     } catch (e) {
-      print('❌ WS Error: $e');
+      print('WS Error: $e');
       isConnected.value = false;
       connectionStatus.value = 'Failed';
       _isConnecting = false;
@@ -164,7 +160,7 @@ class NotificationService extends GetxController {
     }
   }
 
-  // ✅ FIXED: Use ApiConstants.wsBaseUrl directly — eliminates port:0 bug
+  // Avoids a port:0 WebSocket URL.
   String _buildWebSocketUrl(String token) {
     return '${ApiConstants.wsBaseUrl}/ws/notifications/?token=$token';
   }
@@ -179,9 +175,9 @@ class NotificationService extends GetxController {
             'timestamp': DateTime.now().millisecondsSinceEpoch,
           });
           _channel!.sink.add(ping);
-          print('💓 Heartbeat');
+          print('Heartbeat');
         } catch (e) {
-          print('❌ Heartbeat failed: $e');
+          print('Heartbeat failed: $e');
           isConnected.value = false;
           connectionStatus.value = 'Heartbeat failed';
           if (_shouldStayConnected) {
@@ -204,19 +200,19 @@ class NotificationService extends GetxController {
       );
 
       if (token == null || token.isEmpty) {
-        print('❌ No token for reconnect');
+        print('No token for reconnect');
         _shouldStayConnected = false;
         connectionStatus.value = 'Auth required';
         await disconnectWebSocket();
         return;
       }
     } catch (e) {
-      print('⚠️ Reconnect token check failed: $e');
+      print('Reconnect token check failed: $e');
       return;
     }
 
     if (_reconnectAttempts >= _maxReconnectAttempts) {
-      print('❌ Max attempts reached');
+      print('Max attempts reached');
       _reconnectAttempts = 0;
       connectionStatus.value = 'Paused';
 
@@ -231,7 +227,7 @@ class NotificationService extends GetxController {
     _reconnectAttempts++;
     final delay = Duration(seconds: _getReconnectDelay());
     connectionStatus.value = 'Reconnecting in ${delay.inSeconds}s';
-    print('🔄 Reconnect #$_reconnectAttempts in ${delay.inSeconds}s');
+    print('Reconnect #$_reconnectAttempts in ${delay.inSeconds}s');
 
     _reconnectTimer = Timer(delay, () async {
       if (_shouldStayConnected) {
@@ -256,9 +252,9 @@ class NotificationService extends GetxController {
     if (_channel != null) {
       try {
         await _channel!.sink.close(status.normalClosure);
-        print('🔌 Disconnected');
+        print('Disconnected');
       } catch (e) {
-        print('⚠️ Disconnect error: $e');
+        print('Disconnect error: $e');
       } finally {
         _channel = null;
         isConnected.value = false;
@@ -269,80 +265,75 @@ class NotificationService extends GetxController {
   Future<void> _handleWebSocketMessage(dynamic data) async {
     try {
       if (data == null || data.toString().isEmpty) {
-        print('⚠️ Empty WebSocket message received');
+        print('Empty WebSocket message received');
         return;
       }
 
-      print('📨📨📨 RAW WebSocket message received: $data');
+      print('RAW WebSocket message received: $data');
 
       final Map<String, dynamic> message = jsonDecode(data);
 
       if (!message.containsKey('type')) {
-        print('⚠️ WebSocket message missing "type" field');
+        print('WebSocket message missing "type" field');
         return;
       }
 
-      print('📋 Message type: ${message['type']}');
+      print('Message type: ${message['type']}');
 
       switch (message['type']) {
         case 'notification':
-          print('🔔 Processing notification message...');
+          print('Processing notification message...');
           await _handleNotificationMessage(message);
           break;
         case 'pong':
-          print('💓 Pong received from server');
+          print('Pong received from server');
           break;
         case 'error':
-          print('❌ Error message received from server');
+          print('Error message received from server');
           await _handleErrorMessage(message);
           break;
         default:
-          print('ℹ️ Unknown message type: ${message['type']}');
+          print('Unknown message type: ${message['type']}');
       }
     } catch (e, stackTrace) {
-      print('❌ Error handling WebSocket message: $e');
-      print('📍 Stack trace: $stackTrace');
+      print('Error handling WebSocket message: $e');
+      print('Stack trace: $stackTrace');
     }
   }
 
-  // ✅ Handle notification message with deduplication
   Future<void> _handleNotificationMessage(Map<String, dynamic> message) async {
     try {
       if (!message.containsKey('data')) {
-        print('⚠️ Missing data in WebSocket message');
+        print('Missing data in WebSocket message');
         return;
       }
 
       final notification = NotificationModel.fromJson(message['data']);
 
-      print('📨 WebSocket notification received: ID=${notification.id}, Title="${notification.title}"');
+      print('WebSocket notification received: ID=${notification.id}, Title="${notification.title}"');
 
-      // ✅ CHECK FOR DUPLICATES USING ID
       if (_notificationIds.contains(notification.id)) {
-        print('⚠️⚠️⚠️ DUPLICATE DETECTED! Notification ID ${notification.id} already exists - SKIPPING');
+        print('DUPLICATE DETECTED! Notification ID ${notification.id} already exists - SKIPPING');
         return;
       }
 
-      // ✅ DOUBLE CHECK: Also check in notifications list
       final existsInList = notifications.any((n) => n.id == notification.id);
       if (existsInList) {
-        print('⚠️⚠️⚠️ DUPLICATE DETECTED IN LIST! Notification ID ${notification.id} - SKIPPING');
+        print('DUPLICATE DETECTED IN LIST! Notification ID ${notification.id} - SKIPPING');
         return;
       }
 
-      // ✅ ADD TO TRACKING SET
       _notificationIds.add(notification.id);
 
-      // ✅ ADD TO LIST
       notifications.insert(0, notification);
       _updateUnreadCount();
 
-      print('✅✅✅ NEW notification added successfully: ID=${notification.id}, Title="${notification.title}"');
-      print('📊 Total notifications: ${notifications.length}, Tracked IDs: ${_notificationIds.length}');
+      print('NEW notification added successfully: ID=${notification.id}, Title="${notification.title}"');
+      print('Total notifications: ${notifications.length}, Tracked IDs: ${_notificationIds.length}');
 
     } catch (e, stackTrace) {
-      print('❌ Error handling notification message: $e');
-      print('📍 Stack trace: $stackTrace');
+      print('Error handling notification message: $e');
+      print('Stack trace: $stackTrace');
     }
   }
 
@@ -350,7 +341,7 @@ class NotificationService extends GetxController {
     final error = message['message'] ?? 'Unknown';
     final code = message['code'];
 
-    print('❌ Server error: $error ($code)');
+    print('Server error: $error ($code)');
 
     switch (code) {
       case 'invalid_token':
@@ -363,14 +354,14 @@ class NotificationService extends GetxController {
   }
 
   Future<void> forceDisconnectDueToInvalidToken() async {
-    print('🚫 Invalid token - disconnecting');
+    print('Invalid token - disconnecting');
     _shouldStayConnected = false;
     connectionStatus.value = 'Auth failed';
     await disconnectWebSocket();
   }
 
   Future<void> disconnectWebSocket() async {
-    print('🛑 Disconnecting');
+    print('Disconnecting');
     _shouldStayConnected = false;
     connectionStatus.value = 'Disconnecting...';
     _reconnectTimer?.cancel();
@@ -381,7 +372,7 @@ class NotificationService extends GetxController {
   }
 
   Future<void> enableConnection() async {
-    print('✅ Enabling connection');
+    print('Enabling connection');
     _shouldStayConnected = true;
     _reconnectAttempts = 0;
     _isConnecting = false;
@@ -399,12 +390,11 @@ class NotificationService extends GetxController {
         connectionStatus.value = 'No token';
       }
     } catch (e) {
-      print('⚠️ Enable error: $e');
+      print('Enable error: $e');
       connectionStatus.value = 'Enable failed';
     }
   }
 
-  // ✅ Fetch with deduplication
   Future<void> fetchAllNotifications() async {
     try {
       final url = "${ApiConstants.baseUrl}/api/notifications/list/";
@@ -417,11 +407,9 @@ class NotificationService extends GetxController {
       if (response != null && response['results'] != null) {
         final List<dynamic> results = response['results'];
 
-        // ✅ CLEAR OLD DATA
         notifications.clear();
         _notificationIds.clear();
 
-        // ✅ ADD WITH DEDUPLICATION
         for (var json in results) {
           try {
             final notification = NotificationModel.fromJson(json);
@@ -430,18 +418,18 @@ class NotificationService extends GetxController {
               _notificationIds.add(notification.id);
               notifications.add(notification);
             } else {
-              print('⚠️ Skipping duplicate notification ID: ${notification.id}');
+              print('Skipping duplicate notification ID: ${notification.id}');
             }
           } catch (e) {
-            print('❌ Error parsing notification: $e');
+            print('Error parsing notification: $e');
           }
         }
 
         _updateUnreadCount();
-        print('✅ Fetched ${notifications.length} unique notifications (${_notificationIds.length} IDs tracked)');
+        print('Fetched ${notifications.length} unique notifications (${_notificationIds.length} IDs tracked)');
       }
     } catch (e) {
-      print('⚠️ Fetch error: $e');
+      print('Fetch error: $e');
     }
   }
 
@@ -467,7 +455,7 @@ class NotificationService extends GetxController {
 
       return success;
     } catch (e) {
-      print('⚠️ Mark read error: $e');
+      print('Mark read error: $e');
       return false;
     }
   }
@@ -485,12 +473,12 @@ class NotificationService extends GetxController {
       ).timeout(Duration(seconds: 5));
 
       if (response != null) {
-        print('✅ Marked as read: $id');
+        print('Marked as read: $id');
         return true;
       }
       return false;
     } catch (e) {
-      print('⚠️ Mark read API failed: $e');
+      print('Mark read API failed: $e');
       return false;
     }
   }
@@ -501,7 +489,7 @@ class NotificationService extends GetxController {
 
   @override
   void onClose() {
-    print('🧹 Cleaning up NotificationService');
+    print('Cleaning up NotificationService');
     _shouldStayConnected = false;
     _reconnectTimer?.cancel();
     _heartbeatTimer?.cancel();
@@ -546,7 +534,7 @@ class NotificationModel {
         createdAt: json['created_at'] ?? DateTime.now().toIso8601String(),
       );
     } catch (e) {
-      print('❌ Error parsing notification JSON: $e');
+      print('Error parsing notification JSON: $e');
       return NotificationModel(
         id: json['id'] ?? 0,
         title: 'Error Loading Notification',

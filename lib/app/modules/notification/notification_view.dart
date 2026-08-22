@@ -10,45 +10,45 @@ class NotificationView extends StatefulWidget {
 }
 
 class _NotificationViewState extends State<NotificationView> {
-  final RxBool isLoading = true.obs; // Start with loading true
+  final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
   final RxBool hasError = false.obs;
 
   @override
   void initState() {
     super.initState();
-    print('🚀 NotificationView: initState called');
+    print('NotificationView: initState called');
     _loadNotifications();
   }
 
   Future<void> _loadNotifications() async {
-    print('📡 Starting to load notifications...');
+    print('Starting to load notifications...');
 
     try {
       isLoading.value = true;
       hasError.value = false;
       errorMessage.value = '';
 
-      print('🔄 Fetching notifications from service...');
+      print('Fetching notifications from service...');
       final notificationService = Get.find<NotificationService>();
       await notificationService.fetchAllNotifications();
 
-      print('✅ Notifications loaded successfully');
+      print('Notifications loaded successfully');
 
     } on Exception catch (e) {
-      print('❌ Exception caught: $e');
+      print('Exception caught: $e');
       _handleError(e);
     } catch (e) {
-      print('❌ Error caught: $e');
+      print('Error caught: $e');
       _handleError(e);
     } finally {
       isLoading.value = false;
-      print('⏹️ Loading finished. hasError: ${hasError.value}, errorMessage: ${errorMessage.value}');
+      print('Loading finished. hasError: ${hasError.value}, errorMessage: ${errorMessage.value}');
     }
   }
 
   void _handleError(dynamic error) {
-    print('🔴 Handling error: $error');
+    print('Handling error: $error');
 
     hasError.value = true;
     final errorStr = error.toString().toLowerCase();
@@ -58,30 +58,30 @@ class _NotificationViewState extends State<NotificationView> {
         errorStr.contains('failed host lookup') ||
         errorStr.contains('network_error')) {
       errorMessage.value = 'No internet connection';
-      print('📶 Network error detected');
+      print('Network error detected');
     } else if (errorStr.contains('server') ||
         errorStr.contains('503') ||
         errorStr.contains('500') ||
         errorStr.contains('server_error')) {
       errorMessage.value = 'Server is temporarily down';
-      print('🌐 Server error detected');
+      print('Server error detected');
     } else if (errorStr.contains('session') || errorStr.contains('401')) {
       errorMessage.value = 'Session expired';
-      print('🔐 Session error detected');
+      print('Session error detected');
     } else if (errorStr.contains('timeout')) {
       errorMessage.value = 'Connection timeout';
-      print('⏱️ Timeout error detected');
+      print('Timeout error detected');
     } else {
       errorMessage.value = 'Something went wrong';
-      print('⚠️ Generic error detected');
+      print('Generic error detected');
     }
 
-    print('📝 Final error message: ${errorMessage.value}');
+    print('Final error message: ${errorMessage.value}');
   }
 
   @override
   Widget build(BuildContext context) {
-    print('🎨 Building NotificationView');
+    print('Building NotificationView');
     final notificationService = Get.find<NotificationService>();
 
     return Scaffold(
@@ -100,11 +100,10 @@ class _NotificationViewState extends State<NotificationView> {
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: Obx(() {
-        print('🔄 Rebuilding with: isLoading=${isLoading.value}, hasError=${hasError.value}');
+        print('Rebuilding with: isLoading=${isLoading.value}, hasError=${hasError.value}');
 
-        // Show loading indicator
         if (isLoading.value) {
-          print('⏳ Showing loading indicator');
+          print('Showing loading indicator');
           return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -120,24 +119,22 @@ class _NotificationViewState extends State<NotificationView> {
           );
         }
 
-        // Show error screen
         if (hasError.value) {
-          print('❌ Showing error view: ${errorMessage.value}');
+          print('Showing error view: ${errorMessage.value}');
           return ErrorView(
             errorMessage: errorMessage.value,
             onRetry: () {
-              print('🔄 Retry button pressed');
+              print('Retry button pressed');
               _loadNotifications();
             },
             onGoBack: () {
-              print('⬅️ Go back button pressed');
+              print('Go back button pressed');
               Get.back();
             },
           );
         }
 
-        print('📋 Showing notifications list');
-        // Show notifications list
+        print('Showing notifications list');
         return Column(
           children: [
             Container(
@@ -209,19 +206,18 @@ class _NotificationViewState extends State<NotificationView> {
               ),
             ),
 
-            // Notifications list
             Expanded(
               child: notificationService.notifications.isEmpty
                   ? const EmptyNotificationsView()
                   : RefreshIndicator(
                 onRefresh: () async {
                   try {
-                    print('🔄 User triggered refresh');
+                    print('User triggered refresh');
                     hasError.value = false;
                     await notificationService.fetchAllNotifications();
-                    print('✅ Refresh completed');
+                    print('Refresh completed');
                   } catch (e) {
-                    print('❌ Error refreshing notifications: $e');
+                    print('Error refreshing notifications: $e');
                     _handleError(e);
 
                     Get.snackbar(
@@ -297,22 +293,22 @@ class _NotificationViewState extends State<NotificationView> {
   Future<void> _handleNotificationTap(BuildContext context,
       NotificationModel notification, NotificationService notificationService) async {
     try {
-      print('🎯 Notification tapped: ${notification.id} - ${notification.title}');
+      print('Notification tapped: ${notification.id} - ${notification.title}');
 
       if (!notification.isRead) {
-        print('📖 Marking notification ${notification.id} as read...');
+        print('Marking notification ${notification.id} as read...');
         final success = await notificationService.markAsRead(notification.id);
         if (success) {
-          print('✅ Successfully marked notification ${notification.id} as read');
+          print('Successfully marked notification ${notification.id} as read');
         } else {
-          print('❌ Failed to mark notification ${notification.id} as read');
+          print('Failed to mark notification ${notification.id} as read');
         }
       }
 
       _showNotificationDetail(context, notification);
     } catch (e, stackTrace) {
-      print('❌ Error handling notification tap: $e');
-      print('📍 Stack trace: $stackTrace');
+      print('Error handling notification tap: $e');
+      print('Stack trace: $stackTrace');
 
       if (context.mounted) {
         final errorStr = e.toString();
@@ -345,7 +341,7 @@ class _NotificationViewState extends State<NotificationView> {
   void _showNotificationDetail(
       BuildContext context, NotificationModel notification) {
     try {
-      print('📱 Showing notification detail for: ${notification.id}');
+      print('Showing notification detail for: ${notification.id}');
 
       showModalBottomSheet(
         context: context,
@@ -355,7 +351,7 @@ class _NotificationViewState extends State<NotificationView> {
             NotificationDetailSheet(notification: notification),
       );
     } catch (e) {
-      print('❌ Error showing notification detail: $e');
+      print('Error showing notification detail: $e');
 
       showDialog(
         context: context,
@@ -374,7 +370,6 @@ class _NotificationViewState extends State<NotificationView> {
   }
 }
 
-// ✅ Error View Widget with Enhanced Design
 class ErrorView extends StatelessWidget {
   final String errorMessage;
   final VoidCallback onRetry;
@@ -389,7 +384,7 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('🎨 Building ErrorView with message: $errorMessage');
+    print('Building ErrorView with message: $errorMessage');
 
     final isNetworkError = errorMessage.contains('internet') ||
         errorMessage.contains('connection');
@@ -404,7 +399,6 @@ class ErrorView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Error Icon
               Container(
                 width: 120,
                 height: 120,
@@ -432,7 +426,6 @@ class ErrorView extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Error Title
               Text(
                 isNetworkError
                     ? 'No Internet Connection'
@@ -448,7 +441,6 @@ class ErrorView extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Error Message
               Text(
                 isNetworkError
                     ? 'Please check your internet connection\nand try again.'
@@ -464,14 +456,12 @@ class ErrorView extends StatelessWidget {
               ),
               const SizedBox(height: 32),
 
-              // Action Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Go Back Button
                   OutlinedButton.icon(
                     onPressed: () {
-                      print('⬅️ Go Back pressed');
+                      print('Go Back pressed');
                       onGoBack();
                     },
                     icon: const Icon(Icons.arrow_back, size: 20),
@@ -490,10 +480,9 @@ class ErrorView extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
 
-                  // Retry Button
                   ElevatedButton.icon(
                     onPressed: () {
-                      print('🔄 Retry pressed');
+                      print('Retry pressed');
                       onRetry();
                     },
                     icon: const Icon(Icons.refresh, size: 20),
@@ -559,10 +548,10 @@ class NotificationTile extends StatelessWidget {
         child: InkWell(
           onTap: () {
             try {
-              print('🎯 Tile tapped for notification: ${notification.id}');
+              print('Tile tapped for notification: ${notification.id}');
               onTap();
             } catch (e) {
-              print('❌ Error in tile onTap: $e');
+              print('Error in tile onTap: $e');
             }
           },
           borderRadius: BorderRadius.circular(12),
@@ -674,7 +663,7 @@ class NotificationTile extends StatelessWidget {
           return Colors.grey;
       }
     } catch (e) {
-      print('❌ Error getting notification color: $e');
+      print('Error getting notification color: $e');
       return Colors.grey;
     }
   }
@@ -698,7 +687,7 @@ class NotificationTile extends StatelessWidget {
           return Icons.notifications;
       }
     } catch (e) {
-      print('❌ Error getting notification icon: $e');
+      print('Error getting notification icon: $e');
       return Icons.notifications;
     }
   }
@@ -784,7 +773,7 @@ class NotificationDetailSheet extends StatelessWidget {
                     try {
                       Navigator.pop(context);
                     } catch (e) {
-                      print('❌ Error closing detail sheet: $e');
+                      print('Error closing detail sheet: $e');
                     }
                   },
                   icon: const Icon(Icons.close),
@@ -892,7 +881,7 @@ class NotificationDetailSheet extends StatelessWidget {
           return Colors.grey;
       }
     } catch (e) {
-      print('❌ Error getting notification color: $e');
+      print('Error getting notification color: $e');
       return Colors.grey;
     }
   }
@@ -916,7 +905,7 @@ class NotificationDetailSheet extends StatelessWidget {
           return Icons.notifications;
       }
     } catch (e) {
-      print('❌ Error getting notification icon: $e');
+      print('Error getting notification icon: $e');
       return Icons.notifications;
     }
   }
@@ -970,7 +959,7 @@ class EmptyNotificationsView extends StatelessWidget {
                 final notificationService = Get.find<NotificationService>();
                 await notificationService.fetchAllNotifications();
               } catch (e) {
-                print('❌ Error refreshing notifications: $e');
+                print('Error refreshing notifications: $e');
               }
             },
             icon: const Icon(Icons.refresh),

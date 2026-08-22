@@ -1,4 +1,3 @@
-// ForgotPassOtpController - Updated
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -18,7 +17,6 @@ class ForgotPassOtpController extends GetxController {
 
   @override
   void onInit() {
-    // Receive email from Get.arguments
     email.value = Get.arguments ?? '';
 
     otpControllers = List.generate(4, (_) => TextEditingController());
@@ -73,13 +71,13 @@ class ForgotPassOtpController extends GetxController {
 
       if (response['success'] == true) {
         Get.snackbar("Success", response['message'] ?? "OTP resent successfully");
-        startTimer(); // Restart the timer
+        startTimer();
       } else {
         Get.snackbar("Failed", response['message'] ?? "Failed to resend OTP");
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
-      print("❌ Resend OTP error: $e");
+      print("Resend OTP error: $e");
     } finally {
       isLoading.value = false;
     }

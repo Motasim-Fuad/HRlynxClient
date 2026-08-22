@@ -22,15 +22,15 @@ class HrRoleController extends GetxController {
       isLoading.value = true;
       errorMessage.value = '';
 
-      print('🔄 Fetching personas...');
+      print('Fetching personas...');
       final response = await authRepo.getParsonaType();
 
-      print('✅ Received response: $response');
+      print('Received response: $response');
       final model = OnbordingModel.fromJson(response);
       personaList.value = model.data ?? [];
 
       for (var p in personaList) {
-        print('🖼️ Avatar URL: ${p.avatar}');
+        print('Avatar URL: ${p.avatar}');
       }
 
       if (personaList.isEmpty) {
@@ -38,9 +38,8 @@ class HrRoleController extends GetxController {
       }
 
     } catch (e) {
-      print("❌ Error fetching personas: $e");
+      print("Error fetching personas: $e");
 
-      // Set user-friendly error message
       if (e.toString().contains('CloudFlare') ||
           e.toString().contains('523') ||
           e.toString().contains('tunnel') ||
@@ -62,7 +61,6 @@ class HrRoleController extends GetxController {
     }
   }
 
-  // Add manual retry method
   Future<void> retryFetchPersonas() async {
     await fetchPersonas();
   }

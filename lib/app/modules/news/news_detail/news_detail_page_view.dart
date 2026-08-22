@@ -56,12 +56,10 @@ class NewsDetailsView extends StatelessWidget {
         ],
       ),
       body: Obx(() {
-        // ✅ Show loading
         if (viewModel.isLoading.value) {
           return NewsDetailsWidgets.buildLoadingWidget();
         }
 
-        // ✅ Show error with retry
         if (viewModel.error.value.isNotEmpty) {
           return _buildErrorWidget(
             errorType: viewModel.errorType.value,
@@ -70,7 +68,6 @@ class NewsDetailsView extends StatelessWidget {
           );
         }
 
-        // ✅ Show article
         final article = viewModel.article.value;
         if (article == null) {
           return _buildErrorWidget(
@@ -96,7 +93,6 @@ class NewsDetailsView extends StatelessWidget {
               ),
               SizedBox(height: 20),
 
-              // Tags Section
               if (article.tags.isNotEmpty) ...[
                 Obx(() => Wrap(
                   spacing: 8,
@@ -133,11 +129,9 @@ class NewsDetailsView extends StatelessWidget {
                 }),
               ],
 
-              // Article Image
               NewsDetailsWidgets.buildArticleImage(article.mainImageUrl ?? ''),
               SizedBox(height: 20),
 
-              // Article Title
               Text(
                 article.aiTitle ?? 'No title available',
                 style: TextStyle(
@@ -148,13 +142,11 @@ class NewsDetailsView extends StatelessWidget {
               ),
               SizedBox(height: 16),
 
-              // Article Summary
               NewsDetailsWidgets.buildFormattedSummary(
                   article.aiSummary ?? 'No summary available'
               ),
               SizedBox(height: 30),
 
-              // Affiliate Products Section
               Obx(() => NewsDetailsWidgets.buildAffiliateProducts(
                 products: viewModel.affiliateProducts.value,
                 isLoading: viewModel.isLoadingAffiliateProducts.value,
@@ -164,7 +156,6 @@ class NewsDetailsView extends StatelessWidget {
 
               SizedBox(height: 20),
 
-              // Original Content Button
               Center(
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -187,7 +178,6 @@ class NewsDetailsView extends StatelessWidget {
               ),
               SizedBox(height: 16),
 
-              // Disclaimer
               Center(
                 child: GestureDetector(
                   onTap: () => NewsDetailsWidgets.showDisclaimerDialog(),
@@ -210,7 +200,6 @@ class NewsDetailsView extends StatelessWidget {
     );
   }
 
-  /// ✅ Error Widget
   Widget _buildErrorWidget({
     required String errorType,
     required VoidCallback onRetry,

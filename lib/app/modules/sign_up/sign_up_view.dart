@@ -37,7 +37,6 @@ class _SignUpState extends State<SignUp> {
   void initState() {
     super.initState();
 
-    // Clean up existing controllers if they exist
     if (Get.isRegistered<PasswordController>()) {
       Get.delete<PasswordController>();
     }
@@ -45,18 +44,10 @@ class _SignUpState extends State<SignUp> {
       Get.delete<SignUpController>();
     }
 
-    // Create fresh controllers
     passwordcontroller = Get.put(PasswordController(), permanent: false);
     signUpController = Get.put(SignUpController(), permanent: false);
   }
 
-  // @override
-  // void dispose() {
-  //   emailController.dispose();
-  //   passwordController.dispose();
-  //   confirmPasswordController.dispose();
-  //   super.dispose();
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +165,6 @@ class _SignUpState extends State<SignUp> {
 
                           const SizedBox(height: 20),
 
-                          // Terms
                           Row(
                             children: [
                               Obx(() => Checkbox(
@@ -226,7 +216,6 @@ class _SignUpState extends State<SignUp> {
                               const Text('Already have an account?'),
                               TextButton(
                                 onPressed: () {
-                                  // Clean up current controllers before navigating
                                   Get.delete<PasswordController>();
                                   Get.delete<SignUpController>();
                                   Get.to(() => LogInView());

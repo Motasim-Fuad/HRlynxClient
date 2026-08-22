@@ -8,10 +8,9 @@ import 'news_detail/news_detail_page_view.dart';
 class NewsView extends StatelessWidget {
   const NewsView({super.key});
 
+  // Reuse the existing controller so tabs do not use a disposed instance.
   @override
   Widget build(BuildContext context) {
-    // ✅ isRegistered check — controller আগে থেকে থাকলে নতুন বানাবে না
-    // এটাই crash এর fix: navigate করলে পুরনো disposed controller reuse হতো
     final NewsController controller = Get.isRegistered<NewsController>()
         ? Get.find<NewsController>()
         : Get.put(NewsController());
@@ -36,7 +35,6 @@ class NewsView extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
 
-            /// Header Card
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
               child: Container(
@@ -96,7 +94,6 @@ class NewsView extends StatelessWidget {
               ),
             ),
 
-            // Search Bar
             Padding(
               padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
               child: Container(
@@ -138,7 +135,6 @@ class NewsView extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Category Dropdown
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Obx(() => Container(
@@ -243,7 +239,6 @@ class NewsView extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Articles List
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value &&

@@ -5,7 +5,6 @@ import '../../../api_servies/repository/auth_repo.dart';
 import '../../../model/chat/sessionHistoryModel.dart';
 import '../chat_controller.dart';
 
-// Separate widget for history list to avoid Obx issues
 class HistoryListWidget extends StatelessWidget {
   final ChatController chatController;
   final String sessionId;
@@ -23,8 +22,7 @@ class HistoryListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      // This Obx watches for the reload trigger
-      chatController.isReloadingHistory.value; // This line ensures Obx watches this observable
+      chatController.isReloadingHistory.value;
 
       return FutureBuilder(
         future: AuthRepository().fetchPersonaChatHistory(chatController.personaId),
@@ -47,7 +45,6 @@ class HistoryListWidget extends StatelessWidget {
           return ListView.builder(
             itemCount: sessions.length,
             itemBuilder: (context, index) {
-              // Add bounds checking
               if (index >= sessions.length) {
                 return const SizedBox.shrink();
               }
@@ -60,7 +57,6 @@ class HistoryListWidget extends StatelessWidget {
                 onTap: () => onLoadSession(session.id),
                 onDelete: isCurrentSession ? null : () async {
                   await onDeleteHistory(int.parse(session.id));
-                  // Trigger rebuild by updating the observable
                   chatController.reloadHistory();
                 },
                 isCurrentSession: isCurrentSession,

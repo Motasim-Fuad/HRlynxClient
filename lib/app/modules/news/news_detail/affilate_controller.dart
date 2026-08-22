@@ -12,7 +12,6 @@ class AffiliateProductsController extends GetxController {
   final RxString error = ''.obs;
   final RxBool hasMoreData = true.obs;
 
-  // ✅ NEW: Error type
   final RxString errorType = ''.obs;
 
   final RxInt currentPage = 1.obs;
@@ -23,7 +22,6 @@ class AffiliateProductsController extends GetxController {
     super.onInit();
   }
 
-  /// ✅ UPDATED: Better error handling
   Future<void> fetchAffiliateProducts({
     required String categorySlug,
     bool isRefresh = false,
@@ -63,21 +61,20 @@ class AffiliateProductsController extends GetxController {
         currentPage.value++;
 
         if (affiliateResponse.results.isNotEmpty) {
-          print('✅ Loaded ${affiliateResponse.results.length} affiliate products');
+          print('Loaded ${affiliateResponse.results.length} affiliate products');
         } else if (isRefresh) {
-          print('ℹ️ No affiliate products found for this category');
+          print('No affiliate products found for this category');
         }
 
       } else {
         error.value = response['error'] ?? 'Failed to load affiliate products';
         errorType.value = 'UNKNOWN_ERROR';
-        print('❌ Error loading affiliate products: ${error.value}');
+        print('Error loading affiliate products: ${error.value}');
       }
     } catch (e) {
       String errorMsg = e.toString();
-      print('❌ Exception in fetchAffiliateProducts: $errorMsg');
+      print('Exception in fetchAffiliateProducts: $errorMsg');
 
-      // ✅ Categorize errors (but don't show to user - affiliate products are not critical)
       if (errorMsg.contains('NETWORK_ERROR')) {
         error.value = 'Network error loading products';
         errorType.value = 'NETWORK_ERROR';
@@ -95,7 +92,7 @@ class AffiliateProductsController extends GetxController {
 
   Future<void> onAffiliateProductClick(AffiliateProductModel product) async {
     try {
-      print('🔗 User clicked on product: ${product.title} (ID: ${product.id})');
+      print('User clicked on product: ${product.title} (ID: ${product.id})');
 
       final response = await _authRepository.trackClick(product.id);
 
@@ -106,27 +103,27 @@ class AffiliateProductsController extends GetxController {
 
         if (redirectUrl.isNotEmpty) {
           await _launchUrl(redirectUrl);
-          print('✅ Successfully tracked click and opened product URL');
+          print('Successfully tracked click and opened product URL');
         } else {
-          print('⚠️ No redirect URL found');
+          print('No redirect URL found');
         }
 
       } else {
-        print('⚠️ Click tracking failed, opening direct URL');
+        print('Click tracking failed, opening direct URL');
         if (product.affiliateUrl.isNotEmpty) {
           await _launchUrl(product.affiliateUrl);
         }
       }
 
     } catch (e) {
-      print('❌ Error handling affiliate click: $e');
+      print('Error handling affiliate click: $e');
 
       try {
         if (product.affiliateUrl.isNotEmpty) {
           await _launchUrl(product.affiliateUrl);
         }
       } catch (fallbackError) {
-        print('❌ Fallback URL launch failed: $fallbackError');
+        print('Fallback URL launch failed: $fallbackError');
       }
     }
   }
@@ -192,10 +189,10 @@ class AffiliateProductsController extends GetxController {
         throw Exception('Could not launch URL: $cleanUrl');
       }
 
-      print('✅ Successfully launched URL: $cleanUrl');
+      print('Successfully launched URL: $cleanUrl');
 
     } catch (e) {
-      print('❌ Error launching URL: $e');
+      print('Error launching URL: $e');
       throw Exception('Failed to open link: ${e.toString()}');
     }
   }

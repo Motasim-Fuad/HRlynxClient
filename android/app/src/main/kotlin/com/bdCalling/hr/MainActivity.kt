@@ -1,10 +1,3 @@
-//package com.lynxova.hrlnyx
-//
-//import io.flutter.embedding.android.FlutterActivity
-//
-//class MainActivity : FlutterActivity()
-
-
 package com.lynxova.hrlnyx
 
 import io.flutter.embedding.android.FlutterFragmentActivity

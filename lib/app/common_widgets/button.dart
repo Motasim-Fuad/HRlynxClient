@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
@@ -6,13 +5,13 @@ import 'package:flutter/material.dart';
 class Button extends StatelessWidget {
   final String title;
   final VoidCallback? onTap;
-  final bool isLoading; // 👈 NEW PARAMETER
+  final bool isLoading;
 
   const Button({
     Key? key,
     required this.title,
     this.onTap,
-    this.isLoading = false, // 👈 default false
+    this.isLoading = false,
   }) : super(key: key);
 
   @override
@@ -21,7 +20,7 @@ class Button extends StatelessWidget {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: isLoading ? null : onTap, // disable when loading
+        onPressed: isLoading ? null : onTap,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primarycolor,
           shape: RoundedRectangleBorder(
@@ -49,5 +48,3 @@ class Button extends StatelessWidget {
     );
   }
 }
-
-

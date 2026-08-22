@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../chat_controller.dart';
 
-// Separate widget for refresh button to avoid Obx issues
 class RefreshButton extends StatelessWidget {
   final ChatController chatController;
 
@@ -25,14 +24,11 @@ class RefreshButton extends StatelessWidget {
             : const Icon(Icons.refresh, color: Colors.white),
         onPressed: () async {
           if (!chatController.isReloadingHistory.value) {
-            // Start animation
             chatController.isReloadingHistory.value = true;
             chatController.historyAnimationController.repeat();
 
-            // Make API call
             await chatController.reloadHistory();
 
-            // Stop animation
             chatController.historyAnimationController.stop();
             chatController.isReloadingHistory.value = false;
           }

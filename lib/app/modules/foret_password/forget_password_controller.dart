@@ -25,7 +25,6 @@ class ForgetPasswordController extends GetxController {
         Get.snackbar('Success', response['message'] ?? 'Reset link sent',
             backgroundColor: Colors.green, colorText: Colors.white);
 
-        // Pass email as arguments to the next screen
         Get.to(() => Forgotpassotpview(), arguments: email.value);
       } else {
         Get.snackbar('Failed', response['message'] ?? 'Something went wrong',

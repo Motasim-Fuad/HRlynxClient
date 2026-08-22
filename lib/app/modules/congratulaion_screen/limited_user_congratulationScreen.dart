@@ -21,7 +21,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Title
                 Text(
                   "Close, but not quite unlocked…",
                   textAlign: TextAlign.center,
@@ -34,8 +33,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Lock cup icon (use your own image asset or emoji)
-
 
                 Container(
                   child: Image(image: AssetImage(AppImages.limitated_Congratulation,),height: size.height * 0.25,),
@@ -43,7 +40,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Description
                 const Text(
                   "No worries, happy to serve you a\nless caffeinated experience!",
                   textAlign: TextAlign.center,
@@ -56,7 +52,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
 
                 const SizedBox(height: 25),
 
-                // Heading for list
                 const Text(
                   "What leading professionals are\nleveraging to stay at the top of\ntheir HR game:",
                   textAlign: TextAlign.center,
@@ -70,7 +65,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // Bullet points
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
@@ -83,7 +77,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // Bottom message
                 const Text(
                   "Oops, take me back to unlock HRlynx",
                   textAlign: TextAlign.center,
@@ -95,7 +88,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
 
                 const SizedBox(height: 15),
 
-                // Button
 
                 Button(title: "Continue with Limited Free Access",onTap: (){
                   Get.offAll(MainScreen());
@@ -110,7 +102,6 @@ class LimitedUserCongratulationScreen extends StatelessWidget {
   }
 }
 
-// Custom bullet point widget
 class BulletItem extends StatelessWidget {
   final String text;
   const BulletItem(this.text, {super.key});

@@ -8,7 +8,7 @@ class CustomTextFormField extends StatelessWidget {
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
-  final int? maxLines; // allow passing maxLines
+  final int? maxLines;
 
   const CustomTextFormField({
     super.key,
@@ -30,7 +30,7 @@ class CustomTextFormField extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       onChanged: onChanged,
-      maxLines: obscureText ? 1 : (maxLines ?? 1), // 👈 important line
+      maxLines: obscureText ? 1 : (maxLines ?? 1),
       decoration: InputDecoration(
         hintText: hintText,
         suffixIcon: suffixIcon,

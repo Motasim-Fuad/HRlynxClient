@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/common_widgets/button.dart';
 import 'package:HRlynx/app/common_widgets/text_field.dart';
 import 'package:HRlynx/app/modules/change_password/changePasswordController.dart';

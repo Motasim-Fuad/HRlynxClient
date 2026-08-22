@@ -1,5 +1,3 @@
-// lib/app/modules/log_in/log_in_controller.dart - FINAL PRODUCTION
-
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -31,12 +29,6 @@ class LogInController extends GetxController {
     isChecked.value = false;
   }
 
-  // @override
-  // void onClose() {
-  //   emailController.dispose();
-  //   passwordController.dispose();
-  //   super.onClose();
-  // }
 
   void toggleObscureText()       => isObscured.value = !isObscured.value;
   void toggleCheckbox(bool? val) => isChecked.value  = val ?? false;
@@ -51,7 +43,6 @@ class LogInController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Step 1: Authenticate
       final response = await _withRetry(
             () => _authRepo.login(email, password),
         maxAttempts: 2,
@@ -69,7 +60,6 @@ class LogInController extends GetxController {
         return;
       }
 
-      // Step 2: Persist session + fetch persona (parallel)
       final personaFuture = TokenStorage.getSelectedPersonaId();
 
       await Future.wait([
@@ -87,18 +77,15 @@ class LogInController extends GetxController {
         return;
       }
 
-      // Step 3: Firebase (fire-and-forget)
       _initializeFirebaseServicesAsync();
 
-      // Step 4: Set persona
       await _authRepo.setParsonaType({'persona': personaId});
       Get.snackbar("Success", "SingIn Successful",backgroundColor: Colors.white,snackPosition: SnackPosition.TOP);
-      // Step 5: Navigate — isLoading will be false'd in finally
       await SubscriptionManager.instance.handlePostLoginNavigation();
 
     } catch (e, st) {
       _handleLoginError(e);
-      debugPrint('❌ Login error: $e');
+      debugPrint('Login error: $e');
       FirebaseCrashlytics.instance.recordError(e, st, reason: 'loginUser');
     } finally {
       isLoading.value = false;
@@ -126,7 +113,7 @@ class LogInController extends GetxController {
       try {
         return await fn();
       } catch (e) {
-        debugPrint('⚠️ [$tag] attempt ${i + 1} failed: $e');
+        debugPrint('[$tag] attempt ${i + 1} failed: $e');
         if (i == maxAttempts - 1) rethrow;
         await Future.delayed(Duration(seconds: pow(2, i).toInt()));
       }
@@ -143,7 +130,7 @@ class LogInController extends GetxController {
         await NotificationService.instance.enableConnection();
         await FirebaseMeg().sendFCMTokenAfterLogin();
       } catch (e) {
-        debugPrint('⚠️ Firebase services error: $e');
+        debugPrint('Firebase services error: $e');
       }
     });
   }

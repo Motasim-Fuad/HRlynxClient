@@ -24,7 +24,6 @@ class VoiceRecordingWidget extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Cancel button
           GestureDetector(
             onTap: onCancel,
             child: Container(
@@ -39,7 +38,6 @@ class VoiceRecordingWidget extends StatelessWidget {
 
           SizedBox(width: 12),
 
-          // Recording animation
           Container(
             width: 12,
             height: 12,
@@ -50,7 +48,6 @@ class VoiceRecordingWidget extends StatelessWidget {
             child: TweenAnimationBuilder(
               tween: Tween(begin: 0.5, end: 1.0),
               duration: Duration(milliseconds: 800),
-              // repeat: true,
               builder: (context, double value, child) {
                 return Transform.scale(
                   scale: value,
@@ -67,7 +64,6 @@ class VoiceRecordingWidget extends StatelessWidget {
 
           SizedBox(width: 12),
 
-          // Recording text and duration
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,7 +87,6 @@ class VoiceRecordingWidget extends StatelessWidget {
             ),
           ),
 
-          // Send button
           GestureDetector(
             onTap: onSend,
             child: Container(

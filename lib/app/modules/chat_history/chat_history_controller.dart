@@ -1,4 +1,3 @@
-
 import 'package:get/get.dart';
 
 import 'chat_history_model.dart' show ChatHistoryModel;

@@ -9,18 +9,17 @@ import 'package:get/get.dart';
 class MainScreen extends StatelessWidget {
   final BottomNavController navController = Get.put(BottomNavController());
 
-  // Screens instance ekbar create hoye memory te thakbe
   final List<Widget> screens = [
     HomeView(),
     NewsView(),
     ProfileView(),
   ];
 
+  // Keep tab screens in memory.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // IndexedStack use koro - prottek screen memory te thakbe
       body: Obx(() => IndexedStack(
         index: navController.currentIndex.value,
         children: screens,

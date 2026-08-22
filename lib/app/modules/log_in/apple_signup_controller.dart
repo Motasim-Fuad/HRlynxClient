@@ -1,5 +1,3 @@
-// lib/app/modules/sign_up/apple_signup_controller.dart - FINAL PRODUCTION
-
 import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
@@ -33,20 +31,17 @@ class AppleSignUpController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Step 1: Device check
       if (!await SignInWithApple.isAvailable()) {
         _showSnack('Error', 'Apple Sign-In is not available on this device.');
         return;
       }
 
-      // Step 2: Apple + Firebase sign-in
       final userCredential = await _appleFirebaseSignIn();
       if (userCredential == null) return;
 
       final user = userCredential.user;
       if (!_isValidUser(user)) return;
 
-      // Step 3: Persona fetch
       final personaId = await TokenStorage.getSelectedPersonaId();
       if (personaId == null) {
         _showSnack('Error',
@@ -54,7 +49,6 @@ class AppleSignUpController extends GetxController {
         return;
       }
 
-      // Step 4: Backend sign-up (with retry)
       final success = await _withRetry(
             () => _authRepo.SocialSignUpAndSetPersona(
           email:    user!.email!,
@@ -70,7 +64,6 @@ class AppleSignUpController extends GetxController {
         return;
       }
 
-      // Step 5: Post-login
       _initializeFirebaseServicesAsync();
       _enableBiometricAsync(user!.email!);
       await _authRepo.setParsonaType({'persona': personaId});
@@ -169,7 +162,7 @@ class AppleSignUpController extends GetxController {
       try {
         return await fn();
       } catch (e) {
-        debugPrint('⚠️ [$tag] attempt ${i + 1} failed: $e');
+        debugPrint('[$tag] attempt ${i + 1} failed: $e');
         if (i == maxAttempts - 1) rethrow;
         await Future.delayed(Duration(seconds: pow(2, i).toInt()));
       }
@@ -182,7 +175,7 @@ class AppleSignUpController extends GetxController {
       try {
         await _biometricService.enableBiometricLogin(email);
       } catch (e) {
-        debugPrint('⚠️ Biometric error: $e');
+        debugPrint('Biometric error: $e');
       }
     });
   }
@@ -196,7 +189,7 @@ class AppleSignUpController extends GetxController {
         await NotificationService.instance.enableConnection();
         await FirebaseMeg().sendFCMTokenAfterLogin();
       } catch (e) {
-        debugPrint('⚠️ Firebase services error: $e');
+        debugPrint('Firebase services error: $e');
       }
     });
   }

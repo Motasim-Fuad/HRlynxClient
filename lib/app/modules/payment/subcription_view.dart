@@ -63,12 +63,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
       backgroundColor: AppColors.primarycolor,
       body: SafeArea(
         child: Obx(() {
-          // ✅ SHOW ERROR UI FIRST
           if (controller.hasError.value) {
             return _buildErrorUI(width, height);
           }
 
-          // Show loading state
           if (controller.isLoading.value && controller.plans.isEmpty) {
             return _buildLoadingState(width, height);
           }
@@ -164,7 +162,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
     );
   }
 
-  // ✅ ERROR UI WIDGET
   Widget _buildErrorUI(double width, double height) {
     final errorType = controller.errorType.value;
     final errorMessage = controller.errorMessage.value;
@@ -180,7 +177,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Error Icon
               Container(
                 width: width * 0.3,
                 height: width * 0.3,
@@ -208,7 +204,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
               ),
               SizedBox(height: height * 0.03),
 
-              // Error Title
               Text(
                 isNetworkError
                     ? 'No Internet Connection'
@@ -224,7 +219,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
               ),
               SizedBox(height: height * 0.015),
 
-              // Error Message
               Text(
                 isNetworkError
                     ? 'Please check your internet connection\nand try again.'
@@ -240,11 +234,9 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
               ),
               SizedBox(height: height * 0.04),
 
-              // Action Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Go Back Button
                   OutlinedButton.icon(
                     onPressed: () {
                       Get.back();
@@ -266,7 +258,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
                   ),
                   SizedBox(width: width * 0.03),
 
-                  // Retry Button
                   ElevatedButton.icon(
                     onPressed: () {
                       controller.clearError();
@@ -295,7 +286,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> with TickerProv
               ),
               SizedBox(height: height * 0.03),
 
-              // Skip to Free Access
               TextButton(
                 onPressed: () async {
                   await TokenStorage.saveSubscriptionCheckDone(true);

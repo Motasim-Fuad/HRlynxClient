@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/common_widgets/button.dart';
 import 'package:HRlynx/app/modules/main_screen/main_screen_view.dart';
 import 'package:flutter/material.dart';

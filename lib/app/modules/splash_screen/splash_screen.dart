@@ -19,7 +19,6 @@ class SplashScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Fixed image at top
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -34,7 +33,6 @@ class SplashScreen extends StatelessWidget {
               ),
             ),
 
-            // Scrollable content area
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -42,7 +40,6 @@ class SplashScreen extends StatelessWidget {
                   children: [
                     SizedBox(height: h * 0.04),
 
-                    // Title
                     Text(
                       'Welcome to your AI-powered\nHR Assistant!',
                       textAlign: TextAlign.center,
@@ -55,7 +52,6 @@ class SplashScreen extends StatelessWidget {
 
                     SizedBox(height: h * 0.02),
 
-                    // Subtitle
                     Text(
                       'Tailored for your role. Built for your challenges.',
                       textAlign: TextAlign.center,
@@ -72,12 +68,10 @@ class SplashScreen extends StatelessWidget {
               ),
             ),
 
-            // Fixed bottom section (indicators + button)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  // Page indicators
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(4, (index) {
@@ -99,7 +93,6 @@ class SplashScreen extends StatelessWidget {
 
                   SizedBox(height: h * 0.03),
 
-                  // Button
                   Button(
                     title: 'Get Started',
                     onTap: () {

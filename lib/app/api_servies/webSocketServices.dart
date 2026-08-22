@@ -12,24 +12,21 @@ class WebSocketService {
 
   final RxBool _isConnected = false.obs;
 
-  // ✅ WebSocketService নিজেই limit track করবে
-  // Controller নতুন হলেও এটা থাকবে
+  // Token limit survives ChatController rebuilds.
   bool _isLimitReached = false;
 
   bool get isConnected => _isConnected.value;
   bool get isLimitReached => _isLimitReached;
 
-  // ✅ শুধু নতুন session বানানোর সময় call করো
-  // reconnect বা hot reload এ call করবে না — limit state preserve থাকবে
+  // Reset limit only for a new session.
   void resetForNewSession() {
     _isLimitReached = false;
-    print('🔄 WS: Limit reset for new session');
+    print('WS: Limit reset for new session');
   }
 
   Future<void> connect(String sessionId, String token, {int? personaId}) async {
     this.personaId = personaId;
 
-    // ❌ এখানে reset নেই — hot reload এ limit state নষ্ট হবে না
 
     await disconnect();
 
@@ -37,7 +34,7 @@ class WebSocketService {
       final uri = Uri.parse(
         "${ApiConstants.wsBaseUrl}/ws/chat/$sessionId/?token=$token",
       );
-      print('🔌 Connecting to WebSocket: $uri');
+      print('Connecting to WebSocket: $uri');
 
       _channel = WebSocketChannel.connect(uri);
       _currentSessionId = sessionId;
@@ -46,39 +43,36 @@ class WebSocketService {
 
       _broadcastStream!.listen(
             (event) {
-          print('📥 Incoming: $event');
+          print('Incoming: $event');
 
           try {
             final data = jsonDecode(event);
 
             if (data['type'] == 'connection') {
               _isConnected.value = true;
-              print('✅ WebSocket Connection Confirmed');
+              print('WebSocket Connection Confirmed');
             }
 
-            // ✅ limit_reached event — WebSocket level এ track করো
             if (data['type'] == 'limit_reached') {
               _isLimitReached = true;
-              print('🚫 WS: Limit reached flag set');
+              print('WS: Limit reached flag set');
             }
 
-            // ✅ message event-এও limit_info check করো
             if (data['limit_info'] != null &&
                 data['limit_info']['limit_reached'] == true) {
               _isLimitReached = true;
-              print('🚫 WS: Limit reached via message limit_info');
+              print('WS: Limit reached via message limit_info');
             }
 
           } catch (e) {
-            // Not JSON, that's okay
           }
         },
         onError: (err) {
-          print('❌ WebSocket Error: $err');
+          print('WebSocket Error: $err');
           _isConnected.value = false;
         },
         onDone: () {
-          print('✅ WebSocket stream closed');
+          print('WebSocket stream closed');
           _isConnected.value = false;
         },
         cancelOnError: false,
@@ -88,20 +82,19 @@ class WebSocketService {
 
       if (!_isConnected.value) {
         _isConnected.value = true;
-        print('✅ WebSocket Connected (assumed)');
+        print('WebSocket Connected (assumed)');
       }
 
     } catch (e) {
-      print('❌ WebSocket connection failed: $e');
+      print('WebSocket connection failed: $e');
       _isConnected.value = false;
       rethrow;
     }
   }
 
   void sendMessage(String msg) {
-    // ✅ WebSocket level এ block — Controller নতুন হলেও কাজ করবে
     if (_isLimitReached) {
-      print('🚫 WS: Message blocked — limit reached');
+      print('WS: Message blocked — limit reached');
       return;
     }
 
@@ -115,13 +108,13 @@ class WebSocketService {
 
         final jsonMessage = jsonEncode(messageData);
         _channel!.sink.add(jsonMessage);
-        print('📤 Outgoing JSON: $jsonMessage');
+        print('Outgoing JSON: $jsonMessage');
       } catch (e) {
-        print('❌ Error sending message: $e');
+        print('Error sending message: $e');
         _isConnected.value = false;
       }
     } else {
-      print('❌ Cannot send message - WebSocket not connected');
+      print('Cannot send message - WebSocket not connected');
       print('Channel: ${_channel != null ? "exists" : "null"}');
       print('Connected: ${_isConnected.value}');
       print('Session ID: $_currentSessionId');
@@ -139,9 +132,9 @@ class WebSocketService {
 
       _broadcastStream = null;
       _currentSessionId = null;
-      print('✅ WebSocket disconnected');
+      print('WebSocket disconnected');
     } catch (e) {
-      print('❌ Error disconnecting WebSocket: $e');
+      print('Error disconnecting WebSocket: $e');
     }
   }
 

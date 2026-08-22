@@ -19,11 +19,9 @@ class OtpVerificationScreen extends StatelessWidget {
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Responsive breakpoints
           final isTablet = constraints.maxWidth > 600;
           final isDesktop = constraints.maxWidth > 1024;
 
-          // Responsive values
           final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 24.0 : 8.0);
           final topSpacing = isDesktop ? 140.0 : (isTablet ? 130.0 : 120.0);
           final titleFontSize = isDesktop ? 28.0 : (isTablet ? 26.0 : 24.0);
@@ -34,7 +32,6 @@ class OtpVerificationScreen extends StatelessWidget {
           final textFontSize = isDesktop ? 18.0 : (isTablet ? 17.0 : 16.0);
           final resendFontSize = isDesktop ? 22.0 : (isTablet ? 21.0 : 20.0);
 
-          // Center content on larger screens
           final maxWidth = isDesktop ? 600.0 : double.infinity;
 
           return Center(

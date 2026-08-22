@@ -10,7 +10,6 @@ class PremiumBasicText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen width
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Padding(
@@ -18,13 +17,6 @@ class PremiumBasicText extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          // Icon(
-          //   Icons.check,
-          //   color: AppColors.primarycolor,
-          //   size: screenWidth * 0.05, // responsive icon size
-          // ),
-
-
           SvgPicture.asset(
             AppImages.congratulation_right_icon,
             colorFilter: ColorFilter.mode(
@@ -34,16 +26,16 @@ class PremiumBasicText extends StatelessWidget {
             width: screenWidth * 0.05,
             height: screenWidth * 0.05,
           ),
-          SizedBox(width: screenWidth * 0.02), // responsive spacing
+          SizedBox(width: screenWidth * 0.02),
           Expanded(
             child: Text(
               tittle,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: screenWidth * 0.04, // responsive font size
+                fontSize: screenWidth * 0.04,
                 color: AppColors.primarycolor,
               ),
-              overflow: TextOverflow.ellipsis, // prevents overflow
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

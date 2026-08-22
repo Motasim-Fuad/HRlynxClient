@@ -1,5 +1,3 @@
-// lib/app/modules/sign_up/google_signup_controller.dart - FINAL PRODUCTION
-
 import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -33,18 +31,15 @@ class GoogleSignUpController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Step 1: Google sign-in
       final googleUser = await _getGoogleUser();
       if (googleUser == null) return;
 
-      // Step 2: Firebase auth
       final userCredential = await _firebaseSignIn(googleUser);
       if (userCredential == null) return;
 
       final user = userCredential.user;
       if (!_isValidUser(user)) return;
 
-      // Step 3: Persona fetch
       final personaId = await TokenStorage.getSelectedPersonaId();
       if (personaId == null) {
         _showSnack('Error',
@@ -52,7 +47,6 @@ class GoogleSignUpController extends GetxController {
         return;
       }
 
-      // Step 4: Backend sign-up (with retry)
       final success = await _withRetry(
             () => _authRepo.SocialSignUpAndSetPersona(
           email:    user!.email!,
@@ -68,7 +62,6 @@ class GoogleSignUpController extends GetxController {
         return;
       }
 
-      // Step 5: Post-login
       _initializeFirebaseServicesAsync();
       await _authRepo.setParsonaType({'persona': personaId});
 
@@ -105,7 +98,7 @@ class GoogleSignUpController extends GetxController {
       );
       await googleSignIn.signOut();
       final account = await googleSignIn.signIn();
-      if (account == null) isLoading.value = false; // user cancelled
+      if (account == null) isLoading.value = false;
       return account;
     } catch (e) {
       _handleGeneralError(e);
@@ -150,7 +143,7 @@ class GoogleSignUpController extends GetxController {
       try {
         return await fn();
       } catch (e) {
-        debugPrint('⚠️ [$tag] attempt ${i + 1} failed: $e');
+        debugPrint('[$tag] attempt ${i + 1} failed: $e');
         if (i == maxAttempts - 1) rethrow;
         await Future.delayed(Duration(seconds: pow(2, i).toInt()));
       }
@@ -167,7 +160,7 @@ class GoogleSignUpController extends GetxController {
         await NotificationService.instance.enableConnection();
         await FirebaseMeg().sendFCMTokenAfterLogin();
       } catch (e) {
-        debugPrint('⚠️ Firebase services error: $e');
+        debugPrint('Firebase services error: $e');
       }
     });
   }

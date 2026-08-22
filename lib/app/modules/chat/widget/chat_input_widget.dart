@@ -154,19 +154,10 @@ class ChatInputWidget extends StatelessWidget {
         ),
         const SizedBox(width: 8),
 
-        // IconButton(
-        //   onPressed: () async {
-        //     final started = await voiceService.startRecording();
-        //     if (!started) {
-        //       Get.snackbar("Error", "Could not start recording");
-        //     }
-        //   },
-        //   icon: const Icon(Icons.mic),
-        // ),
 
         IconButton(
           onPressed: chatController.isTokenLimitReached.value
-              ? null // limit reached → disabled
+              ? null
               : () async {
             final started = await voiceService.startRecording();
             if (!started) {
@@ -181,18 +172,6 @@ class ChatInputWidget extends StatelessWidget {
           ),
         ),
 
-        // IconButton(
-        //   icon: const Icon(Icons.send),
-        //   onPressed: () {
-        //     final text = chatController.textController.text.trim();
-        //     if (text.isNotEmpty) {
-        //       chatController.send(text);
-        //       chatController.textController.clear();
-        //       chatController.showSuggestions.value = false;
-        //       chatController.isFirstTime.value = false;
-        //     }
-        //   },
-        // ),
         IconButton(
           icon: Icon(
             Icons.send,
@@ -218,12 +197,6 @@ class ChatInputWidget extends StatelessWidget {
 }
 
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Clean GPT-style Limit Banner
-// ─ icon নেই, progress bar নেই, title নেই, percent নেই
-// ─ শুধু backend message + Upgrade button (free user হলে)
-// ─────────────────────────────────────────────────────────────────────────────
 class _LimitBanner extends StatelessWidget {
   final String message;
   final bool isFree;
@@ -242,7 +215,6 @@ class _LimitBanner extends StatelessWidget {
       child: Row(
         children: [
 
-          // Backend message
           Expanded(
             child: Text(
               message,
@@ -253,7 +225,6 @@ class _LimitBanner extends StatelessWidget {
             ),
           ),
 
-          // Upgrade button — শুধু free user হলে
           if (isFree) ...[
             const SizedBox(width: 12),
             GestureDetector(

@@ -60,7 +60,7 @@ class TermsController extends GetxController {
     );
 
     TextStyle contactStyle = const TextStyle(
-      fontWeight: FontWeight.w400, // Not bold
+      fontWeight: FontWeight.w400,
       fontSize: 16,
       color: Color(0xff7D848D),
     );
@@ -69,17 +69,16 @@ class TermsController extends GetxController {
       fontWeight: FontWeight.w400,
       fontSize: 16,
       color: Color(0xff7D848D),
-      fontStyle: FontStyle.italic, // Italic style
+      fontStyle: FontStyle.italic,
     );
 
-    // Remove HTML tags and split into sections
     String cleanContent = htmlContent
         .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
         .replaceAll(RegExp(r'<p>', caseSensitive: false), '')
         .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n')
         .replaceAll(RegExp(r'<div[^>]*>', caseSensitive: false), '')
         .replaceAll(RegExp(r'</div>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'<[^>]+>'), '') // Remove all other HTML tags
+        .replaceAll(RegExp(r'<[^>]+>'), '')
         .replaceAll('&nbsp;', ' ')
         .replaceAll('&amp;', '&')
         .replaceAll('&lt;', '<')
@@ -97,13 +96,11 @@ class TermsController extends GetxController {
         continue;
       }
 
-      // Check different text types
       bool isHeading = _isHeading(trimmedSection);
       bool isCopyright = _isCopyright(trimmedSection);
       bool isContact = _isContact(trimmedSection);
 
       if (isHeading && !isContact) {
-        // Add spacing before heading (except first one)
         if (!isFirstSection) {
           widgets.add(const SizedBox(height: 30));
         }
@@ -112,24 +109,20 @@ class TermsController extends GetxController {
         widgets.add(const SizedBox(height: 8));
         isFirstSection = false;
       } else if (isCopyright) {
-        // Copyright text - italic style
         widgets.add(Text(trimmedSection, style: copyrightStyle));
 
         if (sections.indexOf(section) < sections.length - 1) {
           widgets.add(const SizedBox(height: 12));
         }
       } else if (isContact) {
-        // Contact/Owner info - not bold
         widgets.add(Text(trimmedSection, style: contactStyle));
 
         if (sections.indexOf(section) < sections.length - 1) {
           widgets.add(const SizedBox(height: 12));
         }
       } else {
-        // Regular body content
         widgets.add(Text(trimmedSection, style: bodyStyle));
 
-        // Add small spacing between paragraphs
         if (sections.indexOf(section) < sections.length - 1) {
           widgets.add(const SizedBox(height: 12));
         }
@@ -140,8 +133,7 @@ class TermsController extends GetxController {
   }
 
   bool _isHeading(String text) {
-    // Check various heading patterns (excluding contact info)
-    return (text.startsWith(RegExp(r'\d+\.\s')) && !_isContact(text)) || // "1. ", "2. ", etc.
+    return (text.startsWith(RegExp(r'\d+\.\s')) && !_isContact(text)) ||
         (text.contains('Terms & Conditions') && !text.contains('©')) ||
         text.contains('Effective Date:') ||
         text.startsWith('Acceptance of Terms') ||
@@ -155,11 +147,10 @@ class TermsController extends GetxController {
         text.startsWith('Account Suspension') ||
         text.startsWith('Jurisdiction') ||
         text.startsWith('Future Phase') ||
-        (text.length < 60 && text.endsWith(':') && !_isContact(text)); // Short text ending with colon (excluding contact)
+        (text.length < 60 && text.endsWith(':') && !_isContact(text));
   }
 
   bool _isCopyright(String text) {
-    // Check if text contains copyright symbols or trademark info
     return text.contains('©') ||
         text.contains('All rights reserved') ||
         text.contains('™') ||
@@ -167,7 +158,6 @@ class TermsController extends GetxController {
   }
 
   bool _isContact(String text) {
-    // Check if text contains contact or owner information
     return text.toLowerCase().contains('owner:') ||
         text.toLowerCase().contains('contact:') ||
         text.toLowerCase().contains('info@') ||
@@ -253,14 +243,13 @@ class TermsOfUse extends StatelessWidget {
   }
 }
 
-// Add this method to your AuthRepository class
 extension TermsExtension on AuthRepository {
   Future<dynamic> getTermsAndConditions() async {
     String url = "${ApiConstants.baseUrl}/api/core/terms-and-conditions/";
     try {
       return await NetworkApiServices.getApi(url, withAuth: false);
     } catch (e) {
-      print('❌ Error fetching terms and conditions: $e');
+      print('Error fetching terms and conditions: $e');
       rethrow;
     }
   }

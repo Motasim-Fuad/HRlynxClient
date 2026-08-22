@@ -99,4 +99,3 @@ class Sessions {
     return data;
   }
 }
-

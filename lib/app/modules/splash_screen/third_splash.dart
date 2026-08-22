@@ -19,7 +19,6 @@ class ThirdSplash extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Fixed image at top
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
@@ -34,7 +33,6 @@ class ThirdSplash extends StatelessWidget {
               ),
             ),
 
-            // Scrollable content area
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -42,7 +40,6 @@ class ThirdSplash extends StatelessWidget {
                   children: [
                     SizedBox(height: h * 0.02),
 
-                    // Title
                     Text(
                       'Interactive \nAI HR Assistants',
                       textAlign: TextAlign.center,
@@ -55,7 +52,6 @@ class ThirdSplash extends StatelessWidget {
 
                     SizedBox(height: h * 0.02),
 
-                    // Description
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: w * 0.08),
                       child: Text(
@@ -71,7 +67,6 @@ class ThirdSplash extends StatelessWidget {
 
                     SizedBox(height: h * 0.03),
 
-                    // Prompt Examples
                     Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 300),
@@ -103,12 +98,10 @@ class ThirdSplash extends StatelessWidget {
               ),
             ),
 
-            // Fixed bottom section (indicators + button)
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 children: [
-                  // Page indicators
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(4, (index) {
@@ -130,7 +123,6 @@ class ThirdSplash extends StatelessWidget {
 
                   SizedBox(height: h * 0.03),
 
-                  // Next button
                   Button(
                     title: 'Next',
                     onTap: () {

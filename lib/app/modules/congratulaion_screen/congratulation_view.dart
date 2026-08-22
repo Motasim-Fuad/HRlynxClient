@@ -15,11 +15,10 @@ class CongratulationView extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
-    // Responsive padding and sizing
-    final horizontalPadding = screenWidth * 0.08; // 8% of screen width
-    final titleFontSize = screenWidth * 0.055; // Responsive title size
-    final subtitleFontSize = screenWidth * 0.045; // Responsive subtitle size
-    final bodyFontSize = screenWidth * 0.04; // Responsive body text size
+    final horizontalPadding = screenWidth * 0.08;
+    final titleFontSize = screenWidth * 0.055;
+    final subtitleFontSize = screenWidth * 0.045;
+    final bodyFontSize = screenWidth * 0.04;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -38,7 +37,6 @@ class CongratulationView extends StatelessWidget {
 
             Text("Congratulations!",style: TextStyle(fontWeight: FontWeight.bold,fontSize: screenWidth *0.08),),
             SizedBox(height: screenHeight *0.05,),
-            // Benefits Unlocked Title
             Text(
               'Benefits Unlocked',
               style: TextStyle(
@@ -52,7 +50,6 @@ class CongratulationView extends StatelessWidget {
 
             SizedBox(height: screenHeight * 0.02),
 
-            // Benefits List
             Container(
               constraints: BoxConstraints(
                 maxWidth: screenWidth * 0.9,
@@ -72,7 +69,6 @@ class CongratulationView extends StatelessWidget {
 
             SizedBox(height: screenHeight * 0.04),
 
-            // Bottom motivational text
             Container(
               constraints: BoxConstraints(
                 maxWidth: screenWidth * 0.85,
@@ -94,7 +90,6 @@ class CongratulationView extends StatelessWidget {
             Button(title: "Home",onTap: (){
               Get.offAll(MainScreen());
             },),
-            // Additional spacing for different screen sizes
             SizedBox(height: screenHeight * 0.01),
           ],
         ),

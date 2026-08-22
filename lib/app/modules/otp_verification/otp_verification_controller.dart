@@ -16,7 +16,6 @@ class OtpController extends GetxController {
   final RxString email = ''.obs;
   final RxInt timerSeconds = 86.obs;
 
-  // Persona-related
   final RxList<Data> personaList = <Data>[].obs;
   final RxInt selectedIndex = 0.obs;
   final RxBool isLoading = false.obs;
@@ -75,29 +74,27 @@ class OtpController extends GetxController {
     try {
       isLoading.value = true;
       final response = await _authRepo.getParsonaType();
-      print("📥 Raw persona response: $response");
+      print("Raw persona response: $response");
 
       final model = OnbordingModel.fromJson(response);
       personaList.value = model.data ?? [];
 
       if (personaList.isEmpty) {
-        print("⚠️ Persona list is empty after parsing");
+        print("Persona list is empty after parsing");
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
-      print("❌ fetchPersonas error: $e");
+      print("fetchPersonas error: $e");
     } finally {
       isLoading.value = false;
     }
   }
 
 
-
   Future<void> submitSelectedPersona() async {
     try {
       isLoading.value = true;
 
-      // Get the stored persona ID from onboarding
       final storedPersonaId = await TokenStorage.getSelectedPersonaId();
 
       if (storedPersonaId == null) {
@@ -106,22 +103,22 @@ class OtpController extends GetxController {
       }
 
       final body = {
-        "persona": storedPersonaId, // Use stored ID instead of current selection
+        "persona": storedPersonaId,
       };
 
-      print("📤 Sending stored persona ID to API: $body");
+      print("Sending stored persona ID to API: $body");
 
       final response = await _authRepo.setParsonaType(body);
 
       if (response['status'] == true || response['success'] == true) {
-        print("✅ Persona selection success: ${response['message']}");
+        print("Persona selection success: ${response['message']}");
         Get.offAll(() => LogInView());
       } else {
-        print("❌ Persona API error: ${response['message']}");
+        print("Persona API error: ${response['message']}");
         Get.snackbar("Error", response['message'] ?? "Failed to select persona");
       }
     } catch (e) {
-      print("❌ Persona API exception: $e");
+      print("Persona API exception: $e");
       Get.snackbar("Error", "Something went wrong: $e");
     } finally {
       isLoading.value = false;
@@ -136,25 +133,22 @@ class OtpController extends GetxController {
       }
       final notificationService = NotificationService.instance;
       await notificationService.enableConnection();
-      print('✅ Notification service initialized successfully');
+      print('Notification service initialized successfully');
     } catch (e) {
-      print('❌ Error initializing notification service: $e');
+      print('Error initializing notification service: $e');
     }
   }
 
-  // ✅ নতুন function: Login এর পর FCM token backend এ পাঠানোর জন্য
   Future<void> sendFCMTokenToBackend() async {
     try {
-      // Firebase message service এর instance নিন
       final firebaseMsg = FirebaseMeg();
       await firebaseMsg.sendFCMTokenAfterLogin();
-      print('✅ FCM token sent to backend after login');
+      print('FCM token sent to backend after login');
     } catch (e) {
-      print('❌ Error sending FCM token after login: $e');
+      print('Error sending FCM token after login: $e');
     }
   }
 
-// Only showing the changed verifyOtp method
 
   Future<void> verifyOtp() async {
     final otp = otpDigits.join();
@@ -178,8 +172,6 @@ class OtpController extends GetxController {
         if (response.containsKey("access") && response.containsKey("refresh")) {
           await TokenStorage.saveOtpTokens(response["access"], response["refresh"]);
           await TokenStorage.saveLoginTokens(response["access"], response["refresh"]);
-          // await TokenStorage.saveUserId(response["id"]);
-          // await TokenStorage.saveUserEmail(response["email"]);
         }
 
         Get.snackbar("Success", response['message']);
@@ -214,14 +206,14 @@ class OtpController extends GetxController {
         if (response['success'] == true ||
             (response['message']?.toString().toLowerCase().contains('sent') ?? false)) {
           Get.snackbar("OTP Resent", response['message']);
-          print("✅ Resend success: ${response['message']}");
+          print("Resend success: ${response['message']}");
         } else {
           Get.snackbar("Failed", response['message'] ?? "Failed to resend OTP");
-          print("❌ Resend error: ${response['message']}");
+          print("Resend error: ${response['message']}");
         }
       } catch (e) {
         Get.snackbar("Error", "Failed to resend OTP: ${e.toString()}");
-        print("❌ Resend exception: $e");
+        print("Resend exception: $e");
       }
 
       timerSeconds.value = 86;

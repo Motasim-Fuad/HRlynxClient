@@ -1,7 +1,3 @@
-// ==========================================
-// 1️⃣ UPDATED: lib/app/api_servies/neteork_api_services.dart
-// Better error messages for different scenarios
-// ==========================================
 import 'dart:convert';
 import 'dart:io';
 import 'package:HRlynx/app/api_servies/token.dart';
@@ -42,7 +38,6 @@ class NetworkApiServices {
     return headers;
   }
 
-  /// GET request
   static Future<dynamic> getApi(
       String url, {
         bool withAuth = true,
@@ -61,7 +56,6 @@ class NetworkApiServices {
     }
   }
 
-  /// POST request
   static Future<dynamic> postApi(
       String url,
       dynamic body, {
@@ -85,7 +79,6 @@ class NetworkApiServices {
     }
   }
 
-  /// PUT request
   static Future<dynamic> putApi(
       String url,
       dynamic body, {
@@ -109,7 +102,6 @@ class NetworkApiServices {
     }
   }
 
-  /// PATCH request
   static Future<dynamic> patchApi(
       String url,
       dynamic body, {
@@ -133,7 +125,6 @@ class NetworkApiServices {
     }
   }
 
-  /// DELETE request
   static Future<dynamic> deleteApi(
       String url, {
         dynamic body,
@@ -143,9 +134,9 @@ class NetworkApiServices {
     try {
       final headers = await getHeaders(withAuth: withAuth, tokenType: tokenType);
 
-      print('🔍 DELETE URL: $url');
-      print('📦 DELETE Body: ${body != null ? jsonEncode(body) : "null"}');
-      print('🔑 DELETE Headers: $headers');
+      print('DELETE URL: $url');
+      print('DELETE Body: ${body != null ? jsonEncode(body) : "null"}');
+      print('DELETE Headers: $headers');
 
       final response = await http.delete(
         Uri.parse(url),
@@ -162,7 +153,6 @@ class NetworkApiServices {
     }
   }
 
-  /// Multipart request
   static Future<dynamic> postMultipartApi(
       String url,
       Map<String, dynamic> fields, {
@@ -172,9 +162,9 @@ class NetworkApiServices {
         String tokenType = 'access',
       }) async {
     try {
-      print('🌐 Multipart POST URL: $url');
-      print('📤 Fields: $fields');
-      print('🖼️ Image: ${imageFile?.path}');
+      print('Multipart POST URL: $url');
+      print('Fields: $fields');
+      print('Image: ${imageFile?.path}');
 
       var request = http.MultipartRequest('POST', Uri.parse(url));
 
@@ -222,23 +212,23 @@ class NetworkApiServices {
         );
 
         request.files.add(multipartFile);
-        print('✅ Image file added: $fileName (${mediaType.toString()})');
+        print('Image file added: $fileName (${mediaType.toString()})');
       }
 
-      print('🚀 Sending multipart request...');
+      print('Sending multipart request...');
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
-      print('🔎 Response Code: ${response.statusCode}');
-      print('📦 Raw Response Body: ${response.body}');
+      print('Response Code: ${response.statusCode}');
+      print('Raw Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         var responseData = jsonDecode(response.body);
-        print('✅ Multipart Success: $responseData');
+        print('Multipart Success: $responseData');
         return responseData;
       } else {
         var errorData = jsonDecode(response.body);
-        print('❌ Multipart Error: $errorData');
+        print('Multipart Error: $errorData');
         throw Exception('API Error: ${errorData['message'] ?? 'Unknown error'}');
       }
     } on SocketException {
@@ -246,12 +236,12 @@ class NetworkApiServices {
     } on HttpException {
       throw Exception('NETWORK_ERROR');
     } catch (e) {
-      print('❌ Multipart Exception: $e');
+      print('Multipart Exception: $e');
       rethrow;
     }
   }
 
-  /// Retry mechanism for CloudFlare issues
+  // Retries GET after CloudFlare failures.
   static Future<dynamic> getApiWithRetry(
       String url, {
         bool withAuth = true,
@@ -268,10 +258,10 @@ class NetworkApiServices {
         if (attempt == maxRetries) {
           throw Exception('NETWORK_ERROR');
         }
-        print('⏳ Network error, retrying in ${retryDelay.inSeconds} seconds...');
+        print('Network error, retrying in ${retryDelay.inSeconds} seconds...');
         await Future.delayed(retryDelay);
       } catch (e) {
-        print('🔄 Attempt $attempt failed: $e');
+        print('Attempt $attempt failed: $e');
 
         if (attempt == maxRetries) {
           rethrow;
@@ -281,7 +271,7 @@ class NetworkApiServices {
             e.toString().contains('523') ||
             e.toString().contains('tunnel') ||
             e.toString().contains('HTML instead of JSON')) {
-          print('⏳ Retrying in ${retryDelay.inSeconds} seconds...');
+          print('Retrying in ${retryDelay.inSeconds} seconds...');
           await Future.delayed(retryDelay);
         } else {
           rethrow;
@@ -291,10 +281,9 @@ class NetworkApiServices {
     throw Exception('Max retries reached');
   }
 
-  /// ✅ NEW: Force logout and navigate to login
   static Future<void> _handleUnauthorized() async {
     try {
-      print('🚨 401 Unauthorized - Forcing logout...');
+      print('401 Unauthorized - Forcing logout...');
 
       await TokenStorage.clearAllTokens();
       await TokenStorage.clearAllPersonaSessions();
@@ -309,23 +298,21 @@ class NetworkApiServices {
       Get.offAll(() => LogInView());
 
     } catch (e) {
-      print('❌ Error during forced logout: $e');
+      print('Error during forced logout: $e');
     }
   }
 
-  /// ✅ UPDATED: Handle response with proper error messages
+  // Maps HTTP errors. 401 forces logout.
   static dynamic _handleResponse(http.Response response) {
-    print('🔎 Response Code: ${response.statusCode}');
-    print('📦 Raw Response Body: ${response.body}');
+    print('Response Code: ${response.statusCode}');
+    print('Raw Response Body: ${response.body}');
 
     try {
-      // ✅ Handle 401 Unauthorized - AUTO LOGOUT
       if (response.statusCode == 401) {
         Future.microtask(() => _handleUnauthorized());
         throw Exception('Session expired. Please login again.');
       }
 
-      // Handle successful responses (200-299)
       if (response.statusCode >= 200 && response.statusCode < 300) {
         if (response.body.isEmpty) {
           return {'success': true, 'message': 'Request completed successfully'};
@@ -337,22 +324,18 @@ class NetworkApiServices {
         throw Exception('Validation Error or you give common password when you create account');
       }
 
-      // ✅ Handle 429 - Rate Limit
       if (response.statusCode == 429) {
         throw Exception('AI usage limit exceeded. Please check your plan or billing.');
       }
 
-      // ✅ Handle 500 Internal Server Error
       if (response.statusCode == 500) {
         throw Exception('SERVER_ERROR');
       }
 
-      // ✅ Handle 503 Service Unavailable
       if (response.statusCode == 503) {
         throw Exception('SERVER_ERROR');
       }
 
-      // ✅ Handle CloudFlare specific errors
       if (response.statusCode == 523) {
         throw Exception('SERVER_ERROR');
       }
@@ -361,13 +344,11 @@ class NetworkApiServices {
         throw Exception('SERVER_ERROR');
       }
 
-      // Check if response is HTML (CloudFlare error page)
       if (response.body.trim().startsWith('<!DOCTYPE html>') ||
           response.body.trim().startsWith('<html')) {
         throw Exception('SERVER_ERROR');
       }
 
-      // Handle other error responses
       if (response.body.isNotEmpty) {
         try {
           final responseBody = jsonDecode(response.body);

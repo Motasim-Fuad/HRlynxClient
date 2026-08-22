@@ -33,14 +33,12 @@ class HomeView extends StatelessWidget {
             child: Column(
               children: [
                 SizedBox(height: 20,),
-                // Fixed Header Section
                 _buildFixedHeader(
                   horizontalPadding: horizontalPadding,
                   isDesktop: isDesktop,
                   isTablet: isTablet,
                 ),
 
-                // Scrollable GridView Section
                 Expanded(
                   child: _buildPersonaGridSection(
                     controller: controller,
@@ -70,7 +68,6 @@ class HomeView extends StatelessWidget {
         children: [
           SizedBox(height: isDesktop ? 40 : (isTablet ? 30 : 20)),
 
-          // Header Card with MediaQuery Height
           LayoutBuilder(
             builder: (context, constraints) {
               final screenHeight = MediaQuery.of(context).size.height;
@@ -158,7 +155,6 @@ class HomeView extends StatelessWidget {
 
           SizedBox(height: isDesktop ? 32 : (isTablet ? 28 : 24)),
 
-          // Section Title
           Padding(
             padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
             child: Align(
@@ -194,12 +190,10 @@ class HomeView extends StatelessWidget {
     double childAspectRatio = isDesktop ? 0.8 : (isTablet ? 0.75 : 0.7);
 
     return Obx(() {
-      // Loading State
       if (controller.isLoading.value || is_SubcribedController.isLoading.value) {
         return _buildLoadingIndicator(isDesktop: isDesktop, isTablet: isTablet);
       }
 
-      // Error State
       if (controller.hasError.value) {
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -215,7 +209,6 @@ class HomeView extends StatelessWidget {
         );
       }
 
-      // Empty State
       if (controller.personaList.isEmpty) {
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -225,7 +218,6 @@ class HomeView extends StatelessWidget {
 
       _printDebugInfo(is_SubcribedController);
 
-      // GridView with Personas
       return FutureBuilder<List<Widget>>(
         future: _buildPersonaCards(
           controller: controller,
@@ -428,12 +420,12 @@ class HomeView extends StatelessWidget {
   }
 
   void _printDebugInfo(UserIsSubcribedController controller) {
-    print("📊 Subscription status in HomeView:");
-    print("   isActive: ${controller.isActive.value}");
-    print("   isSubscribed: ${controller.isSubscribed.value}");
-    print("   isCanceled: ${controller.isCanceled.value}");
-    print("   hasPremiumAccess: ${controller.hasPremiumAccess.value}");
-    print("   selectedPersona: ${controller.selectedPersona.value?.id}");
+    print("Subscription status in HomeView:");
+    print("isActive: ${controller.isActive.value}");
+    print("isSubscribed: ${controller.isSubscribed.value}");
+    print("isCanceled: ${controller.isCanceled.value}");
+    print("hasPremiumAccess: ${controller.hasPremiumAccess.value}");
+    print("selectedPersona: ${controller.selectedPersona.value?.id}");
   }
 
   Future<List<Widget>> _buildPersonaCards({
@@ -455,7 +447,7 @@ class HomeView extends StatelessWidget {
 
       bool isPersonaActive = await is_SubcribedController.isPersonaAccessible(personaId);
 
-      print("🎭 Persona ${persona.title} (ID: $personaId) - Active: $isPersonaActive");
+      print("Persona ${persona.title} (ID: $personaId) - Active: $isPersonaActive");
 
       personaCards.add(
         _buildPersonaCard(
@@ -516,9 +508,8 @@ class HomeView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Image takes flexible space but won't shrink
             Expanded(
-              flex: 4, // Image gets 4 parts
+              flex: 4,
               child: _buildPersonaImage(
                 persona: persona,
                 isPersonaActive: isPersonaActive,
@@ -529,9 +520,8 @@ class HomeView extends StatelessWidget {
                 isTablet: isTablet,
               ),
             ),
-            // Text takes minimal fixed space
             Flexible(
-              flex: 0, // Text gets no flexible space, only its intrinsic size
+              flex: 0,
               child: _buildPersonaTitle(
                 title: persona.title ?? 'No Title',
                 isPersonaActive: isPersonaActive,
@@ -676,10 +666,10 @@ class HomeView extends StatelessWidget {
     required UserIsSubcribedController is_SubcribedController,
   }) async {
     if (isPersonaActive) {
-      print("✅ Starting chat for accessible persona: ${persona.title}");
+      print("Starting chat for accessible persona: ${persona.title}");
       await controller.startChatSession(persona);
     } else {
-      print("❌ Persona not accessible: ${persona.title}");
+      print("Persona not accessible: ${persona.title}");
       _showAccessRestrictedMessage(is_SubcribedController);
     }
   }

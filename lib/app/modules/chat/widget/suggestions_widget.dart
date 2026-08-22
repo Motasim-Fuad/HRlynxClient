@@ -5,7 +5,6 @@ import '../chat_controller.dart';
 class SuggestionsWidget extends StatelessWidget {
   final ChatController chatController;
 
-  // ✅ textController parameter সরানো — chatController.textController ব্যবহার হয়
 
   const SuggestionsWidget({
     super.key,
@@ -26,7 +25,6 @@ class SuggestionsWidget extends StatelessWidget {
               children: chatController.suggestions.map((suggestion) {
                 return GestureDetector(
                   onTap: () {
-                    // ✅ chatController.onSuggestionTap — internally uses textController
                     chatController.onSuggestionTap(suggestion);
                   },
                   child: Container(

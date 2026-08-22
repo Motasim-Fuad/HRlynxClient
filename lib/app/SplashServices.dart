@@ -1,5 +1,3 @@
-// lib/app/SplashServices.dart - PRODUCTION READY
-
 import 'dart:async';
 import 'package:get/get.dart';
 import 'api_servies/firebase_message.dart';
@@ -14,45 +12,41 @@ class SplashService {
     String? token;
 
     try {
-      print('🔍 ========================================');
-      print('🔍 CHECKING LOGIN');
-      print('🔍 ========================================\n');
+      print('CHECKING LOGIN');
 
       try {
         token = await TokenStorage.getLoginAccessToken().timeout(
           Duration(seconds: 5),
           onTimeout: () {
-            print('⚠️ Token timeout');
+            print('Token timeout');
             return null;
           },
         );
       } catch (e) {
-        print('❌ Token error: $e');
+        print('Token error: $e');
         token = null;
       }
 
       if (token == null || token.isEmpty || token == 'null') {
-        print('❌ No token');
-        print('   → SplashScreen\n');
+        print('No token');
+        print('→ SplashScreen');
         await _safeNavigateToSplashScreen();
         return;
       }
 
-      print('✅ Token found');
-      print('   → User logged in');
+      print('Token found');
+      print('→ User logged in');
 
       _initializeUserServicesAsync();
 
       await _safeNavigateToMainScreen();
 
-      print('\n✅ LOGIN CHECK COMPLETE\n');
+      print('LOGIN CHECK COMPLETE');
 
     } catch (e, stackTrace) {
-      print('❌ ========================================');
-      print('❌ LOGIN CHECK ERROR');
-      print('❌ ========================================');
+      print('LOGIN CHECK ERROR');
       print('Error: $e');
-      print('Stack: $stackTrace\n');
+      print('Stack: $stackTrace');
 
       await _safeNavigateToSplashScreen();
     }
@@ -61,21 +55,17 @@ class SplashService {
   void _initializeUserServicesAsync() {
     Future.microtask(() async {
       try {
-        print('\n🔧 ========================================');
-        print('🔧 USER SERVICES (BACKGROUND)');
-        print('🔧 ========================================\n');
+        print('USER SERVICES (BACKGROUND)');
 
         await _initializeNotificationService();
         await _sendFCMToken();
 
-        print('\n✅ USER SERVICES READY\n');
+        print('USER SERVICES READY');
 
       } catch (e, stackTrace) {
-        print('\n⚠️ ========================================');
-        print('⚠️ USER SERVICES ERROR');
-        print('⚠️ ========================================');
+        print('USER SERVICES ERROR');
         print('Error: $e');
-        print('Stack: $stackTrace\n');
+        print('Stack: $stackTrace');
       }
     });
   }
@@ -86,11 +76,11 @@ class SplashService {
 
     while (attempts < maxAttempts) {
       try {
-        print('📬 NotificationService (${attempts + 1}/$maxAttempts)...');
+        print('NotificationService (${attempts + 1}/$maxAttempts)...');
 
         if (!Get.isRegistered<NotificationService>()) {
           Get.put(NotificationService());
-          print('   ✅ Service registered');
+          print('Service registered');
         }
 
         final service = NotificationService.instance;
@@ -100,15 +90,15 @@ class SplashService {
           onTimeout: () => throw TimeoutException('Connection timeout'),
         );
 
-        print('✅ NotificationService ready');
+        print('NotificationService ready');
         return;
 
       } catch (e) {
         attempts++;
-        print('❌ Attempt $attempts failed: $e');
+        print('Attempt $attempts failed: $e');
 
         if (attempts >= maxAttempts) {
-          print('⚠️ NotificationService failed - continuing');
+          print('NotificationService failed - continuing');
           return;
         }
 
@@ -123,7 +113,7 @@ class SplashService {
 
     while (attempts < maxAttempts) {
       try {
-        print('🔐 Sending FCM token (${attempts + 1}/$maxAttempts)...');
+        print('Sending FCM token (${attempts + 1}/$maxAttempts)...');
 
         final firebaseMsg = FirebaseMeg();
 
@@ -132,15 +122,15 @@ class SplashService {
           onTimeout: () => throw TimeoutException('FCM send timeout'),
         );
 
-        print('✅ FCM token sent');
+        print('FCM token sent');
         return;
 
       } catch (e) {
         attempts++;
-        print('❌ FCM attempt $attempts failed: $e');
+        print('FCM attempt $attempts failed: $e');
 
         if (attempts >= maxAttempts) {
-          print('⚠️ FCM send failed - continuing');
+          print('FCM send failed - continuing');
           return;
         }
 
@@ -154,23 +144,23 @@ class SplashService {
       await Future.delayed(Duration(milliseconds: 100));
 
       if (Get.currentRoute == '/SplashScreen') {
-        print('ℹ️ Already on SplashScreen');
+        print('Already on SplashScreen');
         return;
       }
 
-      print('🚀 → SplashScreen');
+      print('→ SplashScreen');
       Get.offAll(() => SplashScreen());
-      print('✅ Navigation successful');
+      print('Navigation successful');
 
     } catch (e, stackTrace) {
-      print('❌ SplashScreen navigation failed: $e');
+      print('SplashScreen navigation failed: $e');
       print('Stack: $stackTrace');
 
       try {
         await Future.delayed(Duration(milliseconds: 500));
         Get.offAll(() => SplashScreen());
       } catch (finalError) {
-        print('❌ Final attempt failed: $finalError');
+        print('Final attempt failed: $finalError');
       }
     }
   }
@@ -180,30 +170,30 @@ class SplashService {
       await Future.delayed(Duration(milliseconds: 100));
 
       if (Get.currentRoute == '/MainScreen') {
-        print('ℹ️ Already on MainScreen');
+        print('Already on MainScreen');
         return;
       }
 
-      print('🚀 → MainScreen');
+      print('→ MainScreen');
       Get.offAll(() => MainScreen());
-      print('✅ Navigation successful');
+      print('Navigation successful');
 
     } catch (e, stackTrace) {
-      print('❌ MainScreen navigation failed: $e');
+      print('MainScreen navigation failed: $e');
       print('Stack: $stackTrace');
 
       try {
-        print('⚠️ Fallback to SplashScreen');
+        print('Fallback to SplashScreen');
         await Future.delayed(Duration(milliseconds: 500));
         Get.offAll(() => SplashScreen());
       } catch (finalError) {
-        print('❌ Final attempt failed: $finalError');
+        print('Final attempt failed: $finalError');
       }
     }
   }
 
   Future<void> retryInitialization() async {
-    print('\n🔄 Manual retry');
+    print('Manual retry');
     await checkLoginStatus();
   }
 }

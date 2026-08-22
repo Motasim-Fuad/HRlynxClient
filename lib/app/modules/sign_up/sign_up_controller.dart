@@ -13,13 +13,11 @@ class SignUpController extends GetxController {
   var isChecked = false.obs;
   var isLoading = false.obs;
 
-  // Generate a unique key each time
   late final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
   void onInit() {
     super.onInit();
-    // Clear form when controller is initialized
     email.value = '';
     password.value = '';
     confirmPassword.value = '';

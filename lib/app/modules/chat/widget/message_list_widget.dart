@@ -33,16 +33,13 @@ class MessageListWidget extends StatelessWidget {
           final message = chatController.messages[i];
           final isMe = message.isUser == true;
 
-          // Check if we should show date separator
           final previousMessage = i > 0 ? chatController.messages[i - 1] : null;
           final showDateSeparator = _shouldShowDateSeparator(previousMessage, message);
 
           return Column(
             children: [
-              // DATE SEPARATOR
               if (showDateSeparator) _buildDateSeparator(message.createdAt),
 
-              // MESSAGE BUBBLE
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -62,7 +59,7 @@ class MessageListWidget extends StatelessWidget {
                         child: session == null ||
                             session.persona?.avatar == null ||
                             session.persona!.avatar!.isEmpty
-                            ? Icon(Icons.smart_toy, size: 20, color: Colors.grey[600]) // AI icon
+                            ? Icon(Icons.smart_toy, size: 20, color: Colors.grey[600])
                             : null,
                       ),
                     if (!isMe) const SizedBox(width: 8),
@@ -70,10 +67,8 @@ class MessageListWidget extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
-                          // VOICE OR TEXT MESSAGE
                           _buildMessageContent(message, isMe),
 
-                          // TIME DISPLAY
                           const SizedBox(height: 4),
                           _buildTimeDisplay(message, isMe),
                         ],
@@ -103,7 +98,6 @@ class MessageListWidget extends StatelessWidget {
     );
   }
 
-  // BUILD DATE SEPARATOR
   Widget _buildDateSeparator(String? timestamp) {
     final date = _parseDate(timestamp);
     final formattedDate = _formatDate(date);
@@ -130,7 +124,6 @@ class MessageListWidget extends StatelessWidget {
     );
   }
 
-  // BUILD MESSAGE CONTENT (VOICE OR TEXT)
   Widget _buildMessageContent(dynamic message, bool isMe) {
     bool shouldShowAsVoice = message.isVoice;
 
@@ -184,7 +177,6 @@ class MessageListWidget extends StatelessWidget {
     }
   }
 
-  // BUILD TIME DISPLAY WITH DATE & TIME
   Widget _buildTimeDisplay(dynamic message, bool isMe) {
     final date = _parseDate(message.createdAt);
     final formattedTime = _formatTime(date);
@@ -215,7 +207,6 @@ class MessageListWidget extends StatelessWidget {
     );
   }
 
-  // HELPER: CHECK IF SHOULD SHOW DATE SEPARATOR
   bool _shouldShowDateSeparator(dynamic previousMessage, dynamic currentMessage) {
     if (previousMessage == null) return true;
 
@@ -232,7 +223,6 @@ class MessageListWidget extends StatelessWidget {
     }
   }
 
-  // HELPER: PARSE DATE
   DateTime _parseDate(String? timestamp) {
     try {
       if (timestamp != null && timestamp.isNotEmpty) {
@@ -244,7 +234,6 @@ class MessageListWidget extends StatelessWidget {
     return DateTime.now();
   }
 
-  // HELPER: FORMAT DATE (Today, Yesterday, etc.)
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -256,16 +245,15 @@ class MessageListWidget extends StatelessWidget {
     } else if (messageDay == yesterday) {
       return 'Yesterday';
     } else if (now.difference(messageDay).inDays < 7) {
-      return DateFormat('EEEE').format(date); // Monday, Tuesday, etc.
+      return DateFormat('EEEE').format(date);
     } else if (date.year == now.year) {
-      return DateFormat('MMM d').format(date); // Jan 15
+      return DateFormat('MMM d').format(date);
     } else {
-      return DateFormat('MMM d, yyyy').format(date); // Jan 15, 2024
+      return DateFormat('MMM d, yyyy').format(date);
     }
   }
 
-  // HELPER: FORMAT TIME (3:45 PM)
   String _formatTime(DateTime date) {
-    return DateFormat('h:mm a').format(date); // 3:45 PM
+    return DateFormat('h:mm a').format(date);
   }
 }

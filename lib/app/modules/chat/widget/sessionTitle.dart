@@ -7,23 +7,23 @@ import '../../../model/chat/sessionHistoryModel.dart';
 class SessionHistoryTile extends StatelessWidget {
   final SessionHistory session;
   final VoidCallback onTap;
-  final VoidCallback? onDelete; // Add delete callback
-  final bool isCurrentSession; // Add this to identify current session
+  final VoidCallback? onDelete;
+  final bool isCurrentSession;
 
   const SessionHistoryTile({
     required this.session,
     required this.onTap,
-    this.onDelete, // Optional delete callback
-    this.isCurrentSession = false, // Default to false
+    this.onDelete,
+    this.isCurrentSession = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key('session_${session.id}'), // Unique key for each session
+      key: Key('session_${session.id}'),
       direction: isCurrentSession
-          ? DismissDirection.none // Disable swipe for current session
-          : DismissDirection.endToStart, // Allow swipe for other sessions
+          ? DismissDirection.none
+          : DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: 20),
@@ -35,10 +35,8 @@ class SessionHistoryTile extends StatelessWidget {
         ),
       ),
       confirmDismiss: (direction) async {
-        // Don't show dialog for current session
         if (isCurrentSession) return false;
 
-        // Show confirmation dialog
         return await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
@@ -60,10 +58,9 @@ class SessionHistoryTile extends StatelessWidget {
               ],
             );
           },
-        ) ?? false; // Return false if dialog is dismissed
+        ) ?? false;
       },
       onDismissed: (direction) {
-        // Call the delete callback if provided and not current session
         if (onDelete != null && !isCurrentSession) {
           onDelete!();
         }
@@ -71,7 +68,7 @@ class SessionHistoryTile extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: isCurrentSession
-              ? Colors.teal.shade800.withOpacity(0.3) // Highlight current session
+              ? Colors.teal.shade800.withOpacity(0.3)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
@@ -119,18 +116,18 @@ class SessionHistoryTile extends StatelessWidget {
               ),
             ],
           ),
-          onTap: isCurrentSession ? null : onTap, // Disable tap for current session
+          onTap: isCurrentSession ? null : onTap,
           trailing: isCurrentSession
               ? Icon(
             Icons.check_circle,
             color: Colors.green,
             size: 20,
-          ) // Show active indicator instead of swipe hint
+          )
               : Icon(
             Icons.swipe_left,
             color: Colors.white54,
             size: 16,
-          ), // Visual hint for swipe action
+          ),
         ),
       ),
     );

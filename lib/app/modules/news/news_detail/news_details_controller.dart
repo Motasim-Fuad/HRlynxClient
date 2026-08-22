@@ -20,11 +20,10 @@ class NewsDetailsViewModel extends GetxController {
   final RxString error = ''.obs;
   final RxInt selectedTagIndex = RxInt(-1);
 
-  // ✅ NEW: Error type tracking
   final RxString errorType = ''.obs;
 
   NewsDetailsModel? _cachedArticle;
-  int? _currentArticleId; // ✅ Store article ID for retry
+  int? _currentArticleId;
 
   @override
   void onInit() {
@@ -33,11 +32,10 @@ class NewsDetailsViewModel extends GetxController {
   }
 
   void initializeArticle(int articleId) {
-    _currentArticleId = articleId; // ✅ Save for retry
+    _currentArticleId = articleId;
     fetchArticleDetails(articleId);
   }
 
-  /// ✅ UPDATED: Better error handling
   Future<void> fetchArticleDetails(int articleId) async {
     try {
       if (_cachedArticle != null) {
@@ -45,10 +43,10 @@ class NewsDetailsViewModel extends GetxController {
         isLoading.value = false;
 
         if (_cachedArticle?.category != null) {
-          print('📰 Using cached article with category: ${_cachedArticle!.category!.name}');
+          print('Using cached article with category: ${_cachedArticle!.category!.name}');
           await loadAffiliateProducts(_cachedArticle!.category!);
         } else {
-          print('⚠️ Cached article has no category - no affiliate products to load');
+          print('Cached article has no category - no affiliate products to load');
         }
         return;
       }
@@ -57,7 +55,7 @@ class NewsDetailsViewModel extends GetxController {
       error.value = '';
       errorType.value = '';
 
-      print('🔍 Fetching article details for ID: $articleId');
+      print('Fetching article details for ID: $articleId');
 
       final response = await _newsRepository.getArticleDetails(articleId);
 
@@ -65,22 +63,21 @@ class NewsDetailsViewModel extends GetxController {
         _cachedArticle = NewsDetailsModel.fromJson(response['data']);
         article.value = _cachedArticle;
 
-        print('✅ Article loaded: ${_cachedArticle!.aiTitle}');
+        print('Article loaded: ${_cachedArticle!.aiTitle}');
 
         if (_cachedArticle?.category != null) {
-          print('📦 Article has category: ${_cachedArticle!.category!.name} - Loading affiliate products');
+          print('Article has category: ${_cachedArticle!.category!.name} - Loading affiliate products');
           await loadAffiliateProducts(_cachedArticle!.category!);
         } else {
-          print('⚠️ Article has no category - no affiliate products to load');
+          print('Article has no category - no affiliate products to load');
         }
       } else {
         throw Exception('Failed to load article details - ${response['error']}');
       }
     } catch (e) {
       String errorMsg = e.toString();
-      print('❌ Error fetching article details: $errorMsg');
+      print('Error fetching article details: $errorMsg');
 
-      // ✅ Categorize errors
       if (errorMsg.contains('NETWORK_ERROR')) {
         error.value = 'No Internet Connection';
         errorType.value = 'NETWORK_ERROR';
@@ -100,7 +97,7 @@ class NewsDetailsViewModel extends GetxController {
   }
 
   Future<void> loadAffiliateProducts(CategoryModel category) async {
-    print('🔍 Loading affiliate products for category: ${category.name} (Slug: ${category.slug})');
+    print('Loading affiliate products for category: ${category.name} (Slug: ${category.slug})');
 
     await _affiliateController.fetchAffiliateProducts(
       categorySlug: category.slug,
@@ -115,7 +112,7 @@ class NewsDetailsViewModel extends GetxController {
   Future<void> refreshAffiliateProducts() async {
     if (article.value?.category != null) {
       final category = article.value!.category!;
-      print('🔄 Refreshing affiliate products for category: ${category.slug}');
+      print('Refreshing affiliate products for category: ${category.slug}');
 
       await _affiliateController.refreshProducts(
         categorySlug: category.slug,
@@ -126,7 +123,7 @@ class NewsDetailsViewModel extends GetxController {
   Future<void> loadMoreAffiliateProducts() async {
     if (article.value?.category != null) {
       final category = article.value!.category!;
-      print('📄 Loading more affiliate products for category: ${category.slug}');
+      print('Loading more affiliate products for category: ${category.slug}');
 
       await _affiliateController.loadMoreProducts(
         categorySlug: category.slug,
@@ -177,7 +174,7 @@ class NewsDetailsViewModel extends GetxController {
     }
   }
 
-  /// ✅ iPad share fix
+  // sharePositionOrigin is required on iPad.
   Future<void> shareArticle({Rect? sharePositionOrigin}) async {
     final currentArticle = article.value;
     if (currentArticle == null) return;
@@ -205,7 +202,7 @@ class NewsDetailsViewModel extends GetxController {
       await Share.share(
         shareText,
         subject: title,
-        sharePositionOrigin: sharePositionOrigin, // ✅ iPad fix
+        sharePositionOrigin: sharePositionOrigin,
       );
 
     } catch (e) {
@@ -252,7 +249,6 @@ class NewsDetailsViewModel extends GetxController {
     }
   }
 
-  /// ✅ NEW: Retry method
   Future<void> retryLoadArticle() async {
     if (_currentArticleId != null) {
       clearCache();
@@ -274,4 +270,3 @@ class NewsDetailsViewModel extends GetxController {
     super.onClose();
   }
 }
-

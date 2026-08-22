@@ -12,12 +12,10 @@ class AuthRepository {
 
   final userController = Get.put(UserController());
 
-  // ---------- Persona ----------
   Future<dynamic> getParsonaType() async {
     String url = "${ApiConstants.baseUrl}/api/aipersona/personas/";
 
     try {
-      // Use the retry mechanism for CloudFlare issues
       return await NetworkApiServices.getApiWithRetry(
         url,
         withAuth: false,
@@ -25,9 +23,8 @@ class AuthRepository {
         retryDelay: Duration(seconds: 3),
       );
     } catch (e) {
-      print('❌ Final error after retries: $e');
+      print('Final error after retries: $e');
 
-      // Provide user-friendly error message
       if (e.toString().contains('CloudFlare') ||
           e.toString().contains('523') ||
           e.toString().contains('tunnel')) {
@@ -48,7 +45,6 @@ class AuthRepository {
     return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
   }
 
-  // ---------- Auth ----------
   Future<dynamic> login(String email, String password) async {
     final body = {
       "email": email,
@@ -73,19 +69,15 @@ class AuthRepository {
     return await NetworkApiServices.postApi(url, body, withAuth: false);
   }
 
-  // ---------- Logout ----------
   Future<dynamic> LogOut() async {
     String url = "${ApiConstants.baseUrl}/api/auth/logout/";
 
-    // Get the refresh token first
     final refreshToken = await TokenStorage.getLoginRefreshToken();
 
-    // Ensure it's not null
     if (refreshToken == null || refreshToken.isEmpty) {
       throw Exception("No refresh token found for logout.");
     }
 
-    // Send it in the body as expected by backend
     final body = {
       "refresh": refreshToken,
     };
@@ -99,8 +91,6 @@ class AuthRepository {
   }
 
 
-
-  // ---------- Forgot Password ----------
   Future<dynamic> forgotPassword(Map<String, dynamic> body) async {
     String url = "${ApiConstants.baseUrl}/api/auth/password/reset-request/";
     return await NetworkApiServices.postApi(url, body, withAuth: false);
@@ -120,7 +110,6 @@ class AuthRepository {
     return await NetworkApiServices.postApi(url, body, withAuth: false);
   }
 
-// ---------- Social SignUp (Google & Apple) ----------
   Future<bool> SocialSignUpAndSetPersona({
     required String email,
     required String name,
@@ -134,7 +123,7 @@ class AuthRepository {
         "provider": provider,
       };
 
-      print("📤 Sending social login payload: $body");
+      print("Sending social login payload: $body");
 
       final response = await NetworkApiServices.postApi(url, body, withAuth: false);
 
@@ -145,19 +134,18 @@ class AuthRepository {
       final userEmail = user['email'];
       final userID = user['id'];
 
-      print("--------------------in repo  i send user id to cusercontroller $userID");
+      print("in repo i send user id to cusercontroller $userID");
 
       await TokenStorage.saveLoginTokens(access, refresh);
       await TokenStorage.saveUserEmail(userEmail);
       await TokenStorage.saveUserId(userID);
       return true;
     } catch (e) {
-      print('❌ googleSignUpAndSetPersona Error: $e');
+      print('googleSignUpAndSetPersona Error: $e');
       return false;
     }
   }
 
-  // ---------- Profile ----------
   Future<dynamic> getUserProfile() async {
     String url = "${ApiConstants.baseUrl}/api/profile/";
     return await NetworkApiServices.getApi(url, tokenType: 'login');
@@ -175,7 +163,6 @@ class AuthRepository {
       "confirm": "True"
     };
 
-    // Try POST request instead of DELETE
     return await NetworkApiServices.postApi(
       url,
       body,
@@ -190,7 +177,7 @@ class AuthRepository {
       url,
       body,
       withAuth: true,
-      tokenType: 'login', // Use access token from login
+      tokenType: 'login',
     );
   }
 
@@ -198,7 +185,6 @@ class AuthRepository {
   Future<dynamic> uploadProfileData(Map<String, dynamic> body, {File? imageFile}) async {
     String url = "${ApiConstants.baseUrl}/api/auth/profile/";
 
-    // Remove image path from body if it exists
     Map<String, dynamic> cleanBody = Map.from(body);
     cleanBody.remove('profile_picture');
 
@@ -212,17 +198,14 @@ class AuthRepository {
     );
   }
   Future<dynamic> fetchProfileData() async {
-    String url = "${ApiConstants.baseUrl}/api/auth/profile/"; // This is correct!
+    String url = "${ApiConstants.baseUrl}/api/auth/profile/";
     return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
   }
 
-// ---------- home ----------
-      //---For Chat Start
   Future<dynamic> getAllAiPersona() async {
     String url = "${ApiConstants.baseUrl}/api/aipersona/personas/";
     return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
   }
-
 
 
   Future<String?> createSession(int personaId) async {
@@ -240,7 +223,7 @@ class AuthRepository {
         tokenType: 'login',
       );
 
-      print('✅ Session creation response: $response');
+      print('Session creation response: $response');
 
       if (response != null &&
           response['session'] != null &&
@@ -250,15 +233,12 @@ class AuthRepository {
         throw Exception('Invalid session response format');
       }
     } catch (e) {
-      print('❌ Error creating session: $e');
+      print('Error creating session: $e');
       return null;
     }
   }
 
-      //---For Chat end
 
-
-// ---------- chat ----------
   Future<dynamic> AiSuggestions(int  personaId) async {
     String url = "${ApiConstants.baseUrl}/api/chat/suggestions/?persona_id=$personaId";
     return await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
@@ -270,24 +250,24 @@ class AuthRepository {
   }
 
 
-  Future<dynamic> fetchSessionsDetails(int sessionId) async {  // 👈 CHANGE TO STRING
+  Future<dynamic> fetchSessionsDetails(int sessionId) async {
     print("fuadAuth1");
     final url = "${ApiConstants.baseUrl}/api/chat/sessions/$sessionId/";
     print("fuadAuth2");
-    print('🌐 Fetching session details for: $url');
+    print('Fetching session details for: $url');
     print("fuadAuth3");
 
     try {
       print("fuadAuth4");
       final response = await NetworkApiServices.getApi(url, withAuth: true, tokenType: 'login');
       print("fuadAuth5");
-      print('✅ Session details response: $response');
+      print('Session details response: $response');
       print("fuadAuth6$response");
       return response;
 
     } catch (e) {
       print("fuadAuth7");
-      print('❌❌❌❌❌❌❌❌ Error fetching session details: $e');
+      print('Error fetching session details: $e');
       return null;
     }
   }
@@ -298,46 +278,39 @@ class AuthRepository {
     return await NetworkApiServices.deleteApi(url, withAuth: true, tokenType: 'login');
   }
 
-  // ---------- Terms & Conditions ----------
   Future<dynamic> getTermsAndConditions() async {
     String url = "${ApiConstants.baseUrl}/api/core/terms-and-conditions/";
     try {
       return await NetworkApiServices.getApi(url, withAuth: false);
     } catch (e) {
-      print('❌ Error fetching terms and conditions: $e');
+      print('Error fetching terms and conditions: $e');
       rethrow;
     }
   }
 
-  // ---------- Privacy Policy ----------
   Future<dynamic> getPrivacyPolicy() async {
     String url = "${ApiConstants.baseUrl}/api/core/privacy-policy/";
     try {
       return await NetworkApiServices.getApi(url, withAuth: false);
     } catch (e) {
-      print('❌ Error fetching privacy policy: $e');
+      print('Error fetching privacy policy: $e');
       rethrow;
     }
   }
 
 
-
-// In auth_repo.dart - Replace the existing getAffiliateProducts method
-
   Future<Map<String, dynamic>> getAffiliateProducts({
     required String categorySlug,
-    int page = 1,  // Add page parameter for pagination
+    int page = 1,
   }) async {
     try {
-      // Use the correct endpoint format from your API
       String url = "${ApiConstants.baseUrl}/api/affiliate/products/?category_slug=$categorySlug";
 
-      // Add page parameter if not first page
       if (page > 1) {
         url += "&page=$page";
       }
 
-      print('🔗 Fetching affiliate products from: $url');
+      print('Fetching affiliate products from: $url');
 
       final response = await NetworkApiServices.getApi(
           url,
@@ -346,7 +319,7 @@ class AuthRepository {
       );
 
       if (response != null) {
-        print('✅ Affiliate products response: $response');
+        print('Affiliate products response: $response');
         return {
           'success': true,
           'data': response,
@@ -358,7 +331,7 @@ class AuthRepository {
         };
       }
     } catch (e) {
-      print('❌ Error fetching affiliate products: $e');
+      print('Error fetching affiliate products: $e');
       return {
         'success': false,
         'error': 'Error fetching affiliate products: $e',
@@ -366,7 +339,6 @@ class AuthRepository {
     }
   }
 
-// Track click count
   Future<Map<String, dynamic>> trackClick(int product) async {
     try {
       String url = "${ApiConstants.baseUrl}/api/affiliate/track-click/";
@@ -374,8 +346,8 @@ class AuthRepository {
         'product': product,
       };
 
-      print('🔗 Tracking click for product: $product');
-      print('📤 Request body: $body');
+      print('Tracking click for product: $product');
+      print('Request body: $body');
 
       final response = await NetworkApiServices.postApi(
           url,
@@ -385,7 +357,7 @@ class AuthRepository {
       );
 
       if (response != null) {
-        print('✅ Track click response: $response');
+        print('Track click response: $response');
         return {
           'success': true,
           'data': response,
@@ -397,7 +369,7 @@ class AuthRepository {
         };
       }
     } catch (e) {
-      print('❌ Error tracking click: $e');
+      print('Error tracking click: $e');
       return {
         'success': false,
         'error': 'Error tracking click: $e',

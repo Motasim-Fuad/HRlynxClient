@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,7 +18,7 @@ class AiConsentDialog {
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
-          '🔒 AI Chat Disclosure',
+          'AI Chat Disclosure',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: const Text(
@@ -39,7 +38,6 @@ class AiConsentDialog {
               ),
             ),
             onPressed: () async {
-              // ✅ Update ConsentController reactively
               final consentCtrl = Get.find<ConsentController>();
               await consentCtrl.giveConsent();
               Navigator.of(context).pop();
@@ -54,8 +52,6 @@ class AiConsentDialog {
     );
   }
 }
-
-
 
 
 class ConsentController extends GetxController {

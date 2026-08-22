@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:get/get.dart';
 import '../../api_servies/repository/auth_repo.dart';
@@ -10,7 +9,6 @@ class ResetPasswordController extends GetxController {
   final confirmPassword = ''.obs;
   final isLoading = false.obs;
 
-  // These can be moved to a separate PasswordController if needed elsewhere
   final isObscuredNew = true.obs;
   final isObscuredConfirm = true.obs;
 
@@ -19,13 +17,11 @@ class ResetPasswordController extends GetxController {
 
   Future<void> updatePassword() async {
     try {
-      // Get email and OTP from arguments
       final args = Get.arguments;
       if (args == null || args['email'] == null || args['otp'] == null) {
         throw Exception('Email and OTP are required');
       }
 
-      // Validate passwords
       if (newPassword.value.isEmpty || confirmPassword.value.isEmpty) {
         throw Exception('Please enter both passwords');
       }
@@ -51,7 +47,6 @@ class ResetPasswordController extends GetxController {
 
       if (response['success'] == true) {
         Get.snackbar("Success", response['message'] ?? "Password updated successfully");
-        // Navigate to login or other appropriate screen
         Get.off(LogInView());
       } else {
         throw Exception(response['message'] ?? "Failed to update password");

@@ -24,7 +24,6 @@ class UploadDataController extends GetxController {
     fetchExistingProfileData();
   }
 
-  /// Fetch profile data
   Future<void> fetchExistingProfileData() async {
     try {
       isFetchingData.value = true;
@@ -49,13 +48,11 @@ class UploadDataController extends GetxController {
         }
       }
     } catch (_) {
-      // silent fail
     } finally {
       isFetchingData.value = false;
     }
   }
 
-  /// Pick Image
   Future<void> pickImage() async {
     try {
       final picked = await ImagePicker().pickImage(
@@ -88,7 +85,6 @@ class UploadDataController extends GetxController {
     );
   }
 
-  /// Save Data
   Future<void> saveData() async {
     if (nameController.text.isEmpty ||
         phoneController.text.isEmpty) {

@@ -1,4 +1,3 @@
-// 1. MODEL - news_details_model.dart
 class NewsDetailsModel {
   final int id;
   final String? aiTitle;

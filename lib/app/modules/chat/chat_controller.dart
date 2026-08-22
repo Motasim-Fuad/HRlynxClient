@@ -31,7 +31,6 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
 
   final TextEditingController textController = TextEditingController();
 
-  // ─── Token Limit System ────────────────────────────────────────
   var tokenLimitInfo      = Rxn<Map<String, dynamic>>();
   var isTokenLimitReached = false.obs;
   var showNearLimitBanner = false.obs;
@@ -40,7 +39,6 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
   var tokensTotal         = 20000.obs;
   var limitBannerTitle    = ''.obs;
   var limitBannerMessage  = ''.obs;
-  // ────────────────────────────────────────────────────────────────
 
   final ScrollController scrollController = ScrollController();
 
@@ -51,6 +49,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
     this.isNewSession = false,
   });
 
+  // Syncs token limit after a controller rebuild.
   @override
   void onInit() {
     super.onInit();
@@ -59,14 +58,12 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
       duration: const Duration(milliseconds: 1000),
     );
 
-    // ✅ WebSocketService থেকে limit state sync করো
-    // Hot reload এ controller নতুন হলেও wsService এর state নেয়
     if (wsService.isLimitReached) {
       isTokenLimitReached.value = true;
       showNearLimitBanner.value = false;
       limitBannerMessage.value =
       "Daily AI limit reached. Try again tomorrow or upgrade your plan.";
-      print('♻️ Limit state synced from WebSocketService');
+      print('Limit state synced from WebSocketService');
     }
 
     fetchSessionDetails();
@@ -76,22 +73,19 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
 
   @override
   void onClose() {
-    print('🧹 ChatController close — persona: $personaId, session: $sessionId');
+    print('ChatController close — persona: $personaId, session: $sessionId');
     _streamSubscription?.cancel();
     _streamSubscription = null;
-    wsService.disconnect().catchError((e) => print('❌ WS disconnect: $e'));
+    wsService.disconnect().catchError((e) => print('WS disconnect: $e'));
     historyAnimationController.dispose();
     try {
       if (scrollController.hasClients) scrollController.dispose();
     } catch (e) {
-      print('❌ ScrollController dispose error: $e');
+      print('ScrollController dispose error: $e');
     }
     super.onClose();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // TOKEN LIMIT
-  // ─────────────────────────────────────────────────────────────────────────
 
   void _handleTokenLimitInfo(Map<String, dynamic> status) {
     tokenLimitInfo.value = status;
@@ -106,38 +100,32 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
     final int    used  = usage['tokens']     ?? 0;
     final int    left  = remaining['tokens'] ?? 0;
 
-    // ✅ Clamp করা হয়েছে — 175% বা 200% দেখাবে না, max 1.0
     final double pct = (total > 0 ? (used / total) : 0.0).clamp(0.0, 1.0);
 
     tokensTotal.value       = total;
     tokensRemaining.value   = left;
     tokenUsagePercent.value = pct;
 
-    print('📊 Token: $used/$total  (${(pct * 100).toStringAsFixed(1)}%)');
+    print('Token: $used/$total (${(pct * 100).toStringAsFixed(1)}%)');
 
-    // ─── 🔴 100% LIMIT ────────────────────────────────────────────
     if (status['limit_reached'] == true || left <= 0) {
       isTokenLimitReached.value = true;
       showNearLimitBanner.value = false;
 
-      // Backend message — না থাকলে fallback
       final backendMsg = status['message']?.toString().trim() ?? '';
       limitBannerMessage.value = backendMsg.isNotEmpty
           ? backendMsg
           : "Daily AI limit reached. Try again tomorrow or upgrade your plan.";
     }
 
-    // ─── 🟡 90% WARNING ───────────────────────────────────────────
     else if (pct >= 0.90) {
       showNearLimitBanner.value = true;
       isTokenLimitReached.value = false;
 
-      // ✅ Custom frontend message — 19k/20k দেখাবে না
       limitBannerMessage.value =
       "You're approaching your daily AI limit. Upgrade to continue without interruption.";
     }
 
-    // ─── ✅ Normal ─────────────────────────────────────────────────
     else {
       showNearLimitBanner.value = false;
       isTokenLimitReached.value = false;
@@ -149,14 +137,11 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
     return plan.contains('free') || plan.contains('no subscription');
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // SEND — limit থাকলে block করো
-  // ─────────────────────────────────────────────────────────────────────────
 
+  // Blocks send when the daily token limit is reached.
   void send(String msg) {
-    // 🔒 Hard block — limit reached হলে message যাবে না
     if (isTokenLimitReached.value) {
-      print('🚫 Send blocked — token limit reached');
+      print('Send blocked — token limit reached');
       return;
     }
 
@@ -185,14 +170,10 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // VOICE
-  // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> sendVoiceMessage(String sessionId) async {
-    // 🔒 Voice message ও block
     if (isTokenLimitReached.value) {
-      print('🚫 Voice blocked — token limit reached');
+      print('Voice blocked — token limit reached');
       return;
     }
 
@@ -226,24 +207,21 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
         Get.snackbar('Error', 'Failed to send voice message');
       }
     } catch (e) {
-      print('❌ Voice error: $e');
+      print('Voice error: $e');
       Get.snackbar('Error', 'Error: $e');
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // WEBSOCKET
-  // ─────────────────────────────────────────────────────────────────────────
 
   void _setupWebSocketListener() {
     _streamSubscription?.cancel();
     Future.delayed(const Duration(milliseconds: 500), () {
       _streamSubscription = wsService.stream.listen(
         _handleWebSocketMessage,
-        onError: (e) { print('❌ WS error: $e'); _handleConnectionError(); },
-        onDone:  () { print('✅ WS closed'); isTyping.value = false; },
+        onError: (e) { print('WS error: $e'); _handleConnectionError(); },
+        onDone:  () { print('WS closed'); isTyping.value = false; },
       );
-      print('📡 WS listener ready');
+      print('WS listener ready');
     });
   }
 
@@ -260,7 +238,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
 
       switch (data['type']) {
         case 'connection':
-          print('✅ WS connected: ${data['message']}');
+          print('WS connected: ${data['message']}');
           break;
 
         case 'error':
@@ -282,7 +260,6 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
           isTyping.value = false;
           final limitInfo = data['limit_info'];
           if (limitInfo != null) {
-            // ✅ Backend message directly set করো
             final msg = limitInfo['message']?.toString().trim() ?? '';
             limitBannerMessage.value = msg.isNotEmpty
                 ? msg
@@ -296,18 +273,18 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
               showNearLimitBanner.value = false;
             }
           }
-          print('🚫 Limit reached: ${limitBannerMessage.value}');
+          print('Limit reached: ${limitBannerMessage.value}');
           break;
 
         case 'pong':
-          print('💓 Pong');
+          print('Pong');
           break;
 
         default:
-          print('❓ Unknown type: ${data['type']}');
+          print('Unknown type: ${data['type']}');
       }
     } catch (e) {
-      print('❌ WS parse error: $e');
+      print('WS parse error: $e');
     }
   }
 
@@ -335,12 +312,12 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
             data['created_at'] ??
             DateTime.now().toIso8601String(),
       ));
-      print('📝 AI message added. Total: ${messages.length}');
+      print('AI message added. Total: ${messages.length}');
       update();
       messages.refresh();
       WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
     } catch (e) {
-      print('❌ Incoming message error: $e');
+      print('Incoming message error: $e');
     }
   }
 
@@ -374,7 +351,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
         _handleIncomingMessage(data);
       }
     } catch (e) {
-      print('❌ Incoming voice error: $e');
+      print('Incoming voice error: $e');
     }
   }
 
@@ -385,7 +362,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
 
     if (errorMessage.contains('429') || errorMessage.contains('quota') ||
         errorMessage.contains('exceeded') || errorMessage.contains('insufficient_quota')) {
-      title = '🚫 AI Usage Limit Reached';
+      title = 'AI Usage Limit Reached';
       msg   = "You've exceeded your AI usage quota.";
       bg    = Colors.orange.shade700;
       isTyping.value = false;
@@ -419,16 +396,13 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
       if (token != null) {
         await wsService.connect(sessionId, token, personaId: personaId);
         _setupWebSocketListener();
-        print('🔄 Reconnected');
+        print('Reconnected');
       }
     } catch (e) {
-      print('❌ Reconnect failed: $e');
+      print('Reconnect failed: $e');
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // SUGGESTIONS
-  // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> fetchSuggestions(int personaId) async {
     try {
@@ -446,7 +420,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
       suggestions.clear();
       showSuggestions.value = false;
     } catch (e) {
-      print('❌ Suggestions error: $e');
+      print('Suggestions error: $e');
       suggestions.clear();
       showSuggestions.value = false;
     } finally {
@@ -462,15 +436,12 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
     isFirstTime.value = false;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // SESSION DETAILS
-  // ─────────────────────────────────────────────────────────────────────────
 
   Future<void> fetchSessionDetails() async {
     try {
       final sessionIdInt = sessionIdAsInt;
       if (sessionIdInt == null) {
-        print("❌ Invalid session ID: '$sessionId'");
+        print("Invalid session ID: '$sessionId'");
         return;
       }
 
@@ -519,7 +490,7 @@ class ChatController extends GetxController with GetTickerProviderStateMixin {
       }
       WidgetsBinding.instance.addPostFrameCallback((_) => scrollToBottom());
     } catch (e) {
-      print("❌ fetchSessionDetails error: $e");
+      print("fetchSessionDetails error: $e");
     }
   }
 

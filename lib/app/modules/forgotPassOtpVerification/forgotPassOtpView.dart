@@ -16,11 +16,9 @@ class Forgotpassotpview extends StatelessWidget {
       appBar: AppBar(title: const Text("OTP Verification"),backgroundColor: Colors.white,),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Responsive breakpoints
           final isTablet = constraints.maxWidth > 600;
           final isDesktop = constraints.maxWidth > 1024;
 
-          // Responsive values
           final horizontalPadding = isDesktop ? 40.0 : (isTablet ? 32.0 : 24.0);
           final topSpacing = isDesktop ? 100.0 : (isTablet ? 90.0 : 80.0);
           final titleFontSize = isDesktop ? 20.0 : (isTablet ? 18.0 : 16.0);
@@ -28,7 +26,6 @@ class Forgotpassotpview extends StatelessWidget {
           final otpBoxSpacing = isDesktop ? 20.0 : (isTablet ? 16.0 : 12.0);
           final textFontSize = isDesktop ? 18.0 : (isTablet ? 17.0 : 16.0);
 
-          // Center content on larger screens
           final maxWidth = isDesktop ? 600.0 : double.infinity;
 
           return Center(

@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 class NewsController extends GetxController {
   final NewsRepository _newsRepository = NewsRepository();
 
-  // Observable variables
   var isLoading = false.obs;
   var articles = <dynamic>[].obs;
   var categories = <dynamic>[].obs;
@@ -18,7 +17,6 @@ class NewsController extends GetxController {
   var hasNextPage = true.obs;
   var isLoadingMore = false.obs;
 
-  // ✅ NEW: Error handling
   var hasError = false.obs;
   var errorMessage = ''.obs;
 
@@ -38,7 +36,6 @@ class NewsController extends GetxController {
     super.onClose();
   }
 
-  /// ✅ UPDATED: Better error handling
   Future<void> loadInitialData() async {
     isLoading.value = true;
     hasError.value = false;
@@ -53,9 +50,8 @@ class NewsController extends GetxController {
       hasError.value = true;
       String error = e.toString();
 
-      print('❌ Error loading initial data: $error');
+      print('Error loading initial data: $error');
 
-      // ✅ Categorize errors
       if (error.contains('NETWORK_ERROR')) {
         errorMessage.value = 'NETWORK_ERROR';
       } else if (error.contains('SERVER_ERROR')) {
@@ -77,8 +73,7 @@ class NewsController extends GetxController {
         allTags.value = response['data'];
       }
     } catch (e) {
-      print('⚠️ Error loading tags: $e');
-      // Don't show error for tags, it's not critical
+      print('Error loading tags: $e');
     }
   }
 
@@ -89,12 +84,11 @@ class NewsController extends GetxController {
         categories.value = response['data'];
       }
     } catch (e) {
-      print('❌ Error loading categories: $e');
-      rethrow; // Propagate error to loadInitialData
+      print('Error loading categories: $e');
+      rethrow;
     }
   }
 
-  /// ✅ UPDATED: Better error handling
   Future<void> loadArticles({bool refresh = false}) async {
     if (refresh) {
       currentPage.value = 1;
@@ -137,9 +131,8 @@ class NewsController extends GetxController {
       }
     } catch (e) {
       String error = e.toString();
-      print('❌ Error loading articles: $error');
+      print('Error loading articles: $error');
 
-      // ✅ Set error state
       hasError.value = true;
       if (error.contains('NETWORK_ERROR')) {
         errorMessage.value = 'NETWORK_ERROR';
@@ -151,7 +144,7 @@ class NewsController extends GetxController {
         errorMessage.value = 'UNKNOWN_ERROR';
       }
 
-      rethrow; // Propagate to caller
+      rethrow;
     }
   }
 
@@ -172,13 +165,12 @@ class NewsController extends GetxController {
       await loadArticles();
     } catch (e) {
       currentPage.value--;
-      print('❌ Error loading more articles: $e');
+      print('Error loading more articles: $e');
     } finally {
       isLoadingMore.value = false;
     }
   }
 
-  /// ✅ UPDATED: Better search error handling
   Future<void> searchArticles(String query) async {
     if (query.trim().isEmpty) {
       selectedCategoryId.value = null;
@@ -208,7 +200,7 @@ class NewsController extends GetxController {
     } catch (e) {
       hasError.value = true;
       String error = e.toString();
-      print('❌ Error searching articles: $error');
+      print('Error searching articles: $error');
 
       if (error.contains('NETWORK_ERROR')) {
         errorMessage.value = 'NETWORK_ERROR';

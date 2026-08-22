@@ -8,7 +8,6 @@ import 'package:get/get_core/src/get_main.dart';
 
 class NewsDetailsWidgets {
 
-  // Tag widget
   static Widget buildTagChip({
     required TagModel tag,
     required bool isSelected,
@@ -60,7 +59,6 @@ class NewsDetailsWidgets {
     );
   }
 
-  // Selected tag info widget
   static Widget buildSelectedTagInfo(TagModel tag) {
     return Container(
       width: double.infinity,
@@ -125,7 +123,6 @@ class NewsDetailsWidgets {
     );
   }
 
-  // Article image widget
   static Widget buildArticleImage(String imageUrl) {
     final hasImage = imageUrl.isNotEmpty &&
         imageUrl.startsWith('http') &&
@@ -177,9 +174,8 @@ class NewsDetailsWidgets {
     );
   }
 
-// ULTIMATE DYNAMIC SUMMARY PARSER - Handles ANY format!
+  // Renders only these three summary sections.
   static Widget buildFormattedSummary(String summary) {
-    // ONLY these 3 sections are allowed
     final allowedTitles = [
       'Don\'t Miss This',
       'QuickScan Summary',
@@ -188,7 +184,6 @@ class NewsDetailsWidgets {
 
     Map<String, String> extractedSections = {};
 
-    // STEP 1: Extract content for each allowed title
     for (String allowedTitle in allowedTitles) {
       String? content = _extractSectionContent(summary, allowedTitle);
       if (content != null && content.isNotEmpty) {
@@ -196,7 +191,6 @@ class NewsDetailsWidgets {
       }
     }
 
-    // STEP 2: Build widgets from extracted sections
     List<Widget> sections = [];
     for (String title in allowedTitles) {
       if (extractedSections.containsKey(title)) {
@@ -204,10 +198,8 @@ class NewsDetailsWidgets {
       }
     }
 
-    // STEP 3: Fallback if no sections found
     if (sections.isEmpty) {
       String cleanedSummary = summary.trim();
-      // Remove leading "SUMMARY:" or "**SUMMARY:**" if exists
       cleanedSummary = cleanedSummary.replaceFirst(RegExp(r'^\*\*SUMMARY:\*\*\s*', caseSensitive: false), '');
       cleanedSummary = cleanedSummary.replaceFirst(RegExp(r'^SUMMARY:\s*', caseSensitive: false), '');
       sections.add(_buildSection('Summary', _cleanBulletPoints(cleanedSummary)));
@@ -219,29 +211,23 @@ class NewsDetailsWidgets {
     );
   }
 
-// DYNAMIC EXTRACTOR - Finds content for any title in ANY format
   static String? _extractSectionContent(String text, String targetTitle) {
-    // Pattern 1: **Title:** or **Title**
     String pattern1 = '\\*\\*${RegExp.escape(targetTitle)}:?\\*\\*';
     RegExp regex1 = RegExp(pattern1, caseSensitive: false);
 
-    // Pattern 2: Title: (plain text)
     String pattern2 = '^${RegExp.escape(targetTitle)}:';
     RegExp regex2 = RegExp(pattern2, caseSensitive: false, multiLine: true);
 
     Match? match = regex1.firstMatch(text) ?? regex2.firstMatch(text);
 
     if (match != null) {
-      // Found direct match - extract content after it
       int startIndex = match.end;
       String remaining = text.substring(startIndex).trim();
 
-      // Find where this section ends (next title or end of text)
       String contentEnd = _findContentEnd(remaining);
       return contentEnd;
     }
 
-    // Pattern 3: Search inside **SUMMARY:** or plain SUMMARY:
     String? contentInsideSummary = _searchInsideSummary(text, targetTitle);
     if (contentInsideSummary != null) {
       return contentInsideSummary;
@@ -250,9 +236,7 @@ class NewsDetailsWidgets {
     return null;
   }
 
-// Searches for target title inside SUMMARY sections
   static String? _searchInsideSummary(String text, String targetTitle) {
-    // Try to find **SUMMARY:** section first
     RegExp summaryRegex = RegExp(r'\*\*SUMMARY:\*\*', caseSensitive: false);
     Match? summaryMatch = summaryRegex.firstMatch(text);
 
@@ -260,7 +244,6 @@ class NewsDetailsWidgets {
       int summaryStart = summaryMatch.end;
       String summaryContent = text.substring(summaryStart);
 
-      // Find end of SUMMARY section (next ** title or end)
       RegExp nextTitleRegex = RegExp(r'\*\*[^*]+\*\*');
       Match? nextTitle = nextTitleRegex.firstMatch(summaryContent);
 
@@ -268,8 +251,6 @@ class NewsDetailsWidgets {
         summaryContent = summaryContent.substring(0, nextTitle.start);
       }
 
-      // Now search for our target title inside summaryContent
-      // Try nested ** first
       String nestedPattern = '\\*\\*${RegExp.escape(targetTitle)}:?\\*\\*';
       RegExp nestedRegex = RegExp(nestedPattern, caseSensitive: false);
       Match? nestedMatch = nestedRegex.firstMatch(summaryContent);
@@ -279,7 +260,6 @@ class NewsDetailsWidgets {
         return _findContentEnd(content);
       }
 
-      // Try plain text inside SUMMARY
       String plainPattern = '${RegExp.escape(targetTitle)}:';
       RegExp plainRegex = RegExp(plainPattern, caseSensitive: false);
       Match? plainMatch = plainRegex.firstMatch(summaryContent);
@@ -289,13 +269,9 @@ class NewsDetailsWidgets {
         return _findContentEnd(content);
       }
 
-      // Special case: If looking for "Don't Miss This" and not found,
-      // use entire SUMMARY content
       if (targetTitle.toLowerCase() == 'don\'t miss this') {
         String cleanContent = summaryContent.trim();
-        // Remove any leading newlines
         cleanContent = cleanContent.replaceFirst(RegExp(r'^\s+'), '');
-        // Take only first line/paragraph
         int newlineIndex = cleanContent.indexOf('\n');
         if (newlineIndex != -1) {
           cleanContent = cleanContent.substring(0, newlineIndex).trim();
@@ -307,22 +283,17 @@ class NewsDetailsWidgets {
     return null;
   }
 
-// Finds where content ends (at next title or end of string)
   static String _findContentEnd(String content) {
-    // Split by newlines and look for next title pattern
     List<String> lines = content.split('\n');
     StringBuffer result = StringBuffer();
 
-    // Regex for any title pattern (** or ending with :)
     RegExp titlePattern = RegExp(r'^\*\*[^*]+\*\*|^[A-Z][^:]+:$');
 
     for (String line in lines) {
       String trimmed = line.trim();
       if (trimmed.isEmpty) continue;
 
-      // Check if this line is a new title
       if (titlePattern.hasMatch(trimmed)) {
-        // Check if it's one of our allowed titles - if not, include it
         bool isAllowedTitle = [
           'Don\'t Miss This',
           'QuickScan Summary',
@@ -333,7 +304,7 @@ class NewsDetailsWidgets {
         );
 
         if (isAllowedTitle) {
-          break; // Stop here - next section starts
+          break;
         }
       }
 
@@ -344,7 +315,6 @@ class NewsDetailsWidgets {
     return result.toString().trim();
   }
 
-// Build section widget
   static Widget _buildSection(String title, String content) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -390,27 +360,20 @@ class NewsDetailsWidgets {
     );
   }
 
-  // Clean bullet points and remove extra spaces
   static String _cleanBulletPoints(String text) {
-    // Remove leading/trailing whitespace
     String cleaned = text.trim();
 
-    // Split by newlines to handle each line
     List<String> lines = cleaned.split('\n');
 
-    // Process each line
     List<String> processedLines = [];
     for (String line in lines) {
       String trimmedLine = line.trim();
 
-      // Skip empty lines
       if (trimmedLine.isEmpty) continue;
 
-      // Check if line starts with bullet point
       if (trimmedLine.startsWith('•') ||
           trimmedLine.startsWith('-') ||
           trimmedLine.startsWith('*')) {
-        // Remove the bullet and any spaces after it, then add consistent formatting
         String withoutBullet = trimmedLine.substring(1).trim();
         processedLines.add('• $withoutBullet');
       } else {
@@ -418,10 +381,8 @@ class NewsDetailsWidgets {
       }
     }
 
-    // Join with single newline
     return processedLines.join('\n');
   }
-  // Loading widget
   static Widget buildLoadingWidget() {
     return Center(
       child: CircularProgressIndicator(
@@ -430,7 +391,6 @@ class NewsDetailsWidgets {
     );
   }
 
-  // Error widget
   static Widget buildErrorWidget(VoidCallback onRetry) {
     return Center(
       child: Column(
@@ -452,7 +412,6 @@ class NewsDetailsWidgets {
     );
   }
 
-  // Disclaimer dialog
   static void showDisclaimerDialog() {
     Get.defaultDialog(
       titlePadding: EdgeInsets.only(top: 30),
@@ -462,7 +421,6 @@ class NewsDetailsWidgets {
     );
   }
 
-  // Helper method
   static String _capitalizeFirstLetter(String text) {
     if (text.isEmpty) return text;
     return text[0].toUpperCase() + text.substring(1).toLowerCase();
@@ -520,7 +478,7 @@ class NewsDetailsWidgets {
     }
 
     if (products.isEmpty) {
-      return SizedBox.shrink(); // Don't show anything if no products
+      return SizedBox.shrink();
     }
 
     return Column(
@@ -552,7 +510,6 @@ class NewsDetailsWidgets {
         ),
         child: Row(
           children: [
-            // Product Image
             Container(
               width: 80,
               height: 80,
@@ -620,12 +577,10 @@ class NewsDetailsWidgets {
 
             SizedBox(width: 16),
 
-            // Product Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Product Title
                   Text(
                     product.title,
                     style: TextStyle(
@@ -639,7 +594,6 @@ class NewsDetailsWidgets {
                   ),
 
                   SizedBox(height: 8),
-                  // Affiliate Disclaimer
                   Row(
                     children: [
                       Container(
@@ -672,7 +626,6 @@ class NewsDetailsWidgets {
 
                   SizedBox(height: 4),
 
-                  // Amazon Associate Disclaimer
                   Text(
                    product.disclaimer,
                     style: TextStyle(
@@ -687,7 +640,6 @@ class NewsDetailsWidgets {
               ),
             ),
 
-            // Arrow Icon
             Icon(
               Icons.arrow_forward_ios,
               size: 16,

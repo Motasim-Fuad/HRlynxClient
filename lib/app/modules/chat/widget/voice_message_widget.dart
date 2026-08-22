@@ -8,7 +8,7 @@ class VoiceMessageBubble extends StatefulWidget {
   final String? transcript;
   final bool isUser;
   final String timestamp;
-  final Duration? audioDuration; // Optional duration from backend
+  final Duration? audioDuration;
 
   const VoiceMessageBubble({
     Key? key,
@@ -31,17 +31,14 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   late Animation<double> _pulseAnimation;
   bool _isDisposed = false;
 
-  // FIXED: Get VoiceService globally instead of passing it
   VoiceService get voiceService {
     if (Get.isRegistered<VoiceService>()) {
       return Get.find<VoiceService>();
     } else {
-      // Fallback: create one if not exists (shouldn't happen but safety)
       return Get.put(VoiceService(), permanent: true);
     }
   }
 
-  // Static wave heights for consistent look (like Messenger)
   List<double> _staticWaveHeights = [];
   List<double> _animatedWaveHeights = [];
   final int _waveCount = 15;
@@ -69,13 +66,10 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   }
 
   void _initializeWaveHeights() {
-    // Create consistent wave pattern (like Messenger's static waves)
-    final random = math.Random(42); // Fixed seed for consistency
+    final random = math.Random(42);
     _staticWaveHeights = List.generate(_waveCount, (index) {
-      // Create varied but predictable heights
       double baseHeight = 12.0 + (random.nextDouble() * 16.0);
 
-      // Make some waves taller for visual appeal
       if (index == 3 || index == 7 || index == 11) {
         baseHeight += 8.0;
       }
@@ -87,7 +81,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
   }
 
   void _setupAnimations() {
-    // Wave animation for playing state
     _waveAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -101,7 +94,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
       curve: Curves.easeInOut,
     ));
 
-    // Pulse animation for play button
     _pulseAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -130,7 +122,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
         double phase = _waveAnimation.value + (i * 0.4);
         double multiplier = (1 + math.sin(phase)) / 2;
 
-        // More dramatic animation for middle waves
         if (i >= 5 && i <= 9) {
           multiplier = (1 + math.sin(phase * 1.5)) / 2;
         }
@@ -163,7 +154,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
       _pulseAnimationController.stop();
       _pulseAnimationController.reset();
 
-      // Reset to static heights
       setState(() {
         _animatedWaveHeights = List.from(_staticWaveHeights);
       });
@@ -184,7 +174,7 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: widget.isUser
-            ? Color(0xFF007AFF) // iOS blue
+            ? Color(0xFF007AFF)
             : Colors.grey[200],
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(18),
@@ -203,7 +193,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Play/Pause button with Messenger-style design
           Obx(() {
             final isThisPlaying = _isCurrentlyPlaying();
             final isLoading = voiceService.isProcessing.value;
@@ -251,7 +240,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
 
           SizedBox(width: 8),
 
-          // Waveform visualization
           Expanded(
             child: Container(
               height: 32,
@@ -280,16 +268,13 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
 
           SizedBox(width: 8),
 
-          // Duration display
           Obx(() {
             final isThisPlaying = _isCurrentlyPlaying();
             final duration = voiceService.totalDuration.value;
             final position = voiceService.playbackPosition.value;
             String timeText="";
-           // String timeText = voiceService.totalDuration.value as String; // voise duration is here
 
             if (widget.audioDuration != null) {
-              // Use provided duration
               if (isThisPlaying && position.inSeconds > 0) {
                 final remaining = widget.audioDuration! - position;
                 timeText = _formatDuration(remaining);
@@ -297,7 +282,6 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
                 timeText = _formatDuration(widget.audioDuration!);
               }
             } else if (duration.inSeconds > 0) {
-              // Use detected duration
               if (isThisPlaying) {
                 final remaining = duration - position;
                 timeText = _formatDuration(remaining);
@@ -333,14 +317,12 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble>
       final isThisPlaying = _isCurrentlyPlaying();
 
       if (isThisPlaying) {
-        // Pause current audio
         await voiceService.pauseVoiceMessage();
       } else {
-        // Play this audio (will stop others automatically)
         await voiceService.playVoiceMessage(widget.voiceUrl!);
       }
     } catch (e) {
-      print('❌ Error in play/pause: $e');
+      print('Error in play/pause: $e');
       _showErrorSnackbar("Could not play voice message");
     }
   }

@@ -4,7 +4,6 @@ import '../neteork_api_services.dart';
 class NewsRepository {
   final _api = NetworkApiServices();
 
-  // Get all articles with pagination
   Future<dynamic> getArticles({int page = 1, int pageSize = 10}) async {
     try {
       String url = "${ApiConstants.baseUrl}/api/news/articles/?page=$page&page_size=$pageSize";
@@ -15,7 +14,6 @@ class NewsRepository {
     }
   }
 
-  // Get articles by category
   Future<dynamic> getArticlesByCategory({
     required int categoryId,
     int page = 1,
@@ -30,7 +28,6 @@ class NewsRepository {
     }
   }
 
-  // Get articles by tag - Fixed version
   Future<dynamic> getArticlesByTag({
     required int tagId,
     int page = 1,
@@ -50,7 +47,6 @@ class NewsRepository {
     }
   }
 
-  // Alternative method using tag slug instead of ID
   Future<dynamic> getArticlesByTagSlug({
     required String tagSlug,
     int page = 1,
@@ -65,7 +61,6 @@ class NewsRepository {
     }
   }
 
-  // Search articles
   Future<dynamic> searchArticles({
     required String query,
     int page = 1,
@@ -80,7 +75,6 @@ class NewsRepository {
     }
   }
 
-  // Get single article details
   Future<dynamic> getArticleDetails(int articleId) async {
     try {
       String url = "${ApiConstants.baseUrl}/api/news/articles/$articleId/";
@@ -91,7 +85,6 @@ class NewsRepository {
     }
   }
 
-  // Get all categories
   Future<dynamic> getCategories() async {
     try {
       String url = "${ApiConstants.baseUrl}/api/news/categories/";
@@ -102,7 +95,6 @@ class NewsRepository {
     }
   }
 
-  // Get all tags
   Future<dynamic> getTags() async {
     try {
       String url = "${ApiConstants.baseUrl}/api/news/tags/";

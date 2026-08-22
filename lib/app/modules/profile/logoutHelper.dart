@@ -9,70 +9,60 @@ class LogoutController extends GetxController {
   final AuthRepository authRepo = AuthRepository();
   final isLoading = false.obs;
 
-  /// ✅ Regular logout (button click)
   Future<void> logout() async {
     try {
       isLoading.value = true;
 
-      // Disconnect notification service FIRST
       await cleanupNotificationService();
 
-      // Call logout API
       await authRepo.LogOut();
 
       try {
         await Purchases.logOut();
-        print('✅ RevenueCat logged out successfully');
+        print('RevenueCat logged out successfully');
       } catch (e) {
-        print('⚠️ RevenueCat logout failed (non-critical): $e');
+        print('RevenueCat logout failed (non-critical): $e');
       }
 
-      // Clear all tokens
       await TokenStorage.clearAllTokens();
       await TokenStorage.clearAllPersonaSessions();
 
       Get.snackbar("Success", "Logged out successfully");
 
-      // Navigate to login screen
       Get.offAll(() => LogInView());
 
     } catch (e) {
       Get.snackbar("Error", "Logout failed: ${e.toString()}");
-      print('❌ Logout error: $e');
+      print('Logout error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// ✅ NEW: Force logout (for 401 errors) - Called from NetworkApiServices
   static Future<void> forceLogout({String reason = 'Session expired'}) async {
     try {
-      print('🚨 Force logout triggered: $reason');
+      print('Force logout triggered: $reason');
 
-      // Cleanup notification service
       try {
         if (Get.isRegistered<NotificationService>()) {
           final notificationService = NotificationService.instance;
           await notificationService.disconnectWebSocket();
-          print('✅ Notification service cleaned up');
+          print('Notification service cleaned up');
         }
       } catch (e) {
-        print('❌ Error cleaning up notification service: $e');
+        print('Error cleaning up notification service: $e');
       }
 
-      // Cleanup RevenueCat
       try {
         await Purchases.logOut();
-        print('✅ RevenueCat logged out');
+        print('RevenueCat logged out');
       } catch (e) {
-        print('⚠️ RevenueCat logout failed: $e');
+        print('RevenueCat logout failed: $e');
       }
 
-      // Clear all tokens
       await TokenStorage.clearAllTokens();
       await TokenStorage.clearAllPersonaSessions();
 
-      // Show message
       Get.snackbar(
         "Session Expired",
         reason,
@@ -80,24 +70,22 @@ class LogoutController extends GetxController {
         duration: Duration(seconds: 3),
       );
 
-      // Navigate to login
       Get.offAll(() => LogInView());
 
     } catch (e) {
-      print('❌ Force logout error: $e');
+      print('Force logout error: $e');
     }
   }
 
-  // Cleanup notification service
   Future<void> cleanupNotificationService() async {
     try {
       if (Get.isRegistered<NotificationService>()) {
         final notificationService = NotificationService.instance;
         await notificationService.disconnectWebSocket();
-        print('✅ Notification service cleaned up successfully');
+        print('Notification service cleaned up successfully');
       }
     } catch (e) {
-      print('❌ Error cleaning up notification service: $e');
+      print('Error cleaning up notification service: $e');
     }
   }
 }

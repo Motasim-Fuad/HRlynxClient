@@ -1,4 +1,3 @@
-
 import 'package:HRlynx/app/common_widgets/button.dart';
 import 'package:HRlynx/app/modules/reset_password/reset_password_controller.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +40,6 @@ class ResetPassword extends StatelessWidget {
               ),
               const SizedBox(height: 30),
 
-              // New Password Field
               Obx(() => TextFormField(
                 obscureText: controller.isObscuredNew.value,
                 decoration: InputDecoration(
@@ -60,7 +58,6 @@ class ResetPassword extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // Confirm Password Field
               Obx(() => TextFormField(
                 obscureText: controller.isObscuredConfirm.value,
                 decoration: InputDecoration(
@@ -99,5 +96,3 @@ class ResetPassword extends StatelessWidget {
     );
   }
 }
-
-

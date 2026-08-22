@@ -1,5 +1,3 @@
-// lib/app/common_widgets/loading_overlay.dart
-
 import 'package:HRlynx/app/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,7 +6,6 @@ class LoadingOverlay {
   static OverlayEntry? _overlayEntry;
   static bool _isShowing = false;
 
-  /// Show loading with custom message
   static void show({String message = 'Please wait...'}) {
     if (_isShowing) return;
 
@@ -45,7 +42,6 @@ class LoadingOverlay {
     Overlay.of(Get.overlayContext!)?.insert(_overlayEntry!);
   }
 
-  /// Hide loading overlay
   static void hide() {
     if (!_isShowing) return;
 
@@ -54,7 +50,6 @@ class LoadingOverlay {
     _isShowing = false;
   }
 
-  /// Update message while loading is shown
   static void updateMessage(String message) {
     if (!_isShowing) return;
 

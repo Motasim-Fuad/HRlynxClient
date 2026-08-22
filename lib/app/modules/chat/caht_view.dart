@@ -57,10 +57,10 @@ class ChatView extends StatelessWidget {
     VoiceService voiceService;
     if (Get.isRegistered<VoiceService>()) {
       voiceService = Get.find<VoiceService>();
-      print('🎵 Using existing global VoiceService');
+      print('Using existing global VoiceService');
     } else {
       voiceService = Get.put(VoiceService(), permanent: true);
-      print('🎵 Created new global VoiceService');
+      print('Created new global VoiceService');
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -161,7 +161,6 @@ class ChatView extends StatelessWidget {
         final newWebSocket = WebSocketService();
         final newTag = 'chat-$newSessionId-${DateTime.now().millisecondsSinceEpoch}';
 
-        // ✅ নতুন session — limit reset করো connect এর আগে
         newWebSocket.resetForNewSession();
         await newWebSocket.connect(newSessionId, tkn, personaId: currentPersonaId);
 
@@ -212,7 +211,6 @@ class ChatView extends StatelessWidget {
       final newWebSocket = WebSocketService();
       final newTag = 'chat-$newSessionId-${DateTime.now().millisecondsSinceEpoch}';
 
-      // ✅ নতুন session load — limit reset করো connect এর আগে
       newWebSocket.resetForNewSession();
       await newWebSocket.connect(newSessionId, tkn, personaId: currentPersonaId);
 

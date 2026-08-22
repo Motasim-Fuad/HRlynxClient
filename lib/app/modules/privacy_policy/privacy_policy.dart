@@ -57,7 +57,7 @@ class PrivacyController extends GetxController {
     );
 
     TextStyle contactStyle = const TextStyle(
-      fontWeight: FontWeight.w400, // Not bold
+      fontWeight: FontWeight.w400,
       fontSize: 14,
       color: Color(0xff7D848D),
     );
@@ -66,7 +66,7 @@ class PrivacyController extends GetxController {
       fontWeight: FontWeight.w400,
       fontSize: 14,
       color: Color(0xff7D848D),
-      fontStyle: FontStyle.italic, // Italic style
+      fontStyle: FontStyle.italic,
     );
 
     TextStyle titleStyle = const TextStyle(
@@ -80,14 +80,13 @@ class PrivacyController extends GetxController {
       fontSize: 16,
     );
 
-    // Remove HTML tags and split into sections
     String cleanContent = htmlContent
         .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
         .replaceAll(RegExp(r'<p>', caseSensitive: false), '')
         .replaceAll(RegExp(r'</p>', caseSensitive: false), '\n')
         .replaceAll(RegExp(r'<div[^>]*>', caseSensitive: false), '')
         .replaceAll(RegExp(r'</div>', caseSensitive: false), '\n')
-        .replaceAll(RegExp(r'<[^>]+>'), '') // Remove all other HTML tags
+        .replaceAll(RegExp(r'<[^>]+>'), '')
         .replaceAll('&nbsp;', ' ')
         .replaceAll('&amp;', '&')
         .replaceAll('&lt;', '<')
@@ -105,7 +104,6 @@ class PrivacyController extends GetxController {
         continue;
       }
 
-      // Check different text types
       bool isMainTitle = _isMainTitle(trimmedSection);
       bool isHeading = _isHeading(trimmedSection);
       bool isCopyright = _isCopyright(trimmedSection);
@@ -113,7 +111,6 @@ class PrivacyController extends GetxController {
       bool isEffectiveDate = _isEffectiveDate(trimmedSection);
 
       if (isMainTitle) {
-        // Main title with larger, bold styling
         if (!isFirstSection) {
           widgets.add(const SizedBox(height: 30));
         }
@@ -121,11 +118,9 @@ class PrivacyController extends GetxController {
         widgets.add(const SizedBox(height: 10));
         isFirstSection = false;
       } else if (isEffectiveDate) {
-        // Effective date with medium bold styling
         widgets.add(Text(trimmedSection, style: effectiveDateStyle));
         widgets.add(const SizedBox(height: 8));
       } else if (isHeading && !isContact) {
-        // Add spacing before heading (except first one)
         if (!isFirstSection) {
           widgets.add(const SizedBox(height: 30));
         }
@@ -134,22 +129,18 @@ class PrivacyController extends GetxController {
         widgets.add(const SizedBox(height: 15));
         isFirstSection = false;
       } else if (isCopyright) {
-        // Copyright text - italic style
-        widgets.add(const SizedBox(height: 40)); // Extra space before copyright
+        widgets.add(const SizedBox(height: 40));
         widgets.add(Text(trimmedSection, style: copyrightStyle));
         widgets.add(const SizedBox(height: 30));
       } else if (isContact) {
-        // Contact/Owner info - not bold
         widgets.add(Text(trimmedSection, style: contactStyle));
 
         if (sections.indexOf(section) < sections.length - 1) {
           widgets.add(const SizedBox(height: 5));
         }
       } else {
-        // Regular body content
         widgets.add(Text(trimmedSection, style: bodyStyle));
 
-        // Add spacing between paragraphs
         if (sections.indexOf(section) < sections.length - 1) {
           widgets.add(const SizedBox(height: 10));
         }
@@ -160,18 +151,15 @@ class PrivacyController extends GetxController {
   }
 
   bool _isMainTitle(String text) {
-    // Check if it's the main title (contains Privacy Policy and version)
     return text.contains('Privacy Policy') && text.contains('(v');
   }
 
   bool _isEffectiveDate(String text) {
-    // Check if it's effective date
     return text.startsWith('Effective Date:');
   }
 
   bool _isHeading(String text) {
-    // Check various heading patterns (excluding contact info)
-    return (text.startsWith(RegExp(r'\d+\.\s')) && !_isContact(text)) || // "1. ", "2. ", etc.
+    return (text.startsWith(RegExp(r'\d+\.\s')) && !_isContact(text)) ||
         text.startsWith('Information We Collect') ||
         text.startsWith('How We Use Your Information') ||
         text.startsWith('Subscription & Auto-Renewal') ||
@@ -186,11 +174,10 @@ class PrivacyController extends GetxController {
         text.startsWith('Your Rights (Other Jurisdictions)') ||
         text.startsWith('Children\'s Privacy') ||
         text.startsWith('Updates to This Policy') ||
-        (text.length < 60 && text.endsWith(':') && !_isContact(text)); // Short text ending with colon (excluding contact)
+        (text.length < 60 && text.endsWith(':') && !_isContact(text));
   }
 
   bool _isCopyright(String text) {
-    // Check if text contains copyright symbols or trademark info
     return text.contains('©') ||
         text.contains('All rights reserved') ||
         text.contains('™') ||
@@ -198,7 +185,6 @@ class PrivacyController extends GetxController {
   }
 
   bool _isContact(String text) {
-    // Check if text contains contact or owner information
     return text.toLowerCase().contains('owner:') ||
         text.toLowerCase().contains('contact:') ||
         text.toLowerCase().contains('info@') ||
@@ -287,14 +273,13 @@ class PrivacyPolicy extends StatelessWidget {
   }
 }
 
-// Add this method to your AuthRepository class
 extension PrivacyExtension on AuthRepository {
   Future<dynamic> getPrivacyPolicy() async {
     String url = "${ApiConstants.baseUrl}/api/core/privacy-policy/";
     try {
       return await NetworkApiServices.getApi(url, withAuth: false);
     } catch (e) {
-      print('❌ Error fetching privacy policy: $e');
+      print('Error fetching privacy policy: $e');
       rethrow;
     }
   }

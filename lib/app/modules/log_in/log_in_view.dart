@@ -29,7 +29,6 @@ class _LogInViewState extends State<LogInView> {
   void initState() {
     super.initState();
 
-    // Clean up existing controllers
     if (Get.isRegistered<LogInController>()) {
       Get.delete<LogInController>();
     }
@@ -40,7 +39,6 @@ class _LogInViewState extends State<LogInView> {
       Get.delete<AppleSignUpController>();
     }
 
-    // Create fresh controllers
     controller = Get.put(LogInController(), permanent: false);
     googleSignUpController = Get.put(
       GoogleSignUpController(),
@@ -149,7 +147,6 @@ class _LogInViewState extends State<LogInView> {
 
                       const SizedBox(height: 10),
 
-                      // Terms checkbox
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
@@ -196,7 +193,6 @@ class _LogInViewState extends State<LogInView> {
 
                       const SizedBox(height: 20),
 
-                      // Login Button
                       Obx(
                             () => Button(
                           title: 'Log In',

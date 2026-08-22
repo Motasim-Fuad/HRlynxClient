@@ -26,7 +26,7 @@ class ProfileView extends StatelessWidget {
   final UserController userController = Get.put(UserController());
   final ProfileController profileController = Get.put(ProfileController(),);
   final LogoutController logoutController = Get.put(LogoutController());
-  final DeleteAccountController deleteAccountController = Get.put(DeleteAccountController()); // 👈 Add this
+  final DeleteAccountController deleteAccountController = Get.put(DeleteAccountController());
   final UserIsSubcribedController subController = Get.put(UserIsSubcribedController());
 
   @override
@@ -74,7 +74,7 @@ class ProfileView extends StatelessWidget {
 
         return RefreshIndicator(
           onRefresh: () async {
-            print("🔄 Pull-to-refresh triggered");
+            print("Pull-to-refresh triggered");
             await profileController.refreshProfile();
           },
           color: Colors.blue,
@@ -87,7 +87,6 @@ class ProfileView extends StatelessWidget {
               children: [
                 SizedBox(height: 10),
 
-                // Profile Picture
                 Center(
                   child: Container(
                     width: 120,
@@ -112,7 +111,6 @@ class ProfileView extends StatelessWidget {
 
                 SizedBox(height: 12),
 
-                // Name
                 Center(
                   child: Text(
                     profileController.userName.value.isNotEmpty
@@ -129,7 +127,6 @@ class ProfileView extends StatelessWidget {
                 ),
 
                 SizedBox(height: 4),
-                // Email
                 Center(
                   child: Text(
                     profileController.userEmail.value.isNotEmpty
@@ -147,7 +144,6 @@ class ProfileView extends StatelessWidget {
 
                 SizedBox(height: 20),
 
-                // Subscription Status Section
                 Obx(() {
                   if (subController.isSubscribed.value) {
                     return Column(
@@ -224,7 +220,6 @@ class ProfileView extends StatelessWidget {
                   }
                 }),
 
-                // Menu Items
                 _buildMenuItem(
                   icon: Icons.notifications_active_outlined,
                   title: 'Notifications',
@@ -249,7 +244,6 @@ class ProfileView extends StatelessWidget {
                   onTap: () => Get.to(ChangePassword()),
                 ),
 
-                // Delete Account - 👈 Updated this
                 _buildMenuItem(
                   icon: Icons.delete_forever_outlined,
                   title: 'Delete Account',
@@ -261,10 +255,9 @@ class ProfileView extends StatelessWidget {
                     }else{
                       _showDeleteAccountDialog(context);
                     }
-                  }  // 👈 Changed function
+                  }
                 ),
 
-                // Logout Item
                 _buildMenuItem(
                   icon: Icons.logout_outlined,
                   title: 'Log out',
@@ -280,7 +273,6 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  // Build Profile Picture with CachedNetworkImage
   Widget _buildProfilePicture() {
     if (profileController.userProfilePicture.value.isEmpty) {
       return Container(
@@ -333,7 +325,7 @@ class ProfileView extends StatelessWidget {
         ),
       ),
       errorWidget: (context, url, error) {
-        print('❌ Failed to load profile image: $error');
+        print('Failed to load profile image: $error');
         return Container(
           width: 120,
           height: 120,
@@ -387,7 +379,6 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  // Build Menu Item Widget
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -432,7 +423,6 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  // 👇 NEW: Delete Account Dialog
   void _showDeleteAccountDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -506,7 +496,6 @@ class ProfileView extends StatelessWidget {
             onPressed: () async {
               Navigator.of(context).pop();
 
-              // Show loading dialog
               Get.dialog(
                 Center(
                   child: Card(
@@ -529,7 +518,6 @@ class ProfileView extends StatelessWidget {
                 barrierDismissible: false,
               );
 
-              // Call delete account function
               await deleteAccountController.deleteAccount();
             },
             style: TextButton.styleFrom(
@@ -552,7 +540,6 @@ class ProfileView extends StatelessWidget {
     );
   }
 
-  // Show Logout Confirmation Dialog
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,

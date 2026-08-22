@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 
-// Helper to parse ISO datetime safely
 DateTime? parseIsoDate(String? isoString) {
   if (isoString == null) return null;
   try {
@@ -17,8 +16,8 @@ String formatTime(DateTime? time) {
       now.day == time.day && now.month == time.month && now.year == time.year;
 
   if (isToday) {
-    return DateFormat.jm().format(time); // e.g., 2:45 PM
+    return DateFormat.jm().format(time);
   } else {
-    return DateFormat('dd/MM/yyyy, h:mm a').format(time); // e.g., 22/07/2025, 2:45 PM
+    return DateFormat('dd/MM/yyyy, h:mm a').format(time);
   }
 }

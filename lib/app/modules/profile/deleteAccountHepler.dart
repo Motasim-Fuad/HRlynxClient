@@ -1,4 +1,3 @@
-// DeleteAccountController.dart
 import 'package:HRlynx/app/api_servies/notification_services.dart';
 import 'package:HRlynx/app/modules/log_in/log_in_view.dart';
 import 'package:get/get.dart';
@@ -13,13 +12,10 @@ class DeleteAccountController extends GetxController {
     try {
       isLoading.value = true;
 
-      // Disconnect notification service FIRST
       await cleanupNotificationService();
 
-      // Call delete account API
       await authRepo.deleteAccount();
 
-      // Clear all tokens and data
       await TokenStorage.clearAllTokens();
       await TokenStorage.clearAllPersonaSessions();
 
@@ -29,7 +25,6 @@ class DeleteAccountController extends GetxController {
         snackPosition: SnackPosition.TOP,
       );
 
-      // Navigate to login screen
       Get.offAll(() => LogInView());
 
     } catch (e) {
@@ -38,28 +33,24 @@ class DeleteAccountController extends GetxController {
         "Account deletion failed: ${e.toString()}",
         snackPosition: SnackPosition.BOTTOM,
       );
-      print('❌ Delete account error: $e');
+      print('Delete account error: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Cleanup notification service
   Future<void> cleanupNotificationService() async {
     try {
       if (Get.isRegistered<NotificationService>()) {
         final notificationService = NotificationService.instance;
 
-        // Disconnect WebSocket properly
         await notificationService.disconnectWebSocket();
 
-        // Clear notifications
-        // notificationService.clearAllNotifications();
 
-        print('✅ Notification service cleaned up successfully');
+        print('Notification service cleaned up successfully');
       }
     } catch (e) {
-      print('❌ Error cleaning up notification service: $e');
+      print('Error cleaning up notification service: $e');
     }
   }
 }

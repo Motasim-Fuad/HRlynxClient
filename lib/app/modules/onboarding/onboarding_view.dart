@@ -29,7 +29,6 @@ class OnboardingView extends StatelessWidget {
           child: Column(
             children: [
               SizedBox(height: h * 0.02),
-              // Logo / Top Image
               Image.asset(
                 AppImages.splash,
                 height: h * 0.25,
@@ -38,7 +37,6 @@ class OnboardingView extends StatelessWidget {
 
               SizedBox(height: h * 0.00),
 
-              // Title Text
               Text(
                 'Customize your experience by choosing an AI HR Assistant Persona!',
                 textAlign: TextAlign.center,
@@ -51,7 +49,6 @@ class OnboardingView extends StatelessWidget {
 
               SizedBox(height: h * 0.02),
 
-              // Persona List
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value) {
@@ -118,14 +115,12 @@ class OnboardingView extends StatelessWidget {
                     physics: const BouncingScrollPhysics(),
                     itemBuilder: (context, index) {
                       Data persona = controller.personaList[index];
-                      // final image = persona.avatar ?? '';
-                      // avatar URL টা relative হলে base URL যোগ করো
                       String image = '';
                       if (persona.avatar != null && persona.avatar!.isNotEmpty) {
                         if (persona.avatar!.startsWith('http')) {
-                          image = persona.avatar!; // Already full URL
+                          image = persona.avatar!;
                         } else {
-                          image = "${ApiConstants.baseUrl}${persona.avatar!}"; // Relative → Full URL
+                          image = "${ApiConstants.baseUrl}${persona.avatar!}";
                         }
                       }
 
@@ -144,7 +139,6 @@ class OnboardingView extends StatelessWidget {
 
               SizedBox(height: h * 0.01),
 
-              // Page indicators
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(4, (index) {
@@ -166,7 +160,6 @@ class OnboardingView extends StatelessWidget {
 
               SizedBox(height: h * 0.015),
 
-              // Next button
               Button(
                 title: 'Next',
                 onTap: () async {

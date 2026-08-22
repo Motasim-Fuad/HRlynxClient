@@ -89,8 +89,6 @@ class Persona {
 }
 
 
-// Add or update this in your Messages model class:
-
 class Messages {
   int? id;
   String? content;
@@ -112,15 +110,12 @@ class Messages {
     this.transcript,
   });
 
-  // Enhanced isVoice getter with comprehensive checks
   bool get isVoice {
-    // Check multiple indicators for voice messages
     bool hasVoiceUrl = voice_file_url != null && voice_file_url!.isNotEmpty;
     bool hasVoiceType = messageType?.toLowerCase() == 'voice';
     bool hasVoiceFlag = hasVoice == true;
     bool hasTranscriptData = transcript != null && transcript!.isNotEmpty;
 
-    // Also check content for voice indicators (in case backend sends different format)
     bool contentIndicatesVoice = false;
     if (content != null) {
       contentIndicatesVoice = content!.contains('voice_file_url') ||
@@ -129,14 +124,13 @@ class Messages {
 
     bool result = hasVoiceUrl || hasVoiceType || hasVoiceFlag || hasTranscriptData || contentIndicatesVoice;
 
-    // Debug logging for voice detection
     if (hasVoiceUrl || hasVoiceType || hasVoiceFlag || hasTranscriptData) {
-      print("🎤 Voice message detected for ID $id:");
-      print("  - hasVoiceUrl: $hasVoiceUrl (${voice_file_url})");
-      print("  - hasVoiceType: $hasVoiceType (${messageType})");
-      print("  - hasVoiceFlag: $hasVoiceFlag");
-      print("  - hasTranscript: $hasTranscriptData");
-      print("  - Final result: $result");
+      print("Voice message detected for ID $id:");
+      print("- hasVoiceUrl: $hasVoiceUrl (${voice_file_url})");
+      print("- hasVoiceType: $hasVoiceType (${messageType})");
+      print("- hasVoiceFlag: $hasVoiceFlag");
+      print("- hasTranscript: $hasTranscriptData");
+      print("- Final result: $result");
     }
 
     return result;

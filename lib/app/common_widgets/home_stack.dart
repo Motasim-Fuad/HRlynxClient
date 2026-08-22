@@ -17,7 +17,7 @@ class HomeStack extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Expanded( // Takes available height inside grid cell
+          Expanded(
             child: ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               child: Image.network(
@@ -49,4 +49,3 @@ class HomeStack extends StatelessWidget {
     );
   }
 }
-

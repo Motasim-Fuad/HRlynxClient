@@ -1,5 +1,3 @@
-// lib/main.dart - FINAL PRODUCTION
-
 import 'dart:io';
 import 'dart:async';
 import 'dart:ui';
@@ -17,22 +15,18 @@ import 'app/api_servies/notification_services.dart';
 import 'app/api_servies/token.dart';
 import 'app/modules/payment/payment_controller.dart';
 
-// ─── Background FCM handler (must be top-level) ───────────────
+// FCM background handler. Must stay top-level.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  debugPrint('📩 Background message: ${message.messageId}');
+  debugPrint('Background message: ${message.messageId}');
 }
 
-// ─────────────────────────────────────────────────────────────
-//  ENTRY POINT
-// ─────────────────────────────────────────────────────────────
 
 void main() {
-  // ✅ runZonedGuarded আগে, ensureInitialized ভেতরে
   runZonedGuarded(
         () async {
-      WidgetsFlutterBinding.ensureInitialized(); // ← এখানে move করো
+      WidgetsFlutterBinding.ensureInitialized();
 
       await _loadEnv();
       await _initializeFirebase();
@@ -46,27 +40,24 @@ void main() {
 
       if (Platform.isIOS) _requestIOSPermissionsAsync();
 
-      debugPrint('✅ All systems ready');
+      debugPrint('All systems ready');
       runApp(const MyApp());
     },
         (error, stack) {
-      debugPrint('❌ UNCAUGHT ERROR: $error');
+      debugPrint('UNCAUGHT ERROR: $error');
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     },
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-//  INIT HELPERS
-// ─────────────────────────────────────────────────────────────
 
 Future<void> _loadEnv() async {
   try {
     await dotenv.load(fileName: '.env')
         .timeout(const Duration(seconds: 5));
-    debugPrint('✅ .env loaded');
+    debugPrint('.env loaded');
   } catch (e) {
-    debugPrint('⚠️ .env error: $e');
+    debugPrint('.env error: $e');
   }
 }
 
@@ -76,35 +67,32 @@ Future<void> _initializeFirebase() async {
       await Firebase.initializeApp()
           .timeout(const Duration(seconds: 15));
 
-      // Register background handler
       FirebaseMessaging.onBackgroundMessage(
           _firebaseMessagingBackgroundHandler);
 
-      debugPrint('✅ Firebase initialized');
+      debugPrint('Firebase initialized');
       return;
     } catch (e) {
-      debugPrint('⚠️ Firebase attempt ${i + 1} failed: $e');
+      debugPrint('Firebase attempt ${i + 1} failed: $e');
       if (i < 2) await Future.delayed(const Duration(seconds: 2));
     }
   }
-  debugPrint('⚠️ Firebase failed after 3 attempts – continuing');
+  debugPrint('Firebase failed after 3 attempts – continuing');
 }
 
 void _setupCrashlytics() {
   try {
-    // Flutter framework errors
     FlutterError.onError =
         FirebaseCrashlytics.instance.recordFlutterFatalError;
 
-    // Async / platform errors
     PlatformDispatcher.instance.onError = (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;
     };
 
-    debugPrint('✅ Crashlytics ready');
+    debugPrint('Crashlytics ready');
   } catch (e) {
-    debugPrint('⚠️ Crashlytics setup error: $e');
+    debugPrint('Crashlytics setup error: $e');
   }
 }
 
@@ -118,9 +106,9 @@ Future<void> _configureUI() async {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    debugPrint('✅ UI configured');
+    debugPrint('UI configured');
   } catch (e) {
-    debugPrint('⚠️ UI error: $e');
+    debugPrint('UI error: $e');
   }
 }
 
@@ -137,9 +125,9 @@ Future<void> _initializeRevenueCat() async {
     await Purchases.configure(PurchasesConfiguration(apiKey))
         .timeout(const Duration(seconds: 10));
 
-    debugPrint('✅ RevenueCat initialized');
+    debugPrint('RevenueCat initialized');
   } catch (e) {
-    debugPrint('⚠️ RevenueCat error: $e');
+    debugPrint('RevenueCat error: $e');
     FirebaseCrashlytics.instance
         .recordError(e, StackTrace.current, reason: '_initializeRevenueCat');
   }
@@ -149,9 +137,9 @@ Future<void> _initializeFCM() async {
   try {
     await FirebaseMeg().initFCM()
         .timeout(const Duration(seconds: 8));
-    debugPrint('✅ FCM initialized');
+    debugPrint('FCM initialized');
   } catch (e) {
-    debugPrint('⚠️ FCM error: $e');
+    debugPrint('FCM error: $e');
   }
 }
 
@@ -162,7 +150,7 @@ void _requestIOSPermissionsAsync() {
           .requestPermission(alert: true, badge: true, sound: true)
           .timeout(const Duration(seconds: 30));
 
-      debugPrint('✅ Permission: ${settings.authorizationStatus}');
+      debugPrint('Permission: ${settings.authorizationStatus}');
 
       final isAllowed =
           settings.authorizationStatus == AuthorizationStatus.authorized ||
@@ -170,24 +158,20 @@ void _requestIOSPermissionsAsync() {
 
       if (!isAllowed) return;
 
-      // APNs token – retry up to 5 times
       for (int i = 0; i < 5; i++) {
         final token = await FirebaseMessaging.instance.getAPNSToken();
         if (token != null) {
-          debugPrint('✅ APNs token received');
+          debugPrint('APNs token received');
           return;
         }
         await Future.delayed(const Duration(seconds: 2));
       }
     } catch (e) {
-      debugPrint('⚠️ iOS permission error: $e');
+      debugPrint('iOS permission error: $e');
     }
   });
 }
 
-// ─────────────────────────────────────────────────────────────
-//  APP ROOT
-// ─────────────────────────────────────────────────────────────
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -199,7 +183,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home:                     const _SafeInitScreen(),
       builder: (context, child) {
-        // Global error UI
         ErrorWidget.builder = (details) => Scaffold(
           body: Center(
             child: Padding(
@@ -230,9 +213,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-//  SAFE INIT SCREEN  (splash-time initialisation)
-// ─────────────────────────────────────────────────────────────
 
 class _SafeInitScreen extends StatefulWidget {
   const _SafeInitScreen();
@@ -247,7 +227,6 @@ class _SafeInitScreenState extends State<_SafeInitScreen>
   bool   _showRetry = false;
   String _status    = 'Loading...';
 
-  // ── Lifecycle ──────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -266,15 +245,12 @@ class _SafeInitScreenState extends State<_SafeInitScreen>
     if (state == AppLifecycleState.resumed) _onAppResumed();
   }
 
-  // ── Init ───────────────────────────────────────────────────
   Future<void> _initialize() async {
     if (mounted) setState(() { _showRetry = false; _status = 'Loading...'; });
 
     try {
-      // Small delay so the first frame paints before heavy work
       await Future.delayed(const Duration(milliseconds: 200));
 
-      // Init NotificationService early (non-blocking)
       _initNotificationsAsync();
 
       await SplashService().checkLoginStatus().timeout(
@@ -283,7 +259,7 @@ class _SafeInitScreenState extends State<_SafeInitScreen>
       );
 
     } catch (e, st) {
-      debugPrint('❌ Init error: $e');
+      debugPrint('Init error: $e');
       FirebaseCrashlytics.instance
           .recordError(e, st, reason: '_SafeInitScreen._initialize');
 
@@ -291,7 +267,6 @@ class _SafeInitScreenState extends State<_SafeInitScreen>
     }
   }
 
-  // ── Notifications (fire-and-forget) ───────────────────────
   void _initNotificationsAsync() {
     Future.microtask(() async {
       try {
@@ -299,12 +274,11 @@ class _SafeInitScreenState extends State<_SafeInitScreen>
           Get.put(NotificationService());
         }
       } catch (e) {
-        debugPrint('⚠️ Notification init error: $e');
+        debugPrint('Notification init error: $e');
       }
     });
   }
 
-  // ── App resume: check subscription silently ────────────────
   Future<void> _onAppResumed() async {
     try {
       final token = await TokenStorage.getLoginAccessToken()
@@ -321,15 +295,14 @@ class _SafeInitScreenState extends State<_SafeInitScreen>
         final flag = await TokenStorage.getSubscriptionCheckDone();
         if (flag != true) {
           await TokenStorage.saveSubscriptionCheckDone(true);
-          debugPrint('✅ Subscription flag synced on resume');
+          debugPrint('Subscription flag synced on resume');
         }
       }
     } catch (e) {
-      debugPrint('⚠️ Resume check error: $e');
+      debugPrint('Resume check error: $e');
     }
   }
 
-  // ── UI ─────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(

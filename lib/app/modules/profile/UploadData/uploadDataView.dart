@@ -36,7 +36,6 @@ class UploadDataView extends GetView<UploadDataController> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                /// Profile Image
                 Obx(() => GestureDetector(
                   onTap: controller.isLoading.value
                       ? null
@@ -55,9 +54,8 @@ class UploadDataView extends GetView<UploadDataController> {
 
                 const SizedBox(height: 20),
 
-                /// Name
                 SizedBox(
-                  width: double.infinity, // 👈 fixed width for center look
+                  width: double.infinity,
                   child: CustomTextFormField(
                     controller: controller.nameController,
                     hintText: "Enter full name",
@@ -66,7 +64,6 @@ class UploadDataView extends GetView<UploadDataController> {
 
                 const SizedBox(height: 10),
 
-                /// Phone
                 SizedBox(
                   width: double.infinity,
                   child: CustomTextFormField(
@@ -78,7 +75,6 @@ class UploadDataView extends GetView<UploadDataController> {
 
                 const SizedBox(height: 20),
 
-                /// Save Button
                 SizedBox(
                   width: double.infinity,
                   child: Obx(() => Button(
