@@ -3,9 +3,7 @@ import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
     id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -51,11 +49,10 @@ android {
 
     buildTypes {
         release {
-            // এখন আর debug না — তোমার release keystore ব্যবহার হবে
+
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             isShrinkResources = false
-            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }
