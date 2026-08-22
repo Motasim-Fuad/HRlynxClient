@@ -41,26 +41,14 @@ This repository is the **HRlynx client app** (Flutter). Users sign in, pick an H
 
 ## Screenshots
 
-Phone screenshots from the **Play Store listing** (Play Console assets):
-
 <p>
-  <img src="docs/screenshots/play_02.png" width="160" alt="Play screenshot 1" />
-  <img src="docs/screenshots/play_03.png" width="160" alt="Play screenshot 2" />
-  <img src="docs/screenshots/play_04.png" width="160" alt="Play screenshot 3" />
-  <img src="docs/screenshots/play_05.png" width="160" alt="Play screenshot 4" />
-  <img src="docs/screenshots/play_06.png" width="160" alt="Play screenshot 5" />
-</p>
-
-Phone screenshots from the **App Store**:
-
-<p>
-  <img src="docs/screenshots/appstore_1.png" width="140" alt="App Store 1" />
-  <img src="docs/screenshots/appstore_2.png" width="140" alt="App Store 2" />
-  <img src="docs/screenshots/appstore_3.png" width="140" alt="App Store 3" />
-  <img src="docs/screenshots/appstore_4.png" width="140" alt="App Store 4" />
-  <img src="docs/screenshots/appstore_5.png" width="140" alt="App Store 5" />
-  <img src="docs/screenshots/appstore_6.png" width="140" alt="App Store 6" />
-  <img src="docs/screenshots/appstore_7.png" width="140" alt="App Store 7" />
+  <img src="docs/screenshots/appstore_1.png" width="140" alt="HRlynx screenshot 1" />
+  <img src="docs/screenshots/appstore_2.png" width="140" alt="HRlynx screenshot 2" />
+  <img src="docs/screenshots/appstore_3.png" width="140" alt="HRlynx screenshot 3" />
+  <img src="docs/screenshots/appstore_4.png" width="140" alt="HRlynx screenshot 4" />
+  <img src="docs/screenshots/appstore_5.png" width="140" alt="HRlynx screenshot 5" />
+  <img src="docs/screenshots/appstore_6.png" width="140" alt="HRlynx screenshot 6" />
+  <img src="docs/screenshots/appstore_7.png" width="140" alt="HRlynx screenshot 7" />
 </p>
 
 ---
